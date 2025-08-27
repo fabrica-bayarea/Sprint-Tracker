@@ -1,12 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from '../../src/auth/auth.controller';
-import { AuthService } from '../../src/auth/auth.service';
+import { AuthController } from '../../../src/auth/auth.controller';
+import { AuthService } from '../../../src/auth/auth.service';
 import { ConfigService } from '@nestjs/config';
-import { SignUpDto } from '../../src/auth/dto/signup.dto';
+import { SignUpDto } from '../../../src/auth/dto/signup.dto';
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
+<<<<<<< HEAD:back-end/test/auth/auth.controller.spec.ts
 import { SignInDto } from 'src/auth/dto/signin.dto';
 import { access } from 'fs';
+=======
+import { BadRequestException } from '@nestjs/common';
+>>>>>>> 0e18531ff62ab519098e70171cd33d38a95e544f:back-end/test/unit/auth/auth.controller.spec.ts
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -64,6 +68,37 @@ describe('AuthController', () => {
       const result = await controller.signUp(dto, mockResponse as Response);
 
       expect(mockAuthService.signUp).toHaveBeenCalledWith(dto);
+<<<<<<< HEAD:back-end/test/auth/auth.controller.spec.ts
+=======
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'trello-session',
+        'fake-token',
+        expect.objectContaining({
+          httpOnly: true,
+        }),
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Usuário cadastrado com sucesso',
+      });
+    });
+
+    it('deve lançar BadRequestException se email ou senha forem ausentes', async () => {
+      const dto = {
+        email: '',
+        password: '',
+        name: 'Jhon Doe',
+        userName: 'jhon_doe',
+      };
+
+      mockAuthService.signUp.mockRejectedValueOnce(
+        new BadRequestException('E-mail já cadastrado'),
+      );
+
+      await expect(
+        controller.signUp(dto, mockResponse as Response),
+      ).rejects.toThrow(BadRequestException);
+>>>>>>> 0e18531ff62ab519098e70171cd33d38a95e544f:back-end/test/unit/auth/auth.controller.spec.ts
     });
   });
 

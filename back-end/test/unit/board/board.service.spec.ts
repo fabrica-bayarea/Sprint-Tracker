@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BoardService } from '../../src/board/board.service';
+import { BoardService } from '../../../src/board/board.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 import { BoardVisibility } from 'src/common/enums/board-visibility.enum';

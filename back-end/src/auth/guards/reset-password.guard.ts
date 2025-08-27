@@ -52,7 +52,7 @@ export class ResetPasswordGuard implements CanActivate {
       });
 
       if (payload.purpose !== 'reset-password') {
-        throw new ForbiddenException(
+        throw new UnauthorizedException(
           'Este token não é válido para redefinir a senha.',
         );
       }
@@ -62,7 +62,9 @@ export class ResetPasswordGuard implements CanActivate {
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'TokenExpiredError') {
-          throw new ForbiddenException('Token de redefinição expirado.');
+          throw new UnauthorizedException(
+            'Token de redefinição expirado ou inválido.',
+          );
         }
         if (error.name === 'JsonWebTokenError') {
           throw new UnauthorizedException('Token de redefinição inválido.');

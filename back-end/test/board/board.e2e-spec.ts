@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { Test } from '@nestjs/testing';
-import { BoardModule } from '../src/board/board.module';
-import { BoardService } from '../src/board/board.service';
+import { BoardModule } from '../../src/board/board.module';
+import { BoardService } from '../../src/board/board.service';
 import { INestApplication } from '@nestjs/common';
 
 describe('Board', () => {

@@ -4,9 +4,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProfileService } from '../../src/profile/profile.service';
-import { PrismaService } from '../../src/prisma/prisma.service';
-import { ProfileDto } from '../../src/profile/dto/update-profile.dto';
+import { ProfileService } from '../../../src/profile/profile.service';
+import { PrismaService } from '../../../src/prisma/prisma.service';
+import { ProfileDto } from '../../../src/profile/dto/update-profile.dto';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 
 describe('ProfileService', () => {
