@@ -4,6 +4,7 @@ import { INestApplication } from "@nestjs/common"
 import request from "supertest"
 import { Test } from "@nestjs/testing"
 
+//teste da criação de uma lista a partir de um board existente
 describe('List', ()=>{
     let app: INestApplication;
     const listService = {
