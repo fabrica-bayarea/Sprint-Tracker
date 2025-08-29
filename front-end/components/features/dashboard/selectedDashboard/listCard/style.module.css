@@ -17,41 +17,44 @@
   margin-bottom: 6px;
 }
 
+.listTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .listTitle {
   font-weight: 700;
   font-size: 1.1rem;
   color: #334155;
 }
 
+.dragHandle {
+  background: none;
+  border: none;
+  cursor: grab;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.dragHandle:hover {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
 .listActions{
   display: flex;
   align-items: center;
   gap: 2px;
-}
-
-.taskCard {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background-color: white;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e1e5e9;
-  transition: all 0.2s ease;
-}
-
-.taskCard:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  border-color: #ddd;
-}
-
-.taskCard span {
-  flex: 1;
-  font-size: 14px;
-  color: #333;
-  word-break: break-word;
 }
 
 .addTaskButton {
@@ -72,11 +75,6 @@
   color: #c51313;
 }
 
-.taskActions{
-  display: flex;
-  align-items: center;
-}
-
 .deleteButton {
   background: none;
   border: none;
@@ -93,32 +91,4 @@
 .deleteButton:hover {
   background-color: #f0f0f0;
   color: #ff4757;
-}
-
-.deleteTaskButton {
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  opacity: 0;
-}
-
-.taskCard:hover .deleteTaskButton {
-  opacity: 1;
-}
-
-.deleteTaskButton:hover {
-  background-color: #fee2e2;
-  color: #dc2626;
-  transform: scale(1.1);
-}
-
-.deleteTaskButton:active {
-  transform: scale(0.95);
 }

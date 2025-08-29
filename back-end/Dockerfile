@@ -12,8 +12,11 @@ COPY package*.json ./
 # Instala as dependências de forma limpa
 RUN npm install --quiet --no-fund --loglevel=error
 
-# Copia todos os arquivos do projeto para o container
-COPY . .
+# Copia apenas os arquivos necessários para build e execução
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+COPY prisma ./prisma
+COPY src ./src
 
 # Gera os arquivos necessários para o prisma e otimiza o código
 RUN npx prisma generate && \

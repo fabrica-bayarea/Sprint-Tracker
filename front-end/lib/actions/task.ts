@@ -1,7 +1,7 @@
 'use server';
 
 import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { getSessionCookie } from "../utils/sessionCookie";
+import { getCookie } from "../utils/sessionCookie";
 
 const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
 
@@ -40,7 +40,7 @@ export async function createTask(taskData: TaskData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
     body: JSON.stringify(taskData),
   });
@@ -61,7 +61,7 @@ export async function getTasksByList(listId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
   });
 
@@ -81,7 +81,7 @@ export async function getTaskById(taskId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
   });
 
@@ -101,7 +101,7 @@ export async function updateTask(taskId: string, updateData: UpdateTaskData) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
     body: JSON.stringify(updateData),
   });
@@ -122,7 +122,7 @@ export async function deleteTask(taskId: string) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie()
+      "Cookie": await getCookie("trello-session")
     },
   });
 
@@ -141,9 +141,34 @@ export async function moveTask(taskId: string, newPosition: number) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie()
+      "Cookie": await getCookie("trello-session")
     },
     body: JSON.stringify({ newPosition }),
+  });
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: await handleFetchError(response, "Falha ao mover a tarefa"),
+    };
+  }
+  
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return { success: true, data: await response.json() };
+  } else {
+    return { success: true, data: null };
+  }
+}
+
+export async function moveTaskOtherList(taskId: string, newPosition: number, newListId: string) {
+  const response = await fetch(`${BASE_URL_API}/v1/tasks/${taskId}/move`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": await getCookie("trello-session")
+    },
+    body: JSON.stringify({ newListId, newPosition }),
   });
 
   if (!response.ok) {
@@ -166,7 +191,7 @@ export async function getExpiredTasks() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie()
+      "Cookie": await getCookie("trello-session")
     },
   });
 

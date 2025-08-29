@@ -1,6 +1,6 @@
 'use server';
 
-import { getSessionCookie } from "@/lib/utils/sessionCookie";
+import { getCookie } from "@/lib/utils/sessionCookie";
 import { handleFetchError } from "@/lib/utils/handleFetchError";
 
 const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
@@ -35,7 +35,7 @@ export async function getAllList(boardId: string) {
   const response = await fetch(`${BASE_URL_API}/v1/lists/board/${boardId}`, {
     headers: {
       'Accept': 'application/json',
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
   });
 
@@ -56,7 +56,7 @@ export async function createList(newListData: NewListData) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
     body: JSON.stringify(newListData),
   });
@@ -94,7 +94,7 @@ export async function editList(List: PatchListData) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
     body: JSON.stringify(updateData),
   });
@@ -119,7 +119,7 @@ export async function deleteList(listId: string) {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
   });
 
@@ -144,7 +144,7 @@ export async function moveList(listId: string, newPosition: number) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
     body: JSON.stringify({ newPosition }),
   });

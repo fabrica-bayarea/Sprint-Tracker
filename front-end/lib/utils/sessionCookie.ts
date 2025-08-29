@@ -1,15 +1,7 @@
+"use server";
+
 import { cookies } from "next/headers";
 import setCookie from "set-cookie-parser";
-
-export function parseJwt(token: string) {
-  try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-    if (!payload) throw new Error("Token inválido");
-    return payload
-  } catch {
-    return null;
-  }
-}
 
 export async function setSessioCookie(rawSetCookie: string) {
     const [parsed] = setCookie.parse(rawSetCookie);
@@ -26,14 +18,14 @@ export async function setSessioCookie(rawSetCookie: string) {
     });
 }
 
-export async function removeSessionCookie() {
+export async function removeCookie(cookieName: string) {
   const cookieStore = cookies();
-  (await cookieStore).delete("trello-session");
+  (await cookieStore).delete(cookieName);
 }
 
-export async function getSessionCookie() {
+export async function getCookie(cookieName: string) {
   const cookieStore = cookies();
-  const token = (await cookieStore).get("trello-session")?.value;
-  if (!token) throw new Error("Usuario não autenticado");
-  return `trello-session=${token}`;
+  const token = (await cookieStore).get(cookieName)?.value;
+  if (!token) throw new Error("Cookie não encontrado");
+  return `${cookieName}=${token}`;
 }

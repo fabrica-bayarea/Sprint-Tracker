@@ -99,6 +99,10 @@ export class AuthController {
   @Post('signup')
   async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
     try {
+      if (!dto.email || !dto.password || dto.email.trim() === '' || dto.password.trim() === '') {
+        throw new BadRequestException('Email e senha são obrigatórios');
+      }
+
       const result = await this.authService.signUp(dto);
 
       return res
@@ -432,12 +436,12 @@ export class AuthController {
       const resetJwtToken =
         await this.authService.verifyResetCode(verifyResetCodeDto);
 
-      res.cookie('reset_token', resetJwtToken, {
+      res.cookie('reset-token', resetJwtToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        //secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 15 * 60 * 1000,
-        path: '/v1/auth/reset-password',
+        path: '/',
       });
 
       return {

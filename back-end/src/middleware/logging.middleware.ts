@@ -51,7 +51,7 @@ export class LoggingMiddleware implements NestMiddleware {
   }
 
   private filterSensitiveHeaders(key: string, value: unknown): unknown {
-    const sensitiveHeaders = ['authorization'];
+    const sensitiveHeaders = ['authorization', 'cookie', 'set-cookie'];
     return sensitiveHeaders.includes(key.toLowerCase()) ? '***' : value;
   }
 }

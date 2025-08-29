@@ -1,10 +1,4 @@
-.forgotPasswordButton {
-  max-width: 200px;
-  margin: 20px auto 0;
-  border-radius: 20px;
-}
-
-.forgotPasswordText {
+.verifyText {
   color: white;
   text-align: center;
   font-size: 14px;
@@ -12,11 +6,12 @@
   line-height: 1.5;
 }
 
-.forgotPassword {
-  text-align: center;
+.resetText {
   color: white;
+  text-align: center;
   font-size: 14px;
-  margin-top: 10px;
+  margin-bottom: 20px;
+  line-height: 1.5;
 }
 
 .form {
@@ -24,4 +19,11 @@
   flex-direction: column;
   gap: 15px;
   width: 100%;
+}
+
+.codeInput {
+  text-align: center;
+  letter-spacing: 2px;
+  font-size: 16px;
+  font-weight: bold;
 }

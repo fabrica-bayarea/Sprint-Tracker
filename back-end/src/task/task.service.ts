@@ -130,7 +130,7 @@ export class TaskService {
     });
   }
 
-  async moveTaskToList(taskId: string, newListId: string) {
+  async moveTaskToList(taskId: string, newListId: string, newPosition: number) {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
     });
@@ -139,30 +139,52 @@ export class TaskService {
       throw new NotFoundException('Task não encontrada');
     }
 
-    await this.prisma.task.updateMany({
-      where: {
-        listId: task.listId,
-        position: {
-          gt: task.position,
-        },
-      },
-      data: {
-        position: {
-          decrement: 1,
-        },
-      },
+    const targetList = await this.prisma.list.findUnique({
+      where: { id: newListId },
     });
 
-    const newPosition = await this.prisma.task.count({
-      where: { listId: newListId },
-    });
+    if (!targetList) {
+      throw new NotFoundException('Lista de destino não encontrada');
+    }
 
-    return this.prisma.task.update({
-      where: { id: taskId },
-      data: {
-        listId: newListId,
-        position: newPosition,
-      },
+    return this.prisma.$transaction(async (prisma) => {
+      await prisma.task.updateMany({
+        where: {
+          listId: task.listId,
+          position: {
+            gt: task.position,
+          },
+        },
+        data: {
+          position: {
+            decrement: 1,
+          },
+        },
+      });
+
+      await prisma.task.updateMany({
+        where: {
+          listId: newListId,
+          position: {
+            gte: newPosition,
+          },
+        },
+        data: {
+          position: {
+            increment: 1,
+          },
+        },
+      });
+
+      const updatedTask = await prisma.task.update({
+        where: { id: taskId },
+        data: {
+          listId: newListId,
+          position: newPosition,
+        },
+      });
+
+      return updatedTask;
     });
   }
 }

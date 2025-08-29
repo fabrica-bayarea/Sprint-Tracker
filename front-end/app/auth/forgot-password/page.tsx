@@ -15,18 +15,31 @@ import styles from "./style.module.css";
 export default function ForgotPassword() {
   const router = useRouter()
   const [email, setEmail] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const { showNotification } = useNotificationStore()
 
   async function handleSubmit(e: React.FormEvent) {
       e.preventDefault()
 
-      const result = await forgotPassword(email);
+      if (!email.trim()) {
+        showNotification("Por favor, insira seu e-mail", 'failed')
+        return
+      }
 
-      if (result.success) {
-        router.push("/auth/login");
-        router.refresh();
-      } else {
-        showNotification(result.error || "Erro desconhecido", 'failed')
+      setIsLoading(true)
+
+      try {
+        const result = await forgotPassword(email);
+
+        if (result.success) {
+          showNotification("E-mail enviado com sucesso! Verifique sua caixa de entrada.", 'success')
+          router.push("/auth/forgot-password/verify");
+          router.refresh();
+        } else {
+          showNotification(result.error || "Erro desconhecido", 'failed')
+        }
+      } finally {
+        setIsLoading(false)
       }
     }
   return (
@@ -45,8 +58,8 @@ export default function ForgotPassword() {
           placeholder="Insira o seu email"
           value={email}
         />
-        <AuthButton type="submit">
-          Enviar e-mail
+        <AuthButton type="submit" disabled={isLoading}>
+          {isLoading ? "Enviando..." : "Enviar e-mail"}
         </AuthButton>
       </form>
     </AuthFormContainer>

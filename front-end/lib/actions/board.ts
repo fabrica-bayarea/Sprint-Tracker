@@ -1,7 +1,7 @@
 'use server';
 
 import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { getSessionCookie } from "@/lib/utils/sessionCookie";
+import { getCookie } from "@/lib/utils/sessionCookie";
 
 interface BoardData {
   title: string;
@@ -20,7 +20,7 @@ export async function createBoard(boardData: BoardData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
     body: JSON.stringify({
       ...boardData,
@@ -43,7 +43,7 @@ export async function getBoards() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
   });
 
@@ -71,7 +71,7 @@ export async function getBoardById(boardId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getSessionCookie(),
+      "Cookie": await getCookie("trello-session"),
     },
   });
 

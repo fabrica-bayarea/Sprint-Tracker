@@ -1,4 +1,4 @@
-/* front-end/app/not-found.module.css */
+/* front-end/app/error.module.css */
 
 .container {
   height: 100vh;
@@ -31,7 +31,7 @@
 
 .button {
   padding: 0.75rem 1.5rem;
-  background-color: #dc2626; /* vermelho */
+  background-color: #dc2626;
   color: #fff;
   border-radius: 0.375rem;
   text-decoration: none;
@@ -41,5 +41,5 @@
 }
 
 .button:hover {
-  background-color: #991b1b; /* vermelho escuro */
+  background-color: #991b1b;
 }

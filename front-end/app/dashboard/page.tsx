@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, Trash2, CheckCircle2 } from "lucide-react";
 
 import { getBoards } from "@/lib/actions/board";
-import { getExpiredTasks } from "@/lib/actions/task";
+import { getExpiredTasks, deleteTask, updateTask } from "@/lib/actions/task";
 import { useNotificationStore } from '@/lib/stores/notification';
 
 import Section from '@/components/features/dashboard/selectedDashboard/section';
@@ -51,6 +51,38 @@ export default function Dashboard() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [pendencias, setPendencias] = useState<PendenciaItem[]>([]);
   const { showNotification } = useNotificationStore()
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const result = await deleteTask(taskId);
+      if (result.success) {
+        setPendencias(prevPendencias => 
+          prevPendencias.filter(p => p.id !== taskId)
+        );
+        showNotification("Tarefa deletada com sucesso!", 'success');
+      } else {
+        showNotification(result.error || "Erro ao deletar tarefa", 'failed');
+      }
+    } catch {
+      showNotification("Erro ao deletar tarefa", 'failed');
+    }
+  };
+
+  const handleMarkAsDone = async (taskId: string) => {
+    try {
+      const result = await updateTask(taskId, { status: "DONE" });
+      if (result.success) {
+        setPendencias(prevPendencias => 
+          prevPendencias.filter(p => p.id !== taskId)
+        );
+        showNotification("Tarefa marcada como concluída!", 'success');
+      } else {
+        showNotification(result.error || "Erro ao atualizar tarefa", 'failed');
+      }
+    } catch {
+      showNotification("Erro ao atualizar tarefa", 'failed');
+    }
+  };
 
   useEffect(() => {
     async function fetchBoards() {
@@ -117,8 +149,20 @@ export default function Dashboard() {
                   {p.atrasado && <span className={styles.pendenciaAtrasado}>Atrasado!</span>}
                 </span>
                 <span className={styles.pendenciaGrupo}>{p.grupo}/<span>{p.andamento}</span></span>
-                <button className={styles.pendenciaAction}><Trash2 size={18} /></button>
-                <button className={styles.pendenciaAction}><Check size={18} /></button>
+                <button 
+                  className={styles.pendenciaAction}
+                  onClick={() => handleDeleteTask(p.id)}
+                  title="Deletar tarefa"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button 
+                  className={styles.pendenciaAction}
+                  onClick={() => handleMarkAsDone(p.id)}
+                  title="Marcar como concluída"
+                >
+                  <Check size={18} />
+                </button>
                 <span className={styles.pendenciaData}>{p.data}</span>
               </div>
             ))

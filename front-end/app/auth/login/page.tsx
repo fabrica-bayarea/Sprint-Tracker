@@ -67,7 +67,7 @@ export default function Home() {
           <AuthButton type="button" onClick={() => window.location.href = `/api/v1/auth/google`} className={styles.oauthCircleButton} aria-label="Entrar com Google">
             <Image src="/images/google-icon.png" alt="Google" width={28} height={28} />
           </AuthButton>
-          <AuthButton type="button" onClick={() => window.location.href = `/api/v1/auth/google`} className={styles.oauthCircleButton} aria-label="Entrar com Microsoft">
+          <AuthButton type="button" onClick={() => window.location.href = `/api/v1/auth/microsoft`} className={styles.oauthCircleButton} aria-label="Entrar com Microsoft">
             <Image src="/images/microsoft-icon.png" alt="Microsoft" width={28} height={28} />
           </AuthButton>
         </div>

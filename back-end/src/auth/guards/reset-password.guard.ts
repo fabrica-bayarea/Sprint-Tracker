@@ -29,10 +29,10 @@ export class ResetPasswordGuard implements CanActivate {
 
     let token: string | undefined;
 
-    if (request.cookies && typeof request.cookies['reset_token'] === 'string') {
-      token = request.cookies['reset_token'];
-    } else if (Array.isArray(request.cookies?.['reset_token'])) {
-      token = String(request.cookies['reset_token'][0]);
+    if (request.cookies && typeof request.cookies['reset-token'] === 'string') {
+      token = request.cookies['reset-token'];
+    } else if (Array.isArray(request.cookies?.['reset-token'])) {
+      token = String(request.cookies['reset-token'][0]);
     } else {
       token = undefined;
     }

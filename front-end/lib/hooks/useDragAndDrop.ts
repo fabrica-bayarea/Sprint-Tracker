@@ -8,7 +8,7 @@ import { useTaskOperations } from './useTaskOperations';
 export function useDragAndDrop(boardId: string) {
   const { lists, setLists, getListIndex, getTaskPosition, moveTask } = useBoardStore();
   const { handleMoveList } = useListOperations(boardId);
-  const { handleMoveTask } = useTaskOperations();
+  const { handleMoveTask, handleMoveTaskToOtherList } = useTaskOperations();
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -22,7 +22,7 @@ export function useDragAndDrop(boardId: string) {
       const newLists = arrayMove(lists, activeListIdx, overListIdx);
       setLists(newLists);
       
-      // Fazer a requisição para o backend
+
       const listId = active.id as string;
       const newPosition = overListIdx + 1; // Posição baseada em 1
       handleMoveList(listId, newPosition);
@@ -54,9 +54,11 @@ export function useDragAndDrop(boardId: string) {
     // Mover a tarefa no estado local
     moveTask(sourceListIdx, taskIdx, destListIdx, destTaskIdx === -1 ? undefined : destTaskIdx);
     
-    // Fazer requisição para o backend apenas se for dentro da mesma lista
+    // Fazer requisição para o backend
+    const taskId = active.id as string;
+    
     if (sourceListIdx === destListIdx) {
-      const taskId = active.id as string;
+      // Movimento dentro da mesma lista
       const sourceList = lists[sourceListIdx];
       
       // Calcular a nova posição baseada na posição final após o movimento
@@ -78,8 +80,32 @@ export function useDragAndDrop(boardId: string) {
       }
       
       handleMoveTask(taskId, newPosition);
+    } else {
+      // Movimento para lista diferente
+      const destList = lists[destListIdx];
+      const newListId = destList.id;
+      
+      // Calcular a nova posição na lista de destino
+      let newPosition: number;
+      if (destTaskIdx === -1 || destTaskIdx === undefined) {
+        // Se solto no final da lista, usar a próxima posição disponível
+        newPosition = destList.tasks.length > 0 ? 
+          Math.max(...destList.tasks.map(t => t.position)) + 1 : 1;
+      } else {
+        // Se solto entre tarefas, calcular baseado no índice de destino
+        if (destTaskIdx === 0) {
+          // Se movido para o início
+          newPosition = destList.tasks.length > 0 ? 
+            Math.min(...destList.tasks.map(t => t.position)) - 1 : 1;
+        } else {
+          // Se movido para o meio, usar o índice como posição
+          newPosition = destTaskIdx + 1;
+        }
+      }
+      
+      handleMoveTaskToOtherList(taskId, newPosition, newListId);
     }
-  }, [lists, setLists, getListIndex, getTaskPosition, moveTask, handleMoveList, handleMoveTask]);
+  }, [lists, setLists, getListIndex, getTaskPosition, moveTask, handleMoveList, handleMoveTask, handleMoveTaskToOtherList]);
 
   return {
     handleDragEnd,
