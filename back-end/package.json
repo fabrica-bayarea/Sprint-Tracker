@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "DATABASE_URL=postgresql://user_test:password_test@127.17.0.1:5433/postgres?schema=public jest --config ./jest-e2e.json"
+    "test:e2e": "cross-env DATABASE_URL=postgresql://user_test:password_test@127.17.0.1:5433/postgres?schema=public jest --config ./jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.16",
@@ -50,7 +50,7 @@
     "@eslint/js": "^9.18.0",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
-    "@nestjs/testing": "^11.0.1",
+    "@nestjs/testing": "^11.1.6",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/argon2": "^0.14.1",
@@ -69,6 +69,7 @@
     "@types/passport-microsoft": "^2.1.0",
     "@types/supertest": "^6.0.3",
     "copyfiles": "^2.4.1",
+    "cross-env": "^10.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

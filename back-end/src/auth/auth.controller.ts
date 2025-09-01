@@ -99,7 +99,12 @@ export class AuthController {
   @Post('signup')
   async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
     try {
-      if (!dto.email || !dto.password || dto.email.trim() === '' || dto.password.trim() === '') {
+      if (
+        !dto.email ||
+        !dto.password ||
+        dto.email.trim() === '' ||
+        dto.password.trim() === ''
+      ) {
         throw new BadRequestException('Email e senha são obrigatórios');
       }
 

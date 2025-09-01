@@ -51,7 +51,7 @@ export class BoardController {
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.boardService.findAll(user.id);
+    return { data: this.boardService.findAll(user.id) };
   }
 
   @ApiOperation({
