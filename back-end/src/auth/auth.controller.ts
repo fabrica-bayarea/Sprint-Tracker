@@ -99,7 +99,12 @@ export class AuthController {
   @Post('signup')
   async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
     try {
-      if (!dto.email || !dto.password || dto.email.trim() === '' || dto.password.trim() === '') {
+      if (
+        !dto.email ||
+        !dto.password ||
+        dto.email.trim() === '' ||
+        dto.password.trim() === ''
+      ) {
         throw new BadRequestException('Email e senha são obrigatórios');
       }
 
@@ -441,7 +446,7 @@ export class AuthController {
         //secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 15 * 60 * 1000,
-        path: '/',
+        path: '/v1/auth/reset-password',
       });
 
       return {
