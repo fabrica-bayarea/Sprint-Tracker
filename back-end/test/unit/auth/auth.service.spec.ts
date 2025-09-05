@@ -19,7 +19,7 @@ import { EmailService } from 'src/email/email.service';
 import { SignInDto } from 'src/auth/dto/signin.dto';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/email/dto/change-password.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
