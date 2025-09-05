@@ -28,7 +28,7 @@ export class ResetPasswordDto {
     message: 'A confirmação da senha deve ter no mínimo 8 caracteres.',
   })
   @Match('newPassword', {
-    message: 'A confirmação da senha não corresponde à nova senha.',
+    message: 'As senhas não coincidem.',
   })
   confirmNewPassword: string;
 }

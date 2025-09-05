@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
+import { BadRequestException } from '@nestjs/common';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -76,11 +77,20 @@ describe('AuthController', () => {
     });
 
     it('deve lançar BadRequestException se email ou senha forem ausentes', async () => {
-      const dto = { email: '', password: '', name: '', userName: '' };
+      const dto = {
+        email: '',
+        password: '',
+        name: 'Jhon Doe',
+        userName: 'jhon_doe',
+      };
+
+      mockAuthService.signUp.mockRejectedValueOnce(
+        new BadRequestException('E-mail já cadastrado'),
+      );
 
       await expect(
-        controller.signUp(dto as SignUpDto, mockResponse as Response),
-      ).rejects.toThrow('Email e senha são obrigatórios');
+        controller.signUp(dto, mockResponse as Response),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

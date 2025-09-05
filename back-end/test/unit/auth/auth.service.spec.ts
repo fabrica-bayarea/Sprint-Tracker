@@ -19,7 +19,7 @@ import { EmailService } from 'src/email/email.service';
 import { SignInDto } from 'src/auth/dto/signin.dto';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/email/dto/change-password.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
@@ -139,7 +139,7 @@ describe('AuthService', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       await expect(service.signUp(signUpDto)).rejects.toThrow(
-        new ConflictException('Email já cadastrado'),
+        new ConflictException('Email ou nome de usuário já estão em uso'),
       );
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: signUpDto.email },
@@ -462,6 +462,7 @@ describe('AuthService', () => {
     const changePasswordDto: ChangePasswordDto = {
       oldPassword: 'oldPassword123',
       newPassword: 'newPassword456',
+      confirmNewPassword: 'newPassword456',
     };
     const mockUser = {
       id: userId,

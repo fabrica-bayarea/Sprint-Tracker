@@ -10,8 +10,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/email/dto/change-password.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import {
+  PrismaClientKnownRequestError,
+  PrismaClientValidationError,
+} from '@prisma/client/runtime/library';
 import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
@@ -106,6 +109,10 @@ export class AuthService {
     ) {
       throw new ConflictException('Email ou nome de usuário já estão em uso');
     }
+    if (error instanceof PrismaClientValidationError) {
+      console.error('PrismaClientValidationError:', error.message);
+      throw new BadRequestException('Dados de entrada inválidos fornecidos.');
+    }
     throw new BadRequestException('Erro ao criar usuário');
   }
 
@@ -115,12 +122,20 @@ export class AuthService {
   async signUp(dto: SignUpDto): Promise<{ accessToken: string }> {
     const hashedPassword = await this.hashPassword(dto.password);
 
-    const existingUser = await this.prisma.user.findUnique({
+    const existingUserByEmail = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Email já cadastrado');
+    if (existingUserByEmail) {
+      throw new ConflictException('Email ou nome de usuário já estão em uso');
+    }
+
+    const existingUserByUserName = await this.prisma.user.findUnique({
+      where: { userName: dto.userName },
+    });
+
+    if (existingUserByUserName) {
+      throw new ConflictException('Email ou nome de usuário já estão em uso');
     }
 
     try {
@@ -211,7 +226,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new ForbiddenException('Código inválido ou expirado.');
+      throw new UnauthorizedException('Código inválido ou expirado.');
     }
 
     if (!user.resetToken || user.resetToken !== verifyResetCodeDto.code) {

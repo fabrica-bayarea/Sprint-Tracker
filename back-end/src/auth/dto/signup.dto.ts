@@ -18,12 +18,14 @@ export class SignUpDto {
   userName: string;
 
   @ApiProperty({ example: 'username@gmail.com' })
-  @IsEmail({}, { message: 'Preencha o campo de email' })
+  @IsEmail({}, { message: 'O e-mail deve ser um endereço de e-mail válido.' })
   @IsString({ message: 'O email deve ser uma string' })
+  @IsNotEmpty({ message: 'Preencha o campo de email.' })
   email: string;
 
   @ApiProperty({ example: 'Senha123!' })
   @IsString({ message: 'A senha deve ser uma string' })
+  @IsNotEmpty({ message: 'Preencha o campo de senha' })
   @IsStrongPassword(
     {},
     {
