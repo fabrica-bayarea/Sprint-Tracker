@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 
 import { register } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 import AuthInput from "@/components/ui/authInput";
@@ -25,7 +25,7 @@ import styles from "./style.module.css";
 
 export default function Register() {
   const router = useRouter()
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
   const [fullname, setFullName] = useState("")
   const [userName, setUserName] = useState("")
   const [email, setEmail] = useState("")
@@ -41,16 +41,16 @@ export default function Register() {
     e.preventDefault()
 
     if (!agreeTerms) {
-      showNotification("Você precisa concordar com os termos de serviço.", 'failed')
+      showWarning("Você precisa concordar com os termos de serviço.", 'failed')
       return;
     }
 
     if(confirmEmail != email){
-      showNotification("E-mails não coincidem", 'failed');
+      showWarning("E-mails não coincidem", 'failed');
       return;
     }
     if(confirmPassword != password){
-      showNotification("Senhas não coincidem", 'failed')
+      showWarning("Senhas não coincidem", 'failed')
       return;
     }
     const result = await register(fullname, userName, email, password);
@@ -62,7 +62,7 @@ export default function Register() {
       router.push("/dashboard");
       router.refresh();
     } else {
-      showNotification(result.error || "Erro desconhecido", 'failed')
+      showWarning(result.error || "Erro desconhecido", 'failed')
     }
   }
 

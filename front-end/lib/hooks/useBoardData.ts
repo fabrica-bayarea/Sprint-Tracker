@@ -3,13 +3,13 @@ import { useEffect } from 'react';
 import { getAllList } from '@/lib/actions/list';
 import { getTasksByList } from '@/lib/actions/task';
 import { useBoardStore } from '@/lib/stores/board';
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import { List, Status } from '@/lib/types/board'
 
 export function useBoardData(boardId: string) {
   const { setLists, setLoading } = useBoardStore();
-  const { showNotification } = useNotificationStore();
+  const { showWarning } = useWarningStore();
 
   useEffect(() => {
     if (!boardId) return;
@@ -38,7 +38,7 @@ export function useBoardData(boardId: string) {
           );
           setLists(listsWithTasks);
         } else {
-          showNotification("Erro ao buscar dados do quadro: " + result.error, "failed");
+          showWarning("Erro ao buscar dados do quadro: " + result.error, "failed");
         }
       } finally {
         setLoading(false);
@@ -46,5 +46,5 @@ export function useBoardData(boardId: string) {
     };
 
     fetchBoardData();
-  }, [boardId, setLists, setLoading, showNotification]);
+  }, [boardId, setLists, setLoading, showWarning]);
 }

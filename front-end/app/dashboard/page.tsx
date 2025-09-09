@@ -5,7 +5,7 @@ import { Check, Trash2, CheckCircle2 } from "lucide-react";
 
 import { getBoards } from "@/lib/actions/board";
 import { getExpiredTasks, deleteTask, updateTask } from "@/lib/actions/task";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import Section from '@/components/features/dashboard/selectedDashboard/section';
 
@@ -50,7 +50,7 @@ interface Board {
 export default function Dashboard() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [pendencias, setPendencias] = useState<PendenciaItem[]>([]);
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
 
   const handleDeleteTask = async (taskId: string) => {
     try {
@@ -59,12 +59,12 @@ export default function Dashboard() {
         setPendencias(prevPendencias => 
           prevPendencias.filter(p => p.id !== taskId)
         );
-        showNotification("Tarefa deletada com sucesso!", 'success');
+        showWarning("Tarefa deletada com sucesso!", 'success');
       } else {
-        showNotification(result.error || "Erro ao deletar tarefa", 'failed');
+        showWarning(result.error || "Erro ao deletar tarefa", 'failed');
       }
     } catch {
-      showNotification("Erro ao deletar tarefa", 'failed');
+      showWarning("Erro ao deletar tarefa", 'failed');
     }
   };
 
@@ -75,12 +75,12 @@ export default function Dashboard() {
         setPendencias(prevPendencias => 
           prevPendencias.filter(p => p.id !== taskId)
         );
-        showNotification("Tarefa marcada como concluída!", 'success');
+        showWarning("Tarefa marcada como concluída!", 'success');
       } else {
-        showNotification(result.error || "Erro ao atualizar tarefa", 'failed');
+        showWarning(result.error || "Erro ao atualizar tarefa", 'failed');
       }
     } catch {
-      showNotification("Erro ao atualizar tarefa", 'failed');
+      showWarning("Erro ao atualizar tarefa", 'failed');
     }
   };
 
@@ -90,7 +90,7 @@ export default function Dashboard() {
       if (result.success) {
         setBoards(result.data as Board[]);
       } else {
-        showNotification(result.error || "Erro ao buscar boards", 'failed')
+        showWarning(result.error || "Erro ao buscar boards", 'failed')
       }
     }
 
@@ -121,16 +121,16 @@ export default function Dashboard() {
             setPendencias([]);
           }
         } else {
-          showNotification(result.error || "Erro ao buscar tarefas expiradas", 'failed')
+          showWarning(result.error || "Erro ao buscar tarefas expiradas", 'failed')
         }
       } catch (error) {
-        showNotification(error as string || "Erro ao buscar tarefas expiradas", 'failed');
+        showWarning(error as string || "Erro ao buscar tarefas expiradas", 'failed');
       }
     }
 
     fetchBoards();
     fetchExpiredTasks();
-  }, [showNotification]);
+  }, [showWarning]);
 
   return (
     <main className={styles.dashboardMainCustom}>

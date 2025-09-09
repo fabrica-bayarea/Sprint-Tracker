@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation"
 
 import { deleteUserProfile } from "@/lib/actions/profile";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import styles from "./style.module.css";
 
 export default function DeleteAccountButton() {
   const router = useRouter()
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   async function handleDelete() {
@@ -24,7 +24,7 @@ export default function DeleteAccountButton() {
       await new Promise((resolve) => setTimeout(resolve, 5000));
       router.refresh();
     } else {
-      showNotification(result.error || "Erro desconhecido", 'failed')
+      showWarning(result.error || "Erro desconhecido", 'failed')
     }
 
     setDeleteLoading(false);

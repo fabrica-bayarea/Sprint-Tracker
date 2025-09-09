@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getUserProfile } from "@/lib/actions/profile";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import EditProfileForm from "@/components/features/dashboard/editProfile/formEditUser";
 import DeleteAccountButton from "@/components/features/dashboard/editProfile/deleteProfile";
@@ -11,7 +11,7 @@ import DeleteAccountButton from "@/components/features/dashboard/editProfile/del
 import styles from "./style.module.css";
 
 export default function EditProfilePage() {
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -19,14 +19,14 @@ export default function EditProfilePage() {
       const response = await getUserProfile();
 
       if (!response.success) {
-        showNotification(response.error || "Erro ao carregar perfil", 'failed')
+        showWarning(response.error || "Erro ao carregar perfil", 'failed')
       } else {
         setProfile(response.data);
       }
     }
 
     fetchUserProfile();
-  }, [showNotification]);
+  }, [showWarning]);
 
   return (
     <div className={styles.container}>

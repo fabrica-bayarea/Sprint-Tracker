@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createBoard } from "@/lib/actions/board";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import { Input, Textarea, Image } from "@/components/ui";
 
@@ -12,7 +12,7 @@ import styles from "./style.module.css";
 
 export default function NewBoardPage() {
   const router = useRouter();
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -37,7 +37,7 @@ export default function NewBoardPage() {
       router.push("/dashboard");
       router.refresh();
     } else {
-      showNotification(result.error || "Erro desconhecido", 'failed')
+      showWarning(result.error || "Erro desconhecido", 'failed')
     }
 
     setLoading(false);

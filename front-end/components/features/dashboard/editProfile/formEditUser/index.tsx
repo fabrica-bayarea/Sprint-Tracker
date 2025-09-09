@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { updateUserProfile } from "@/lib/actions/profile";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import { Input, Image } from "@/components/ui";
 
@@ -26,7 +26,7 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
   });
   // const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value, files } = e.target;
@@ -50,9 +50,9 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
     const response = await updateUserProfile(formData);
 
     if (response.success) {
-      showNotification("Perfil atualizado com sucesso!", 'success')
+      showWarning("Perfil atualizado com sucesso!", 'success')
     } else {
-      showNotification(response.error || "Erro desconhecido", 'failed')
+      showWarning(response.error || "Erro desconhecido", 'failed')
     }
 
     setLoading(false);
