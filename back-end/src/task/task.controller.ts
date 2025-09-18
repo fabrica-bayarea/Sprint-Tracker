@@ -92,10 +92,7 @@ export class TaskController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Patch(':id/position')
-  updatePosition(
-    @Param('id') id: string,
-    @Body() dto: UpdatePositionDto,
-  ) {
+  updatePosition(@Param('id') id: string, @Body() dto: UpdatePositionDto) {
     return this.taskService.updatePosition(id, dto.newPosition);
   }
 
@@ -138,6 +135,10 @@ export class TaskController {
   @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
   @Patch(':id/move')
   moveTask(@Param('id') taskId: string, @Body() dto: MoveTaskOtherListDto) {
-    return this.taskService.moveTaskToList(taskId, dto.newListId, dto.newPosition);
+    return this.taskService.moveTaskToList(
+      taskId,
+      dto.newListId,
+      dto.newPosition,
+    );
   }
 }

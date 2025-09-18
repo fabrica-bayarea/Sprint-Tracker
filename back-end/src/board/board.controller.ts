@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/auth/strategy/decorators/current-user.decorator';
 import { BoardService } from './board.service';
@@ -63,33 +65,39 @@ export class BoardController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.boardService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.boardService.getBoardById(id, user.id);
   }
 
   @ApiOperation({
     summary: 'Atualiza um quadro específico',
     description: 'Atualiza um quadro específico pelo ID',
   })
-  @ApiResponse({ status: 200, description: 'Quadro atualizado com sucesso' })
+  @ApiResponse({ status: 204, description: 'Quadro atualizado com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao atualizar o quadro' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateBoardDto) {
-    return this.boardService.update(id, dto);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateBoardDto,
+  ) {
+    return this.boardService.update(id, user.id, dto);
   }
 
   @ApiOperation({
     summary: 'Remove um quadro específico',
     description: 'Remove um quadro específico pelo ID',
   })
-  @ApiResponse({ status: 200, description: 'Quadro removido com sucesso' })
+  @ApiResponse({ status: 204, description: 'Quadro removido com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao remover o quadro' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.boardService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.boardService.remove(id, user.id);
   }
 }
