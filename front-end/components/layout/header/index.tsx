@@ -27,7 +27,14 @@ export default function Header() {
           height={100}
         />
         <div className={styles.wrapper_header_helps}>
-          <Notification />
+          <Notification>
+            <Bell
+              size={32}
+              color="#949494"
+              strokeWidth={2}
+              aria-label="Notificações"
+            />
+          </Notification>
           <CircleHelp
             size={32}
             color="#949494"

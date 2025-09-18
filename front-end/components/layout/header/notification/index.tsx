@@ -1,80 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef, type ReactNode } from "react";
 
-import styles from "./style.module.css"; 
-import { Badge, Popover, IconButton, Typography, Box } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import styles from "./style.module.css";
 
-export default function Notification() {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+export default function Notification({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
 
-  const open = Boolean(anchorEl);
-  const id = open ? "notification-popover" : undefined;
-  
-  const empty = true;
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <>
-      <IconButton
-        aria-describedby={id}
-        aria-label="Notificações"
-        onClick={handleClick}
-        sx={{
-          cursor: "pointer",
-          "&:hover": {
-            color: "#5c5c5c",
-          },
-          color: "#949494", 
-        }}
-      >
+    <div className={styles.notification} ref={containerRef}>
+      <button onClick={toggleDropdown} className={styles.triggerButton}>
+        {children}
+      </button>
 
-        {empty ? (
-          <NotificationsIcon sx={{ fontSize: "2rem" }} /> 
-        ) : (
-          <Badge badgeContent={4} color="error">
-            <NotificationsIcon sx={{ fontSize: "2rem" }} />
-          </Badge>
-        )}
-
-      </IconButton>
-
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
-      >
-
-        <Box
-          sx={{
-            p: 2,
-            minWidth: 200,
-            textAlign: "center",
-          }}
-        >
-
-          <Typography>Nenhuma notificação no momento.</Typography>
-
-        </Box>
-        
-      </Popover>
-    </>
+      {isOpen && (
+        <div className={styles.popover}>
+          <p>Nenhuma notificação no momento!</p>
+        </div>
+      )}
+    </div>
   );
 }

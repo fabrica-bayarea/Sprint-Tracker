@@ -1,0 +1,74 @@
+.notification {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.triggerButton {
+  position: relative;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.triggerButton:hover svg {
+  filter: brightness(0.8);
+  transition: filter 0.3s ease;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  width: 20rem;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  box-shadow: 0 0.5rem 0.8rem rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  z-index: 100;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.popover::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  right: 1.25rem;
+  margin-bottom: -1px;
+  border: 0.5rem solid transparent;
+  border-bottom-color: white;
+}
+
+.popover::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  right: 0.4rem;
+  margin-bottom: -1px;
+  border: 0.5rem solid transparent;
+  border-bottom-color: #e0e0e0;
+}
+
+.popover p {
+  margin: 0;
+  color: #707070;
+  font-size: 1rem;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
