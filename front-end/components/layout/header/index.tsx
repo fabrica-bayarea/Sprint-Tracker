@@ -2,10 +2,11 @@
 
 import { Bell, CircleHelp, User, LogOut } from "lucide-react";
 import { Image } from "@/components/ui";
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { removeCookie } from "@/lib/utils/sessionCookie";
 import styles from "./style.module.css";
+import Notification from "./notification";
 
 export default function Header() {
   const router = useRouter();
@@ -26,14 +27,33 @@ export default function Header() {
           height={100}
         />
         <div className={styles.wrapper_header_helps}>
-          <Bell size={32} color="#949494" strokeWidth={2} aria-label="Notificações" />
-          <CircleHelp size={32} color="#949494" strokeWidth={2} aria-label="Ajuda" />
+          <Notification>
+            <Bell
+              size={32}
+              color="#949494"
+              strokeWidth={2}
+              aria-label="Notificações"
+            />
+          </Notification>
+          <CircleHelp
+            size={32}
+            color="#949494"
+            strokeWidth={2}
+            aria-label="Ajuda"
+          />
           <div className={styles.profileContainer}>
-            <Link href="/dashboard/edit-profile/" className={styles.profileImage} aria-label="Editar perfil">
+            <Link
+              href="/dashboard/edit-profile/"
+              className={styles.profileImage}
+              aria-label="Editar perfil"
+            >
               <div className={styles.profileImageInner}></div>
             </Link>
             <div className={styles.dropdownMenu}>
-              <Link href="/dashboard/edit-profile/" className={styles.dropdownItem}>
+              <Link
+                href="/dashboard/edit-profile/"
+                className={styles.dropdownItem}
+              >
                 <User size={16} />
                 Editar perfil
               </Link>
@@ -46,5 +66,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }
