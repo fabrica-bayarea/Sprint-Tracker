@@ -112,7 +112,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           result.accessToken,
           this.setCookieOptions(false),
         )
@@ -161,7 +161,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           result.accessToken,
           this.setCookieOptions(dto.rememberMe),
         )
@@ -239,7 +239,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           authResult.accessToken,
           this.setCookieOptions(false),
         )
@@ -311,7 +311,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           authResult.accessToken,
           this.setCookieOptions(false),
         )
@@ -541,7 +541,7 @@ export class AuthController {
   logout(@Res() res: Response) {
     try {
       return res
-        .clearCookie('trello-session', {
+        .clearCookie('sprinttacker-session', {
           httpOnly: true,
           path: '/',
           secure: this.configService.get<string>('NODE_ENV') === 'production',

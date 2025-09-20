@@ -23,7 +23,7 @@
 
 3. Crie um container do Postgres:
   ```bash
-  docker run --name database_trello \
+  docker run --name database_sprinttracker \
     -e POSTGRES_PASSWORD=password_postgres -e POSTGRES_USER=user_postgres \
     -d -p 5432:5432 postgres
   ```

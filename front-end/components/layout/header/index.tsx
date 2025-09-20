@@ -12,7 +12,7 @@ export default function Header() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await removeCookie("trello-session");
+    await removeCookie("sprinttacker-session");
     router.push("/auth/login/");
   };
 

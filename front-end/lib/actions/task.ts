@@ -40,7 +40,7 @@ export async function createTask(taskData: TaskData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify(taskData),
   });
@@ -61,7 +61,7 @@ export async function getTasksByList(listId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 
@@ -81,7 +81,7 @@ export async function getTaskById(taskId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 
@@ -101,7 +101,7 @@ export async function updateTask(taskId: string, updateData: UpdateTaskData) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify(updateData),
   });
@@ -122,7 +122,7 @@ export async function deleteTask(taskId: string) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
+      "Cookie": await getCookie("sprinttacker-session")
     },
   });
 
@@ -141,7 +141,7 @@ export async function moveTask(taskId: string, newPosition: number) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
+      "Cookie": await getCookie("sprinttacker-session")
     },
     body: JSON.stringify({ newPosition }),
   });
@@ -166,7 +166,7 @@ export async function moveTaskOtherList(taskId: string, newPosition: number, new
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
+      "Cookie": await getCookie("sprinttacker-session")
     },
     body: JSON.stringify({ newListId, newPosition }),
   });
@@ -191,7 +191,7 @@ export async function getExpiredTasks() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
+      "Cookie": await getCookie("sprinttacker-session")
     },
   });
 

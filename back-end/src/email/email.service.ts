@@ -45,7 +45,7 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail({
-        from: `"Suporte novoTrello" <${process.env.EMAIL!}>`,
+        from: `"Suporte Sprint Tracker" <${process.env.EMAIL!}>`,
         to,
         subject: 'Recuperação de senha',
         html,

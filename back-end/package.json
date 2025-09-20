@@ -1,7 +1,7 @@
 {
   "name": "back-end",
   "version": "1.0.0-alpha",
-  "description": "API da plataforma Novo Trello - Sistema de gerenciamento de tarefas baseado no modelo Kanban",
+  "description": "API da plataforma Sprint Tacker - Sistema de gerenciamento de tarefas baseado no modelo Kanban",
   "author": "Fábrica Bay Area - IESB",
   "private": true,
   "license": "GPL-3.0-only",

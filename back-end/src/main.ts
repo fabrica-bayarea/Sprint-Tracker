@@ -62,21 +62,21 @@ async function bootstrap() {
 
   // Swagger Configuration
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Novo Trello API - IESB')
-    .setDescription('Documentação da API do novo trello do BayArea - IESB')
-    .addCookieAuth('trello-session')
+    .setTitle('Sprint Tacker API - IESB')
+    .setDescription('Documentação da API do Sprint Tracker do BayArea - IESB')
+    .addCookieAuth('sprinttacker-session')
     .setExternalDoc(
       'Documentação adicional',
-      'https://github.com/fabrica-bayarea/novoTrello',
+      'https://github.com/fabrica-bayarea/Sprint-Tracker',
     )
     .setContact('BayArea', '', 'nde.ads@iesb.br')
     .setLicense(
       'License GPL-3.0',
-      'https://github.com/fabrica-bayarea/novoTrello?tab=GPL-3.0-1-ov-file',
+      'https://github.com/fabrica-bayarea/Sprint-Tracker?tab=GPL-3.0-1-ov-file',
     )
     .addTag(
       'Autenticação e Autorização',
-      'Autenticação e autorização via cookie "trello-session" (JWT).',
+      'Autenticação e autorização via cookie "sprinttacker-session" (JWT).',
     )
     .addTag(
       'Perfil de usuário',
@@ -100,7 +100,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
   SwaggerModule.setup('docs', app, document, {
-    customSiteTitle: 'Novo Trello API - IESB',
+    customSiteTitle: 'Sprint Tacker API - IESB',
     customfavIcon:
       'https://www.iesb.br/content/themes/iesb-chleba-themosis/favicon.png',
     customCss: `

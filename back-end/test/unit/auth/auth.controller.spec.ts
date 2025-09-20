@@ -64,7 +64,7 @@ describe('AuthController', () => {
 
       expect(mockAuthService.signUp).toHaveBeenCalledWith(dto);
       expect(mockResponse.cookie).toHaveBeenCalledWith(
-        'trello-session',
+        'sprinttacker-session',
         'fake-token',
         expect.objectContaining({
           httpOnly: true,

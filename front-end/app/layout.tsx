@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Home",
-  description: "A simple Trello",
+  description: "A simple Sprint Tacker",
 };
 
 export default async function RootLayout(

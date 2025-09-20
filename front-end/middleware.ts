@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
 
   const isProtectedRoute = !request.nextUrl.pathname.startsWith('/auth');
   if (isProtectedRoute) {
-    const tokenCookie = request.cookies.get('trello-session');
+    const tokenCookie = request.cookies.get('sprinttacker-session');
     if (!tokenCookie?.value) {
       const loginURL = new URL('/auth/login', request.url);
       const redirectResponse = NextResponse.redirect(loginURL);

@@ -20,7 +20,7 @@ export async function createBoard(boardData: BoardData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify({
       ...boardData,
@@ -43,7 +43,7 @@ export async function getBoards() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 
@@ -71,7 +71,7 @@ export async function getBoardById(boardId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 

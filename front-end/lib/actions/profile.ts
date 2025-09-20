@@ -8,7 +8,7 @@ const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
 export async function getUserProfile() {
   const response = await fetch(`${BASE_URL_API}/v1/profile`, {
     headers: {
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     }
   });
 
@@ -29,7 +29,7 @@ export async function updateUserProfile(formData: { name: string; userName: stri
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify(formData),
   });
@@ -50,7 +50,7 @@ export async function deleteUserProfile() {
   const response = await fetch(`${BASE_URL_API}/v1/profile`, {
     method: "DELETE",
     headers: {
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 

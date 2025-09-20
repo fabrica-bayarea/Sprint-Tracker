@@ -35,7 +35,7 @@ export async function getAllList(boardId: string) {
   const response = await fetch(`${BASE_URL_API}/v1/lists/board/${boardId}`, {
     headers: {
       'Accept': 'application/json',
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 
@@ -56,7 +56,7 @@ export async function createList(newListData: NewListData) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify(newListData),
   });
@@ -94,7 +94,7 @@ export async function editList(List: PatchListData) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify(updateData),
   });
@@ -119,7 +119,7 @@ export async function deleteList(listId: string) {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
   });
 
@@ -144,7 +144,7 @@ export async function moveList(listId: string, newPosition: number) {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      "Cookie": await getCookie("trello-session"),
+      "Cookie": await getCookie("sprinttacker-session"),
     },
     body: JSON.stringify({ newPosition }),
   });
