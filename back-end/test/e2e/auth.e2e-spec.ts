@@ -26,7 +26,7 @@ process.env.DATABASE_URL =
   process.env.DATABASE_URL_TEST ||
   'postgresql://user_test:password_test@127.17.0.1:5433/postgres?schema=public';
 process.env.JWT_SECRET = 'e2e_test_jwt_secret';
-process.env.JWT_RESET_SECRET = 'e2e_test_jwt_reset_secret';
+process.env.JWT_RESET_SECRET = 'e2e_test_jwt_reset_trsecret';
 process.env.EMAIL = 'test@example.com';
 process.env.PASS = 'testpassword';
 
