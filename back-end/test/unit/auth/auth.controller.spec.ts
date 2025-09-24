@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -34,6 +34,15 @@ describe('AuthController', () => {
     sign: jest.fn(),
   };
 
+  const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -42,11 +51,16 @@ describe('AuthController', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: JwtService, useValue: mockJwtService },
       ],
-    }).compile();
+      
+    }).setLogger(mockLogger).compile();
 
     controller = module.get<AuthController>(AuthController);
     controller = module.get<AuthController>(AuthController);
+    
   });
+
+
+
   describe('signUp', () => {
     it('deve retornar sucesso e definir cookie ao cadastrar usuário', async () => {
       const dto: SignUpDto = {
@@ -74,9 +88,11 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Usuário cadastrado com sucesso',
       });
+
     });
 
     it('deve lançar BadRequestException se email ou senha forem ausentes', async () => {
+
       const dto = {
         email: '',
         password: '',
@@ -84,13 +100,16 @@ describe('AuthController', () => {
         userName: 'jhon_doe',
       };
 
+
       mockAuthService.signUp.mockRejectedValueOnce(
         new BadRequestException('E-mail já cadastrado'),
       );
 
+      
       await expect(
         controller.signUp(dto, mockResponse as Response),
       ).rejects.toThrow(BadRequestException);
+      
     });
   });
 });
