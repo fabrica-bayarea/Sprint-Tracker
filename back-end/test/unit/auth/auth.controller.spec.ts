@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 
 describe('AuthController', () => {
   let controller: AuthController;
