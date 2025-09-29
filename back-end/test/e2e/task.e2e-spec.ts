@@ -1,0 +1,102 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
+import cookieParser from 'cookie-parser';
+import { AppModule } from 'src/app.module';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { performSignUp, performSignIn } from './auth.helpers';
+
+describe('Task (e2e)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  let token: string;
+  let userId: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
+    app.setGlobalPrefix('v1');
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+
+    prisma = app.get<PrismaService>(PrismaService);
+
+    const signUpDto = {
+      email: 'taskuser@example.com',
+      password: 'Password123!',
+      name: 'Task User',
+      userName: 'taskuser',
+    };
+    await performSignUp(app, signUpDto).expect(201);
+
+    const loginResponse = await performSignIn(app, {
+      email: signUpDto.email,
+      password: signUpDto.password,
+      rememberMe: false,
+    }).expect(200);
+
+    // essa parte aqui o copilot fez sozinho, era pra aceitar a variável cookies como array
+    let cookies: string[] = [];
+    const setCookieHeader = loginResponse.headers['set-cookie'];
+    if (typeof setCookieHeader === 'string') {
+      cookies = [setCookieHeader];
+    } else if (Array.isArray(setCookieHeader)) {
+      cookies = setCookieHeader;
+    }
+    if (!cookies || cookies.length === 0) throw new Error('Cookie não retornado no login');
+
+    const sessionCookie = cookies.find(c => c.startsWith('trello-session='));
+    if (!sessionCookie) throw new Error('Cookie "trello-session" não encontrado');
+
+    token = sessionCookie.split(';')[0].split('=')[1];
+    if (!token) throw new Error('Token não encontrado no cookie');
+
+    const user = await prisma.user.findUnique({
+      where: { email: signUpDto.email },
+    });
+    if (!user) throw new Error(`User not found: ${signUpDto.email}`);
+    userId = user.id;
+  });
+
+  afterAll(async () => {
+    await prisma.task.deleteMany();
+    await prisma.list.deleteMany();
+    await prisma.board.deleteMany();
+    await prisma.user.deleteMany();
+    await app.close();
+  });
+
+  it('/v1/tasks (POST) - deve criar uma task vinculada a list e user', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Teste' },
+    });
+
+    const list = await prisma.list.create({
+      data: { title: 'Lista Teste', position: 1, boardId: board.id },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/v1/tasks')
+      .set('Cookie', `trello-session=${token}`)
+      .send({
+        title: 'Task Teste',
+        description: 'Essa é uma task associada a uma lista',
+        status: "TODO",
+        listId: list.id,
+      })
+      .expect(201);
+
+    expect(response.body).toHaveProperty('id');
+    expect(response.body.title).toBe('Task Teste');
+  });
+});
