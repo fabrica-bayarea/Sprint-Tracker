@@ -98,5 +98,114 @@ describe('Task (e2e)', () => {
 
     expect(response.body).toHaveProperty('id');
     expect(response.body.title).toBe('Task Teste');
+    })
+    it('/v1/tasks (POST) - erro tentando criar task sem nome', async () =>{
+        const board = await prisma.board.create({
+            data: { ownerId: userId, title: 'Board Teste' },
+        });
+
+        const list = await prisma.list.create({
+            data: { title: 'Lista Teste', position: 1, boardId: board.id },
+        });
+
+        const response = await request(app.getHttpServer())
+        .post('/v1/tasks')
+        .set('Cookie', `trello-session=${token}`)
+        .send({
+            title: '',
+            description: 'Essa é uma task associada a uma lista',
+            status: "TODO",
+            listId: list.id,            
+        })
+        .expect(400)
+        const responseBody = response.body as {message: string}
+        expect(responseBody.message).toEqual(
+            expect.arrayContaining([
+                'Título da tarefa é obrigatório'
+            ])
+        )
+    })
+
+    it('v1/tasks (GET) - should return all tasks in a list', async()=>{
+        const board = await prisma.board.create({
+            data: {
+                ownerId: userId,
+                title: 'Board Para o GET'
+            }
+        })
+
+        const list = await prisma.list.create({
+            data: {
+                title: 'Lista para o GET',
+                position: 1,
+                boardId: board.id
+            }
+        })
+
+        const task01 = await prisma.task.create({
+            data: 
+                {
+                    title: 'Task 01',
+                    description: 'Descrição primeira task',
+                    status: 'TODO',
+                    listId: list.id,
+                    creatorId: userId,
+                    position: 1
+                }
+        })
+        const task02 = await prisma.task.create({
+            data: 
+                {
+                    title: 'Task 02',
+                    description: 'Descrição segunda task',
+                    status: 'TODO',
+                    listId: list.id,
+                    creatorId: userId,
+                    position: 1
+                }
+        })
+
+        const response = await request(app.getHttpServer())
+        .get(`/v1/tasks/list/${list.id}`)
+        .set('Cookie', `trello-session=${token}`)
+        .expect(200)
+
+        expect(response.body)
+
+    })
+
+    it('v1/tasks/:id (GET) - should return the selected task by the id', async()=>{
+        const board = await prisma.board.create({
+            data: {
+                ownerId: userId,
+                title: 'Board to get one task'
+            }
+        })
+
+        const list = await prisma.list.create({
+            data: {
+                title: 'List to find one task',
+                position: 1,
+                boardId: board.id
+            }
+        })
+
+        const task = await prisma.task.create({
+            data: 
+                {
+                    title: 'Task 01',
+                    description: 'Descrição única task',
+                    status: 'TODO',
+                    listId: list.id,
+                    creatorId: userId,
+                    position: 1
+                }
+        })
+
+        const response = await request(app.getHttpServer())
+        .get(`/v1/tasks/${task.id}`)
+        .set('Cookie', `trello-session=${token}`)
+        .expect(200)
+        expect(response.body)
+    })
   });
-});
