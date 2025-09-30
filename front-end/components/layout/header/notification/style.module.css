@@ -40,7 +40,7 @@
   position: absolute;
   bottom: 100%;
   right: 1.25rem;
-  margin-bottom: -1px;
+  margin-bottom: 0px;
   border: 0.5rem solid transparent;
   border-bottom-color: white;
 }
@@ -50,7 +50,7 @@
   position: absolute;
   bottom: 100%;
   right: 0.4rem;
-  margin-bottom: -1px;
+  margin-bottom: 0px;
   border: 0.5rem solid transparent;
   border-bottom-color: #e0e0e0;
 }
