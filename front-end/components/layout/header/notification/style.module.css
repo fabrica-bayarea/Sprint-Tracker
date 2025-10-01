@@ -39,17 +39,18 @@
   content: "";
   position: absolute;
   bottom: 100%;
-  right: 1.25rem;
-  margin-bottom: 0px;
+  right: 0.45rem;
+  margin-bottom: -1px;
   border: 0.5rem solid transparent;
   border-bottom-color: white;
+  z-index: 2
 }
 
 .popover::after {
   content: "";
   position: absolute;
   bottom: 100%;
-  right: 0.4rem;
+  right: 0.45rem;
   margin-bottom: 0px;
   border: 0.5rem solid transparent;
   border-bottom-color: #e0e0e0;
