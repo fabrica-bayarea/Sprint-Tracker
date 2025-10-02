@@ -73,7 +73,7 @@ export class TaskService {
       });
     }
 
-    await this.prisma.task.update({
+    return this.prisma.task.update({
       where: { id },
       data: { position: newPosition },
     });

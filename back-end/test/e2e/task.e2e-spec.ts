@@ -208,4 +208,85 @@ describe('Task (e2e)', () => {
         .expect(200)
         expect(response.body)
     })
+
+    it('v1/tasks/:id (PATCH) - should return the update made by the user', async() =>{
+      const board = await prisma.board.create({
+          data: {
+            ownerId: userId,
+            title: 'Board to get updated'
+          }
+      })
+        const list = await prisma.list.create({
+            data: {
+                title: 'List to be updated',
+                position: 1,
+                boardId: board.id
+            }
+        })
+
+        const task = await prisma.task.create({
+            data: 
+                {
+                    title: 'Task',
+                    description: 'Task to be updated',
+                    status: 'TODO',
+                    listId: list.id,
+                    creatorId: userId,
+                    position: 1
+                }
+        })
+        const updated_task = {
+          title: 'Task Updated',
+          description: 'New task description',
+          status: 'TODO',
+          position: 1
+        }
+        const response = await request(app.getHttpServer())
+        .patch(`/v1/tasks/${task.id}`)
+        .set('Cookie', `trello-session=${token}`)
+        .send({title: "Task Updated"})
+        .expect(200)
+
+        expect(response.body).toMatchObject({
+            id: task.id,
+            title: 'Task Updated',
+        })
+    })
+
+    it('v1/tasks/:id/position (PATCH) - should return the update made by the user', async() =>{
+      const board = await prisma.board.create({
+          data: {
+            ownerId: userId,
+            title: 'Board to get updated'
+          }
+      })
+        const list = await prisma.list.create({
+            data: {
+                title: 'List to be updated',
+                position: 1,
+                boardId: board.id
+            }
+        })
+
+        const task = await prisma.task.create({
+            data: 
+                {
+                    title: 'Task',
+                    description: 'Task to be updated',
+                    status: 'TODO',
+                    listId: list.id,
+                    creatorId: userId,
+                    position: 1
+                }
+        })
+        const response = await request(app.getHttpServer())
+        .patch(`/v1/tasks/${task.id}/position`)
+        .set('Cookie', `trello-session=${token}`)
+        .send({newPosition: 2})
+        .expect(200)
+
+        expect(response.body).toMatchObject({
+          position: 2
+        })
+    })
   });
