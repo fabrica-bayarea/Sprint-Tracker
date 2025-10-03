@@ -5,6 +5,8 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { performSignUp, performSignIn } from './auth.helpers';
+import { isToday } from 'date-fns';
+import startOfToday from 'date-fns/start_of_today';
 
 describe('Task (e2e)', () => {
   let app: INestApplication;
@@ -289,4 +291,130 @@ describe('Task (e2e)', () => {
           position: 2
         })
     })
-  });
+
+    it('v1/tasks/ (DELETE) - Should delete the task by the ID', async() =>{
+      const board = await prisma.board.create({
+        data: {
+          ownerId: userId,
+          title: 'Board to get deleted'
+        }
+      })
+      const list = await prisma.list.create({
+        data: {
+          title: 'List to be deleted',
+          position: 1,
+          boardId: board.id
+        }
+      })
+
+      const task = await prisma.task.create({
+        data: {
+          title: 'Task to be deleted',
+          description: 'Deleted task',
+          status: 'TODO',
+          listId: list.id,
+          creatorId: userId,
+          position: 1
+        }
+      })
+
+      const response = await request(app.getHttpServer())
+      .delete(`/v1/tasks/${task.id}`)
+      .set('Cookie', `trello-session=${token}`)
+      .expect(200)
+
+      expect(response.body).toStrictEqual({})
+    })
+
+    it('v1/tasks/overdue/:userId (GET) - Should return the overdue task on a list', async() =>{
+      const board = await prisma.board.create({
+        data: {
+          ownerId: userId,
+          title: 'Overdue board'
+        }
+      })
+
+      const list = await prisma.list.create({
+        data:{
+          title: 'List overdue',
+          position: 1,
+          boardId: board.id
+        }
+      })
+      const today = new Date()
+      const task_over01 = await prisma.task.create({
+        data: {
+          title: 'Overdue Task',
+          description: 'Overdue description',
+          status: 'TODO',
+          listId: list.id,
+          creatorId: userId,
+          position: 1,
+          dueDate: today
+        }
+      })
+
+      const response = await request(app.getHttpServer())
+      .get(`/v1/tasks/due/today`)
+      .set('Cookie', `trello-session=${token}`)
+      .expect(200)
+
+      expect(response.body).toHaveLength(1)
+      expect(response.body[0]).toMatchObject({
+        id: task_over01.id,
+        title: 'Overdue Task',
+        description: 'Overdue description',
+      })
+    })
+
+    it('/v1/tasks/:id/move - should move task list', async() =>{
+      const board = await prisma.board.create({
+          data: {
+            ownerId: userId,
+            title: 'Board to get updated'
+          }
+      })
+        const list01 = await prisma.list.create({
+            data: {
+                title: 'List to be updated',
+                position: 1,
+                boardId: board.id
+            }
+        })
+        const list02 = await prisma.list.create({
+            data: {
+                title: 'List 02',
+                position: 1,
+                boardId: board.id
+            }
+        })
+
+        const task = await prisma.task.create({
+            data: 
+                {
+                  title: 'Task',
+                  description: 'Task to be updated',
+                  status: 'TODO',
+                  listId: list01.id,
+                  creatorId: userId,
+                  position: 1
+                }
+        })
+
+        const response = await request(app.getHttpServer())
+        .patch(`/v1/tasks/${task.id}/move`)
+        .set('Cookie', `trello-session=${token}`)
+        .send(
+          {
+            newListId: list02.id,
+            newPosition: 1
+          })
+        .expect(200)
+
+        expect(response.body).toMatchObject({
+          id: task.id,
+          listId: list02.id,
+          position: 1
+        })
+      })
+    })
