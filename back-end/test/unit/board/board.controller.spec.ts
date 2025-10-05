@@ -1,14 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BoardController } from 'src/board/board.controller';
-import { BoardService } from 'src/board/board.service';
-import { CreateBoardDto } from 'src/board/dto/create-board.dto';
-import { UpdateBoardDto } from 'src/board/dto/update-board.dto';
-import { BoardVisibility } from 'src/common/enums/board-visibility.enum';
-import { AuthenticatedUser } from 'src/types/user.interface';
+
+import { BoardRoleGuard } from '@/auth/guards/board-role.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { BoardController } from '@/board/board.controller';
+import { BoardService } from '@/board/board.service';
+import { CreateBoardDto } from '@/board/dto/create-board.dto';
+import { UpdateBoardDto } from '@/board/dto/update-board.dto';
+import { BoardVisibility } from '@/common/enums/board-visibility.enum';
+
+import { mockUser } from '../setup-mock';
 
 describe('BoardController', () => {
   let controller: BoardController;
-
   const mockBoardService = {
     create: jest.fn(),
     findAll: jest.fn(),
@@ -17,21 +20,17 @@ describe('BoardController', () => {
     remove: jest.fn(),
   };
 
-  const mockUser: AuthenticatedUser = {
-    id: 'user-id',
-    email: 'test@example.com',
-    name: 'Test User',
-    userName: 'testuser',
-    role: 'ADMIN',
-    authProvider: 'local',
-  };
-
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleBuilder = Test.createTestingModule({
       controllers: [BoardController],
       providers: [{ provide: BoardService, useValue: mockBoardService }],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(BoardRoleGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) });
 
+    const module: TestingModule = await moduleBuilder.compile();
     controller = module.get<BoardController>(BoardController);
   });
 
@@ -40,7 +39,7 @@ describe('BoardController', () => {
   });
 
   describe('create', () => {
-    it('should call service.create with user id and dto', async () => {
+    it('deve chamar service.create com o id do usuário e o dto', async () => {
       const dto: CreateBoardDto = {
         title: 'Test Board',
         description: 'Description',
@@ -56,7 +55,7 @@ describe('BoardController', () => {
   });
 
   describe('findAll', () => {
-    it('should call service.findAll with user id', async () => {
+    it('deve chamar service.findAll com o id do usuário', async () => {
       const boards = [{ id: '1', title: 'Board 1', ownerId: mockUser.id }];
       mockBoardService.findAll.mockResolvedValue(boards);
 
@@ -67,7 +66,7 @@ describe('BoardController', () => {
   });
 
   describe('findOne', () => {
-    it('should call service.findOne with id', async () => {
+    it('deve chamar service.findOne com o id', async () => {
       const board = { id: '1', title: 'Board 1' };
       mockBoardService.findOne.mockResolvedValue(board);
 
@@ -78,7 +77,7 @@ describe('BoardController', () => {
   });
 
   describe('update', () => {
-    it('should call service.update with id and dto', async () => {
+    it('deve chamar service.update com o id e o dto', async () => {
       const dto: UpdateBoardDto = { title: 'Updated Title' };
       const updatedBoard = { id: '1', title: 'Updated Title' };
       mockBoardService.update.mockResolvedValue(updatedBoard);
@@ -90,7 +89,7 @@ describe('BoardController', () => {
   });
 
   describe('remove', () => {
-    it('should call service.remove with id', async () => {
+    it('deve chamar service.remove com o id', async () => {
       const deletedBoard = { id: '1', title: 'Deleted' };
       mockBoardService.remove.mockResolvedValue(deletedBoard);
 

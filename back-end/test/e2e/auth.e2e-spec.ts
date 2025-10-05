@@ -1,12 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { PrismaService } from '../../src/prisma/prisma.service';
-import cookieParser from 'cookie-parser';
-import { EmailService } from '../../src/email/email.service';
-import * as jwt from 'jsonwebtoken';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Role } from '@prisma/client';
+import cookieParser from 'cookie-parser';
+import * as jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { App } from 'supertest/types';
+
+import { AppModule } from '@/app.module';
+import { EmailService } from '@/email/email.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 import {
   createTestUser,
@@ -20,7 +22,6 @@ import {
   extractCookie,
   extractTokenFromCookie,
 } from './auth.helpers';
-import { App } from 'supertest/types';
 
 process.env.DATABASE_URL =
   process.env.DATABASE_URL_TEST ||
@@ -519,7 +520,10 @@ describe('Auth (e2e) - Full Flow', () => {
       };
       const loginResponse = await performSignIn(app, signInDto).expect(200);
 
-      const sessionCookie = extractCookie(loginResponse, 'sprinttacker-session');
+      const sessionCookie = extractCookie(
+        loginResponse,
+        'sprinttacker-session',
+      );
       expect(sessionCookie).toBeDefined();
       expect(sessionCookie).toMatch(/^sprinttacker-session=/);
 
@@ -662,7 +666,10 @@ describe('Auth (e2e) - Full Flow', () => {
       };
       const loginResponse = await performSignIn(app, signInDto).expect(200);
 
-      sessionCookie = extractCookie(loginResponse, 'sprinttacker-session') as string;
+      sessionCookie = extractCookie(
+        loginResponse,
+        'sprinttacker-session',
+      ) as string;
       expect(sessionCookie).toBeDefined();
     });
 

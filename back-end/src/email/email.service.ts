@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { createTransport, Transporter } from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { createTransport, Transporter } from 'nodemailer';
 
 @Injectable()
 export class EmailService {
@@ -52,12 +53,18 @@ export class EmailService {
         attachments: [
           {
             filename: 'bayarea-logo.png',
-            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
+            path:
+              process.env.NODE_ENV === 'production'
+                ? 'dist/@/assets/bayarea-logo.png'
+                : '@/assets/bayarea-logo.png',
             cid: 'bayarea-logo',
           },
           {
             filename: 'iesb-logo.png',
-            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/iesb-logo.png' : 'src/assets/iesb-logo.png',
+            path:
+              process.env.NODE_ENV === 'production'
+                ? 'dist/@/assets/iesb-logo.png'
+                : '@/assets/iesb-logo.png',
             cid: 'iesb-logo',
           },
         ],

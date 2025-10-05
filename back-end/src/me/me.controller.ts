@@ -1,19 +1,21 @@
 import { Body, Controller, Get, UseGuards, Put, Delete } from '@nestjs/common';
-import { ProfileService } from 'src/profile/profile.service';
 import {
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ProfileDto } from '../profile/dto/update-profile.dto';
-import { AuthenticatedUser } from 'src/types/user.interface';
-import { CurrentUser } from 'src/auth/strategy/decorators/current-user.decorator';
+
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { CurrentUser } from '@/auth/strategy/decorators/current-user.decorator';
+import { ProfileService } from '@/me/me.service';
+import { AuthenticatedUser } from '@/types/user.interface';
+
+import { ProfileDto } from './dto/update-profile.dto';
 
 @ApiCookieAuth()
 @ApiTags('Perfil de usuário')
-@Controller({ path: 'profile', version: '1' })
+@Controller({ path: 'me', version: '1' })
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
@@ -24,7 +26,7 @@ export class ProfileController {
   @ApiResponse({ status: 200, description: 'Perfil carregado com sucesso' })
   @ApiResponse({ status: 404, description: 'Perfil não encontrado' })
   @UseGuards(JwtAuthGuard)
-  @Get()
+  @Get('profile')
   async getUserProfile(@CurrentUser() user: AuthenticatedUser) {
     const profile = await this.profileService.getProfile(user.id);
     return profile;
@@ -37,7 +39,7 @@ export class ProfileController {
   @ApiResponse({ status: 200, description: 'Perfil atualizado com sucesso' })
   @ApiResponse({ status: 404, description: 'Perfil não encontrado' })
   @UseGuards(JwtAuthGuard)
-  @Put()
+  @Put('profile')
   async updateProfile(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: ProfileDto,
@@ -54,8 +56,24 @@ export class ProfileController {
   @ApiResponse({ status: 404, description: 'Perfil não encontrado' })
   @UseGuards(JwtAuthGuard)
   @Delete()
-  async deleteProfile(@CurrentUser() user: AuthenticatedUser) {
-    await this.profileService.deleteProfile(user.id);
+  async deleteAccount(@CurrentUser() user: AuthenticatedUser) {
+    await this.profileService.deleteAccount(user.id);
     return { message: 'Conta deletada com sucesso.' };
+  }
+
+  @ApiOperation({
+    summary: 'Retorna as notificações do usuário',
+    description: 'Retorna as notificações do usuário logado',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Notificações carregadas com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'Perfil não encontrado' })
+  @UseGuards(JwtAuthGuard)
+  @Get('notifications')
+  async getNotifications(@CurrentUser() user: AuthenticatedUser) {
+    const notifications = await this.profileService.getNotifications(user.id);
+    return notifications;
   }
 }
