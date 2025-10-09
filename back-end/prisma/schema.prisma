@@ -109,6 +109,7 @@ enum AuthProvider {
   local
   google
   microsoft
+  ldap
 }
 
 enum Role {

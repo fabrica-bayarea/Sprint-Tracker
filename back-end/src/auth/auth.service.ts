@@ -87,7 +87,7 @@ export class AuthService {
         passwordHash: provider === 'local' ? data.password! : data.providerId!,
         providerId: provider === 'local' ? null : data.providerId!,
         role: 'ADMIN' as const,
-        authProvider: provider as 'local' | 'google' | 'microsoft',
+        authProvider: provider as 'local' | 'google' | 'microsoft' | 'ldap',
       };
 
       const newUser = await this.prisma.user.create({

@@ -10,6 +10,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
 import { AuthController } from 'src/auth/auth.controller';
 import { EmailModule } from '../email/email.module';
+import { LdapAuthService } from 'src/ldap/LdapAuthService';
+import { LdapAuthController } from 'src/ldap/LdapAuthController';
 
 @Module({})
 export class AuthModule {
@@ -34,6 +36,7 @@ export class AuthModule {
         JwtStrategy,
         PrismaService,
         AuthService,
+        LdapAuthService,
         {
           provide: 'OAUTH_STRATEGIES',
           useFactory: (configService: ConfigService) => [
@@ -47,8 +50,8 @@ export class AuthModule {
           inject: [ConfigService],
         },
       ],
-      controllers: [AuthController],
-      exports: [AuthService, JwtModule],
+      controllers: [AuthController, LdapAuthController],
+      exports: [AuthService, JwtModule, LdapAuthService],
     };
   }
 }
