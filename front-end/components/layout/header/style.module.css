@@ -18,6 +18,14 @@
   gap: 12px;
 }
 
+.wrapper_header_nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  left: -68px;
+}
+
 .profileContainer {
   position: relative;
   display: inline-block;
