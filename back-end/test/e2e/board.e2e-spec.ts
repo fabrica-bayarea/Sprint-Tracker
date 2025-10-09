@@ -28,6 +28,27 @@ describe('Boards (e2e)', () => {
       throw error;
     }
   };
+import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
+import request from 'supertest';
+import { AppModule } from 'src/app.module';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { SignUpDto } from 'src/auth/dto/signup.dto';
+import { BoardVisibility } from 'src/common/enums/board-visibility.enum';
+import cookieParser from 'cookie-parser';
+import { App } from 'supertest/types';
+
+// Define a interface para o objeto de erro esperado, o que resolve o erro "no-explicit-any"
+interface HttpError extends Error {
+  response?: {
+    body: unknown;
+  };
+}
+
+describe('BoardController (e2e)', () => {
+  let app: INestApplication;
+  let prismaService: PrismaService;
+  let trelloSessionCookie: string;
+  let testUserId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
