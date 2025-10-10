@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Test, TestingModule } from '@nestjs/testing';
+import { randomBytes } from 'crypto';
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -7,21 +8,21 @@ import {
   InternalServerErrorException,
   ConflictException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import * as argon2 from 'argon2';
-import { randomBytes } from 'crypto';
 
 // Importar os serviços e DTOs reais
-import { AuthService } from 'src/auth/auth.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { EmailService } from 'src/email/email.service';
-import { SignInDto } from 'src/auth/dto/signin.dto';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
-import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { AuthService } from '@/auth/auth.service';
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
+import { SignInDto } from '@/auth/dto/signin.dto';
+import { SignUpDto } from '@/auth/dto/signup.dto';
+import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
+import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
+import { EmailService } from '@/email/email.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 const mockPrismaService = {
   user: {
@@ -94,7 +95,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it('deve estar definido', () => {
     expect(service).toBeDefined();
   });
 
@@ -121,7 +122,7 @@ describe('AuthService', () => {
       resetTokenExpiresAt: null,
     };
 
-    it('should create a new user and return an access token', async () => {
+    it('deve criar um novo usuário e retornar um token de acesso', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
       (jwtService.sign as jest.Mock).mockReturnValue('mockAccessToken');
@@ -135,7 +136,7 @@ describe('AuthService', () => {
       expect(result).toEqual({ accessToken: 'mockAccessToken' });
     });
 
-    it('should throw ConflictException if email already exists', async () => {
+    it('deve lançar ConflictException se o email já existir', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       await expect(service.signUp(signUpDto)).rejects.toThrow(
@@ -148,7 +149,7 @@ describe('AuthService', () => {
       expect(jwtService.sign).not.toHaveBeenCalled();
     });
 
-    it('should throw ConflictException for Prisma P2002 error (unique constraint)', async () => {
+    it('deve lançar ConflictException para erro Prisma P2002 (restrição única)', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.user.create as jest.Mock).mockRejectedValue(
         new PrismaClientKnownRequestError('Unique constraint failed', {
@@ -164,7 +165,7 @@ describe('AuthService', () => {
       expect(prisma.user.create).toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException for other errors during user creation', async () => {
+    it('deve lançar BadRequestException para outros erros durante a criação do usuário', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.user.create as jest.Mock).mockRejectedValue(
         new Error('Some other database error'),
@@ -196,7 +197,7 @@ describe('AuthService', () => {
       resetTokenExpiresAt: null,
     };
 
-    it('should return an access token for valid credentials', async () => {
+    it('deve retornar um token de acesso para credenciais válidas', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (argon2.verify as jest.Mock).mockResolvedValue(true);
       (jwtService.sign as jest.Mock).mockReturnValue('mockAccessToken');
@@ -213,7 +214,7 @@ describe('AuthService', () => {
       expect(result).toEqual({ accessToken: 'mockAccessToken' });
     });
 
-    it('should throw UnauthorizedException if user not found or password invalid', async () => {
+    it('deve lançar UnauthorizedException se o usuário não for encontrado ou a senha for inválida', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       await expect(service.signIn(signInDto)).rejects.toThrow(
         new UnauthorizedException('Credenciais inválidas'),
@@ -247,7 +248,7 @@ describe('AuthService', () => {
       resetTokenExpiresAt: null,
     };
 
-    it('should create or find user and return an access token', async () => {
+    it('deve criar ou encontrar o usuário e retornar um token de acesso', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
       (jwtService.sign as jest.Mock).mockReturnValue('mockAccessToken');
@@ -260,7 +261,7 @@ describe('AuthService', () => {
       expect(result).toEqual({ accessToken: 'mockAccessToken' });
     });
 
-    it('should throw ForbiddenException if email is not provided in request', async () => {
+    it('deve lançar ForbiddenException se o email não for fornecido na requisição', async () => {
       const invalidReq = {
         providerId: 'google123',
         email: '',
@@ -289,7 +290,7 @@ describe('AuthService', () => {
       resetTokenExpiresAt: null,
     };
 
-    it('should send a password reset email and update user token', async () => {
+    it('deve enviar um e-mail de redefinição de senha e atualizar o token do usuário', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockUser,
@@ -315,7 +316,7 @@ describe('AuthService', () => {
       expect(prisma.user.update).toHaveBeenCalled(); // Garante que o update foi chamado
     });
 
-    it('should return without error if email not found (security best practice)', async () => {
+    it('deve retornar sem erro se o e-mail não for encontrado (boas práticas de segurança)', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(
@@ -328,7 +329,7 @@ describe('AuthService', () => {
       expect(emailService.sendForgotPasswordEmail).not.toHaveBeenCalled();
     });
 
-    it('should throw InternalServerErrorException if email sending fails', async () => {
+    it('deve lançar InternalServerErrorException se o envio do e-mail falhar', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockUser,
@@ -367,7 +368,7 @@ describe('AuthService', () => {
       resetTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 5),
     };
 
-    it('should return a JWT token for a valid code', async () => {
+    it('deve retornar um token JWT para um código válido', async () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockUser,
@@ -385,7 +386,7 @@ describe('AuthService', () => {
       expect(result).toBe('mockResetJwtToken');
     });
 
-    it('should throw ForbiddenException if code is not found or invalid', async () => {
+    it('deve lançar ForbiddenException se o código não for encontrado ou for inválido', async () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
       await expect(service.verifyResetCode(verifyResetCodeDto)).rejects.toThrow(
         new ForbiddenException('Código inválido ou expirado.'),
@@ -398,7 +399,7 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw UnauthorizedException if code is expired', async () => {
+    it('deve lançar UnauthorizedException se o código estiver expirado', async () => {
       const userWithExpiredCode = {
         ...mockUser,
         resetTokenExpiresAt: new Date(Date.now() - 1000 * 60 * 5),
@@ -423,7 +424,7 @@ describe('AuthService', () => {
       passwordHash: 'oldHashedPassword',
     };
 
-    it('should hash and update the user password', async () => {
+    it('deve hashear e atualizar a senha do usuário', async () => {
       (argon2.hash as jest.Mock).mockResolvedValue(
         'hashed_newStrongPassword123',
       );
@@ -439,7 +440,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('should throw BadRequestException on update error', async () => {
+    it('deve lançar BadRequestException em erro de atualização', async () => {
       (argon2.hash as jest.Mock).mockResolvedValue(
         'hashed_newStrongPassword123',
       );
@@ -471,7 +472,7 @@ describe('AuthService', () => {
       authProvider: 'local',
     };
 
-    it('should change the user password successfully', async () => {
+    it('deve alterar a senha do usuário com sucesso', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (argon2.verify as jest.Mock).mockResolvedValue(true);
       (argon2.hash as jest.Mock).mockResolvedValue('hashed_newPassword456');
@@ -495,7 +496,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('should throw BadRequestException if old password is incorrect', async () => {
+    it('deve lançar BadRequestException se a senha antiga estiver incorreta', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (argon2.verify as jest.Mock).mockResolvedValue(false);
 

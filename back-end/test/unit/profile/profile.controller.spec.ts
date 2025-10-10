@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProfileController } from 'src/profile/profile.controller';
-import { ProfileService } from 'src/profile/profile.service';
-import { ProfileDto } from 'src/profile/dto/update-profile.dto';
-import { AuthenticatedUser } from 'src/types/user.interface';
+
+import { ProfileDto } from '@/me/dto/update-profile.dto';
+import { ProfileController } from '@/me/me.controller';
+import { ProfileService } from '@/me/me.service';
+import { AuthenticatedUser } from '@/types/user.interface';
 
 describe('ProfileController', () => {
   let controller: ProfileController;
@@ -10,7 +11,7 @@ describe('ProfileController', () => {
   const mockProfileService = {
     getProfile: jest.fn(),
     updateProfile: jest.fn(),
-    deleteProfile: jest.fn(),
+    deleteAccount: jest.fn(),
   };
 
   const mockUser: AuthenticatedUser = {
@@ -41,7 +42,7 @@ describe('ProfileController', () => {
   });
 
   describe('getUserProfile', () => {
-    it('should return the user profile', async () => {
+    it('deve retornar o perfil do usuário', async () => {
       const mockProfile = {
         name: 'João',
         userName: 'joaosilva',
@@ -58,7 +59,7 @@ describe('ProfileController', () => {
   });
 
   describe('updateProfile', () => {
-    it('should update the user profile and return a success message', async () => {
+    it('deve atualizar o perfil do usuário e retornar uma mensagem de sucesso', async () => {
       const dto: ProfileDto = {
         name: 'João Atualizado',
         userName: 'joaoupdated',
@@ -81,12 +82,12 @@ describe('ProfileController', () => {
   });
 
   describe('deleteProfile', () => {
-    it('should delete the user profile and return a success message', async () => {
-      mockProfileService.deleteProfile.mockResolvedValue({});
+    it('deve deletar o perfil do usuário e retornar uma mensagem de sucesso', async () => {
+      mockProfileService.deleteAccount.mockResolvedValue({});
 
-      const result = await controller.deleteProfile(mockUser);
+      const result = await controller.deleteAccount(mockUser);
 
-      expect(mockProfileService.deleteProfile).toHaveBeenCalledWith('user-123');
+      expect(mockProfileService.deleteAccount).toHaveBeenCalledWith('user-123');
       expect(result).toEqual({ message: 'Conta deletada com sucesso.' });
     });
   });

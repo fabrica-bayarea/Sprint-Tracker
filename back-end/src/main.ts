@@ -1,11 +1,12 @@
-import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -14,6 +15,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
+  const NODE_ENV = configService.get<string>('NODE_ENV') || 'development';
   const DEBUG = configService.get<string>('DEBUG') === 'true';
   const CORS_ORIGIN = configService.get<string>('CORS_ORIGIN') || '*';
   const PORT = configService.get<string>('PORT') ?? 3000;
@@ -37,12 +39,11 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use(
     helmet({
-      frameguard: {
-        action: 'sameorigin',
-      },
       contentSecurityPolicy: {
         directives: {
-          upgradeInsecureRequests: null,
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          'script-src': ["'self'", 'https://cdn.socket.io'],
+          // Adicionamos 'https://cdn.socket.io' à lista de fontes permitidas para scripts.
         },
       },
     }),
@@ -80,7 +81,7 @@ async function bootstrap() {
     )
     .addTag(
       'Perfil de usuário',
-      'Operações relacionadas ao perfil e gerenciamento de usuários.',
+      'Operações relacionadas ao perfil e gerenciamento do usuário.',
     )
     .addTag(
       'Quadros',
@@ -118,21 +119,23 @@ async function bootstrap() {
   await app.listen(PORT);
   logger.log(`Application is running on: http://localhost:${PORT}`);
 
-  process.on('SIGINT', (): void => {
-    logger.log('Recebido SIGINT. Desligando...');
-    void app.close().then(() => {
-      logger.log('Aplicação desligada.');
-      process.exit(0);
+  if (NODE_ENV === 'production') {
+    process.on('SIGINT', (): void => {
+      logger.log('Recebido SIGINT. Desligando...');
+      void app.close().then(() => {
+        logger.log('Aplicação desligada.');
+        process.exit(0);
+      });
     });
-  });
 
-  process.on('SIGTERM', (): void => {
-    logger.log('Recebido SIGTERM. Desligando...');
-    void app.close().then(() => {
-      logger.log('Aplicação desligada.');
-      process.exit(0);
+    process.on('SIGTERM', (): void => {
+      logger.log('Recebido SIGTERM. Desligando...');
+      void app.close().then(() => {
+        logger.log('Aplicação desligada.');
+        process.exit(0);
+      });
     });
-  });
+  }
 }
 
 void bootstrap();
