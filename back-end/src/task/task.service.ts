@@ -1,14 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { endOfDay } from 'date-fns';
+
+import { BoardGateway } from '@/events/board.gateway';
+import { PrismaService } from '@/prisma/prisma.service';
+
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { endOfDay } from 'date-fns';
 
 @Injectable()
 export class TaskService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly boardGateway: BoardGateway,
+  ) {}
 
+  /**
+   * Cria uma nova tarefa na lista e emite evento de criação.
+   */
   async create(userId: string, dto: CreateTaskDto) {
+    const list = await this.prisma.list.findUnique({
+      where: { id: dto.listId },
+      select: { boardId: true },
+    });
+
+    if (!list) throw new NotFoundException('Lista não encontrada');
+
     const count = await this.prisma.task.count({
       where: { listId: dto.listId },
     });
@@ -25,9 +41,19 @@ export class TaskService {
       },
     });
 
+    const payload = {
+      boardId: list.boardId,
+      action: 'created task',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
+
     return newTask;
   }
 
+  /**
+   * Lista tarefas de uma lista em ordem de posição.
+   */
   findAllByList(listId: string) {
     return this.prisma.task.findMany({
       where: { listId },
@@ -35,27 +61,55 @@ export class TaskService {
     });
   }
 
+  /**
+   * Busca uma tarefa pelo ID ou lança erro se não existir.
+   */
   async findOne(id: string) {
     const task = await this.prisma.task.findUnique({ where: { id } });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task) throw new NotFoundException('Tarefa não encontrada');
     return task;
   }
 
+  /**
+   * Atualiza os dados de uma tarefa e emite evento de atualização.
+   */
   async update(id: string, dto: UpdateTaskDto) {
     await this.findOne(id);
-    return this.prisma.task.update({
+    const updated = await this.prisma.task.update({
       where: { id },
       data: dto,
+      include: { list: { select: { boardId: true } } },
     });
+
+    const { list: listRelation, ...taskOnly } = updated;
+    const boardId = listRelation.boardId;
+    const payload = {
+      boardId,
+      action: 'updated task',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(boardId, payload);
+
+    return taskOnly;
   }
 
+  /**
+   * Atualiza a posição de uma tarefa na lista e reordena as demais.
+   */
   async updatePosition(id: string, newPosition: number) {
     const task = await this.findOne(id);
     const oldPosition = task.position;
 
+    const list = await this.prisma.list.findUnique({
+      where: { id: task.listId },
+      select: { boardId: true },
+    });
+    if (!list) throw new NotFoundException('Lista não encontrada');
+
     if (newPosition < oldPosition) {
       await this.prisma.task.updateMany({
         where: {
+          listId: task.listId,
           position: { gte: newPosition, lt: oldPosition },
         },
         data: {
@@ -65,6 +119,7 @@ export class TaskService {
     } else if (newPosition > oldPosition) {
       await this.prisma.task.updateMany({
         where: {
+          listId: task.listId,
           position: { gt: oldPosition, lte: newPosition },
         },
         data: {
@@ -77,14 +132,30 @@ export class TaskService {
       where: { id },
       data: { position: newPosition },
     });
+
+    const payload = {
+      boardId: list.boardId,
+      action: 'updated task position',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
   }
 
+  /**
+   * Remove uma tarefa e reordena as posições subsequentes.
+   */
   async remove(taskId: string) {
     const taskToDelete = await this.prisma.task.findUnique({
       where: { id: taskId },
     });
 
     if (!taskToDelete) throw new NotFoundException('Task não encontrada');
+
+    const list = await this.prisma.list.findUnique({
+      where: { id: taskToDelete.listId },
+      select: { boardId: true },
+    });
+    if (!list) throw new NotFoundException('Lista não encontrada');
 
     await this.prisma.$transaction([
       this.prisma.task.delete({
@@ -104,8 +175,18 @@ export class TaskService {
         },
       }),
     ]);
+
+    const payload = {
+      boardId: list.boardId,
+      action: 'deleted task',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
   }
 
+  /**
+   * Lista tarefas do usuário vencidas até o fim do dia.
+   */
   async findTasksOverdueDate(userId: string) {
     const today = new Date();
 
@@ -130,6 +211,9 @@ export class TaskService {
     });
   }
 
+  /**
+   * Move a tarefa para outra lista e ajusta as posições.
+   */
   async moveTaskToList(taskId: string, newListId: string, newPosition: number) {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
@@ -139,15 +223,19 @@ export class TaskService {
       throw new NotFoundException('Task não encontrada');
     }
 
-    const targetList = await this.prisma.list.findUnique({
-      where: { id: newListId },
-    });
+    const [sourceList, targetList] = await Promise.all([
+      this.prisma.list.findUnique({ where: { id: task.listId } }),
+      this.prisma.list.findUnique({ where: { id: newListId } }),
+    ]);
 
     if (!targetList) {
       throw new NotFoundException('Lista de destino não encontrada');
     }
+    if (!sourceList) {
+      throw new NotFoundException('Lista de origem não encontrada');
+    }
 
-    return this.prisma.$transaction(async (prisma) => {
+    const updatedTask = await this.prisma.$transaction(async (prisma) => {
       await prisma.task.updateMany({
         where: {
           listId: task.listId,
@@ -186,5 +274,13 @@ export class TaskService {
 
       return updatedTask;
     });
+
+    this.boardGateway.emitModifiedInBoard(sourceList.boardId, {
+      boardId: sourceList.boardId,
+      action: 'moved task between lists',
+      at: new Date().toISOString(),
+    });
+
+    return updatedTask;
   }
 }
