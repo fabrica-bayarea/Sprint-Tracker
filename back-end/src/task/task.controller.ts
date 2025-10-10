@@ -118,7 +118,7 @@ export class TaskController {
     summary: 'Remove uma tarefa',
     description: 'Remove uma tarefa específica pelo taskId',
   })
-  @ApiResponse({ status: 200, description: 'Tarefa removtaskIda com sucesso' })
+  @ApiResponse({ status: 200, description: 'Tarefa removida com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao remover a tarefa' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
@@ -130,9 +130,9 @@ export class TaskController {
   }
 
   @ApiOperation({
-    summary: 'Busca tarefas venctaskIdas ou com vencimento hoje',
+    summary: 'Busca tarefas vencidas ou com vencimento hoje',
     description:
-      'Busca todas as tarefas que estão venctaskIdas ou com vencimento no dia atual do usuário autenticado',
+      'Busca todas as tarefas que estão vencidas ou com vencimento no dia atual do usuário autenticado',
   })
   @ApiResponse({ status: 200, description: 'Tarefas encontradas com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao buscar as tarefas' })
@@ -148,7 +148,7 @@ export class TaskController {
     summary: 'Move uma tarefa para outra lista',
     description: 'Move uma tarefa específica para uma nova lista',
   })
-  @ApiResponse({ status: 200, description: 'Tarefa movtaskIda com sucesso' })
+  @ApiResponse({ status: 200, description: 'Tarefa movida com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao mover a tarefa' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
@@ -158,11 +158,11 @@ export class TaskController {
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
   moveTask(
-    @Param('taskId') tasktaskId: string,
+    @Param('taskId') taskId: string,
     @Body() dto: MoveTaskOtherListDto,
   ) {
     return this.taskService.moveTaskToList(
-      tasktaskId,
+      taskId,
       dto.newListId,
       dto.newPosition,
     );

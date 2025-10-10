@@ -114,7 +114,7 @@ export class ListController {
     summary: 'Remove uma lista',
     description: 'Remove uma lista específica pelo listId',
   })
-  @ApiResponse({ status: 200, description: 'Lista removlistIda com sucesso' })
+  @ApiResponse({ status: 200, description: 'Lista removida com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao remover a lista' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })

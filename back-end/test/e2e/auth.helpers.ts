@@ -4,7 +4,7 @@ import * as argon2 from 'argon2';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
-import { ChangePasswordDto } from '@//auth/dto/change-password.dto';
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
 import { SignInDto } from '@/auth/dto/signin.dto';
 import { SignUpDto } from '@/auth/dto/signup.dto';
