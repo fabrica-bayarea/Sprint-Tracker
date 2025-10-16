@@ -370,7 +370,7 @@ describe('Auth (e2e) - Full Flow', () => {
       expect(generatedResetCode).toBeDefined();
     });
 
-    it('/v1/auth/verify-reset-code (POST) - should return 200 OK and set reset_token cookie for valid code', async () => {
+    it('/v1/auth/verify-reset-code (POST) - should return 200 OK and set reset-token cookie for valid code', async () => {
       const verifyResetCodeDto = { code: generatedResetCode };
 
       const response = await performVerifyResetCode(
@@ -383,9 +383,9 @@ describe('Auth (e2e) - Full Flow', () => {
         'Código verificado com sucesso. Você pode redefinir sua senha.',
       );
 
-      const resetTokenCookie = extractCookie(response, 'reset_token');
+      const resetTokenCookie = extractCookie(response, 'reset-token');
       expect(resetTokenCookie).toBeDefined();
-      expect(resetTokenCookie).toMatch(/^reset_token=/);
+      expect(resetTokenCookie).toMatch(/^reset-token=/);
       expect(resetTokenCookie).toContain('HttpOnly');
       expect(resetTokenCookie).toContain('Path=/v1/auth/reset-password');
 
@@ -493,7 +493,8 @@ describe('Auth (e2e) - Full Flow', () => {
         code: generatedResetCode,
       }).expect(200);
 
-      let resetTokenCookie = extractCookie(verifyRes, 'reset_token');
+ 
+      let resetTokenCookie = extractCookie(verifyRes, 'reset_token') as string;
       if (!resetTokenCookie && verifyRes.body.resetToken) {
         // Permite token no corpo se cookie não vier
         resetTokenCookie = `reset_token=${verifyRes.body.resetToken}`;
@@ -501,7 +502,7 @@ describe('Auth (e2e) - Full Flow', () => {
       expect(resetTokenCookie).toBeDefined();
     });
 
-    it('/v1/auth/reset-password (POST) - should reset password with valid reset_token cookie', async () => {
+    it('/v1/auth/reset-password (POST) - should reset password with valid reset-token cookie', async () => {
       const newPassword = 'NewStrongPassword456!';
       const resetPasswordDto = {
         newPassword: newPassword,
@@ -535,7 +536,7 @@ describe('Auth (e2e) - Full Flow', () => {
       expect(userInDbAfterReset?.resetTokenExpiresAt).toBeNull();
     });
 
-    it('/v1/auth/reset-password (POST) - should return 401 Unauthorized if reset_token cookie is missing', async () => {
+    it('/v1/auth/reset-password (POST) - should return 401 Unauthorized if reset-token cookie is missing', async () => {
       const newPassword = 'NewStrongPassword456!';
       const resetPasswordDto = {
         newPassword: newPassword,
@@ -591,7 +592,7 @@ describe('Auth (e2e) - Full Flow', () => {
       );
     });
 
-    it('/v1/auth/reset-password (POST) - should return 401 Unauthorized if reset_token is expired (via guard)', async () => {
+    it('/v1/auth/reset-password (POST) - should return 401 Unauthorized if reset-token is expired (via guard)', async () => {
       await cleanDatabase();
       const expiredUserEmail = 'expiredreset@example.com';
       await createTestUser(
@@ -620,7 +621,7 @@ describe('Auth (e2e) - Full Flow', () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const expiredResetCookie = `reset_token=${expiredResetJwtToken}; Path=/v1/auth/reset-password; HttpOnly; SameSite=Lax; Max-Age=1`;
+      const expiredResetCookie = `reset-token=${expiredResetJwtToken}; Path=/v1/auth/reset-password; HttpOnly; SameSite=Lax; Max-Age=1`;
 
       const resetPasswordDto = {
         newPassword: 'NewStrongPassword123!',

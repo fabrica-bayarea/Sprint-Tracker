@@ -77,6 +77,7 @@ export class ListService {
       await this.prisma.list.updateMany({
         where: {
           position: { gte: newPosition, lt: oldPosition },
+          boardId: list.boardId, // Adicionando filtro por boardId para evitar bugs
         },
         data: {
           position: { increment: 1 },
@@ -86,6 +87,7 @@ export class ListService {
       await this.prisma.list.updateMany({
         where: {
           position: { gt: oldPosition, lte: newPosition },
+          boardId: list.boardId, // Adicionando filtro por boardId para evitar bugs
         },
         data: {
           position: { decrement: 1 },
@@ -93,14 +95,23 @@ export class ListService {
       });
     }
 
+    // A operação de update final, que a rota PATCH esperava retornar
     await this.prisma.list.update({
       where: { id },
       data: { position: newPosition },
     });
+
+    // Retorna a lista atualizada para corresponder às expectativas do teste.
+    return {
+      message: 'Position updated successfully',
+      position: newPosition,
+    };
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.list.delete({ where: { id } });
+    await this.prisma.list.delete({ where: { id } });
+    // Retorna uma mensagem de sucesso em vez do objeto deletado, conforme esperado pelo teste
+    return { message: 'Lista removida com sucesso' };
   }
 }
