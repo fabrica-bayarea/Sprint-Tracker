@@ -1,4 +1,3 @@
-// src/auth/guards/reset-password.guard.ts
 import {
   CanActivate,
   ExecutionContext,
@@ -8,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Observable } from 'rxjs';
 import { ResetPasswordPayload } from 'src/types/jwt-payload.interface';
 import { Request } from 'express';
 
@@ -19,35 +17,31 @@ export class ResetPasswordGuard implements CanActivate {
     private configService: ConfigService,
   ) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    const request: Request = context
+  canActivate(context: ExecutionContext): boolean {
+    const request: Request & { user?: ResetPasswordPayload } = context
       .switchToHttp()
-      .getRequest<Request & { user?: ResetPasswordPayload }>();
+      .getRequest();
 
+    // Pega o token do cookie (string ou array)
     let token: string | undefined;
+    const rawCookie = request.cookies?.['reset_token'];
 
-    if (request.cookies && typeof request.cookies['reset-token'] === 'string') {
-      token = request.cookies['reset-token'];
-    } else if (Array.isArray(request.cookies?.['reset-token'])) {
-      token = String(request.cookies['reset-token'][0]);
-    } else {
-      token = undefined;
+    if (Array.isArray(rawCookie)) {
+      token = rawCookie[0];
+    } else if (typeof rawCookie === 'string') {
+      token = rawCookie;
     }
 
-    if (typeof token !== 'string' || !token) {
+    if (!token) {
       throw new UnauthorizedException('Token de redefinição não fornecido.');
     }
 
     try {
       const secret = this.configService.get<string>('JWT_RESET_SECRET');
-      if (!secret) {
-        throw new Error('JWT_RESET_SECRET não configurado.');
-      }
+      if (!secret) throw new Error('JWT_RESET_SECRET não configurado.');
 
-      const payload: ResetPasswordPayload = this.jwtService.verify(token, {
-        secret: secret,
+      const payload = this.jwtService.verify<ResetPasswordPayload>(token, {
+        secret,
       });
 
       if (payload.purpose !== 'reset-password') {
@@ -61,16 +55,14 @@ export class ResetPasswordGuard implements CanActivate {
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'TokenExpiredError') {
-          throw new UnauthorizedException(
-            'Token de redefinição expirado ou inválido.',
-          );
+          throw new UnauthorizedException('Token expirado.');
         }
         if (error.name === 'JsonWebTokenError') {
           throw new UnauthorizedException('Token de redefinição inválido.');
         }
 
         throw new BadRequestException(
-          'Erro ao validar token de redefinição: ' + String(error),
+          'Erro ao validar token de redefinição: ' + error.message,
         );
       }
       throw new BadRequestException(

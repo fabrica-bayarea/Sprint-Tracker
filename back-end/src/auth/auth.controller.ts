@@ -393,10 +393,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(ResetPasswordGuard)
   async resetPassword(
-    @Query('token') token: string,
     @Body() resetPasswordDto: ResetPasswordDto,
     @Req() req: { user: { userId: string } },
-  ) {
+  ){
     const userId = req.user.userId;
     await this.authService.resetPassword(userId, resetPasswordDto.newPassword);
     return { message: 'Senha redefinida com sucesso!' };
@@ -441,12 +440,11 @@ export class AuthController {
       const resetJwtToken =
         await this.authService.verifyResetCode(verifyResetCodeDto);
 
-      res.cookie('reset-token', resetJwtToken, {
+      res.cookie('reset_token', resetJwtToken, {
         httpOnly: true,
-        //secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 15 * 60 * 1000,
-        path: '/',
+        path: '/v1/auth/reset-password',
       });
 
       return {
