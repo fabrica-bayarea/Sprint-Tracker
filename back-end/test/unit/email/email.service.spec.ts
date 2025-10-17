@@ -3,10 +3,22 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { EmailService } from 'src/email/email.service';
 import * as nodemailer from 'nodemailer';
 import * as fs from 'fs';
+import { Attachment } from 'nodemailer/lib/mailer';
+
+interface MailOptions {
+  to: string | string[];
+  subject: string;
+  html: string;
+  attachments?: Array<{
+    filename: string;
+    path: string;
+    cid: string;
+  }>;
+}
 
 const mockTransporter = {
-  sendMail: jest.fn(),
-};
+  sendMail: jest.fn<Promise<void>, [MailOptions]>(),
+};;
 
 jest.mock('nodemailer', () => {
   return {
@@ -16,6 +28,19 @@ jest.mock('nodemailer', () => {
 
 jest.mock('fs');
 const mockedFs = fs as jest.Mocked <typeof fs>;
+
+const attachment: Attachment[] = [
+  {
+    filename: 'bayarea-logo.png', //ESSA É A LINHA 129
+    path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
+    cid: 'bayarea-logo',
+  },
+  {
+    filename: 'iesb-logo.png',
+    path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/iesb-logo.png' : 'src/assets/iesb-logo.png',
+    cid: 'iesb-logo',
+  },
+];
 
 describe('EmailService', () => {
   let service: EmailService;
@@ -79,18 +104,7 @@ describe('EmailService', () => {
           to,
           subject: 'Recuperação de senha',
           html: '<p>Seu código é 123456</p>',
-          attachments: [
-          {
-            filename: 'bayarea-logo.png',
-            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
-            cid: 'bayarea-logo',
-          },
-          {
-            filename: 'iesb-logo.png',
-            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/iesb-logo.png' : 'src/assets/iesb-logo.png',
-            cid: 'iesb-logo',
-          },
-        ],
+          attachments: attachment,
         })
       );
     });
@@ -111,7 +125,7 @@ describe('EmailService', () => {
   describe ('Testes da função sendForgotPasswordEmail()', () => {
     
     it('deve enviar email de recuperação de senha com sucesso', async () => {
-      mockTransporter.sendMail.mockResolvedValueOnce({});
+      mockTransporter.sendMail.mockResolvedValueOnce();
 
       const to = 'teste@teste.com';
       const code = '123456';
@@ -123,18 +137,7 @@ describe('EmailService', () => {
           to,
           subject: 'Recuperação de senha',
           html: expect.stringContaining(code),
-          attachments: [
-          {
-            filename: 'bayarea-logo.png',
-            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
-            cid: 'bayarea-logo',
-          },
-          {
-            filename: 'iesb-logo.png',
-            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/iesb-logo.png' : 'src/assets/iesb-logo.png',
-            cid: 'iesb-logo',
-          },
-        ],
+          attachments: attachment,
         }),
       );
     });
