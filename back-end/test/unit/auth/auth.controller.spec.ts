@@ -54,7 +54,6 @@ describe('AuthController', () => {
     }).setLogger(mockLogger).compile();
 
     controller = module.get<AuthController>(AuthController);
-    controller = module.get<AuthController>(AuthController);
   });
 
   describe('signUp', () => {

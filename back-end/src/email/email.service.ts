@@ -25,6 +25,10 @@ export class EmailService {
     }
   }
 
+  getTransporter(): Transporter {
+    return this.transporter;
+  }
+
   private loadTemplate(templateName: string): string {
     const templateBaseDir = path.join(__dirname, 'templates');
     const filePath = path.join(templateBaseDir, templateName);
