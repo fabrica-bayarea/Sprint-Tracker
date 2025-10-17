@@ -69,7 +69,6 @@
     "@types/passport-microsoft": "^2.1.0",
     "@types/supertest": "^6.0.3",
     "copyfiles": "^2.4.1",
-    "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",

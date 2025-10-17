@@ -16,9 +16,9 @@ interface MailOptions {
   }>;
 }
 
-const mockTransporter = {
+const mockTransporter: { sendMail: jest.Mock<Promise<void>, [MailOptions]> } = {
   sendMail: jest.fn<Promise<void>, [MailOptions]>(),
-};;
+};
 
 jest.mock('nodemailer', () => {
   return {
