@@ -79,7 +79,18 @@ describe('EmailService', () => {
           to,
           subject: 'Recuperação de senha',
           html: '<p>Seu código é 123456</p>',
-          attachments: expect.any(Array),
+          attachments: [
+          {
+            filename: 'bayarea-logo.png',
+            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
+            cid: 'bayarea-logo',
+          },
+          {
+            filename: 'iesb-logo.png',
+            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/iesb-logo.png' : 'src/assets/iesb-logo.png',
+            cid: 'iesb-logo',
+          },
+        ],
         })
       );
     });
@@ -112,7 +123,18 @@ describe('EmailService', () => {
           to,
           subject: 'Recuperação de senha',
           html: expect.stringContaining(code),
-          attachments: expect.any(Array),
+          attachments: [
+          {
+            filename: 'bayarea-logo.png',
+            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
+            cid: 'bayarea-logo',
+          },
+          {
+            filename: 'iesb-logo.png',
+            path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/iesb-logo.png' : 'src/assets/iesb-logo.png',
+            cid: 'iesb-logo',
+          },
+        ],
         }),
       );
     });
