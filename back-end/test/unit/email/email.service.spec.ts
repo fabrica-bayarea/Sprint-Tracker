@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import { Attachment } from 'nodemailer/lib/mailer';
 
 interface MailOptions {
-  to: string | string[];
+  to: string;
   subject: string;
   html: string;
   attachments?: Array<{
@@ -31,7 +31,7 @@ const mockedFs = fs as jest.Mocked <typeof fs>;
 
 const attachment: Attachment[] = [
   {
-    filename: 'bayarea-logo.png', //ESSA É A LINHA 129
+    filename: 'bayarea-logo.png',
     path: process.env.NODE_ENV === 'production' ? 'dist/src/assets/bayarea-logo.png' : 'src/assets/bayarea-logo.png',
     cid: 'bayarea-logo',
   },
@@ -60,8 +60,6 @@ describe('EmailService', () => {
     jest.restoreAllMocks();
   })
 
-  //TESTANDO O TRANSPORTER NO CONSTRUCTOR
-
   describe ('Testes do transporter no constructor', () => {
 
     it('deve criar o transporter com sucesso', () => {
@@ -87,8 +85,6 @@ describe('EmailService', () => {
     });
   });
   
-
-  //TESTE PARA LOADTEMPLATE
   describe ('Testes do transporter no constructor', () => {
 
     it('deve enviar e-mail com sucesso ao ler o template com sucesso', async () => {
@@ -121,7 +117,7 @@ describe('EmailService', () => {
 
  });
 
-//TESTANTO SENDFORGOTPASSWORDEMAIL() ÚLTIMA FUNCAO
+
   describe ('Testes da função sendForgotPasswordEmail()', () => {
     
     it('deve enviar email de recuperação de senha com sucesso', async () => {
@@ -143,6 +139,8 @@ describe('EmailService', () => {
     });
 
     it('deve lançar erro ao enviar o email', async () => {
+      
+      mockTransporter.sendMail = jest.fn().mockResolvedValue(undefined);
       mockTransporter.sendMail.mockRejectedValueOnce(new Error('Falha ao enviar'));
 
       const to = 'teste@teste.com';
