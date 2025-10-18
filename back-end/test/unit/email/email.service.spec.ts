@@ -121,7 +121,7 @@ describe('EmailService', () => {
   describe ('Testes da função sendForgotPasswordEmail()', () => {
     
     it('deve enviar email de recuperação de senha com sucesso', async () => {
-      mockTransporter.sendMail.mockResolvedValueOnce();
+      mockTransporter.sendMail.mockResolvedValueOnce(undefined);
 
       const to = 'teste@teste.com';
       const code = '123456';
