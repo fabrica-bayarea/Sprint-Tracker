@@ -140,7 +140,7 @@ describe('EmailService', () => {
 
     it('deve lançar erro ao enviar o email', async () => {
       
-      mockTransporter.sendMail = jest.fn().mockResolvedValue(undefined);
+      mockTransporter.sendMail.mockClear();
       mockTransporter.sendMail.mockRejectedValueOnce(new Error('Falha ao enviar'));
 
       const to = 'teste@teste.com';
