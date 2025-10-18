@@ -22,7 +22,7 @@ var mockTransporter: { sendMail: jest.Mock<Promise<void>, [MailOptions]> } = {
 
 jest.mock('nodemailer', () => {
   return {
-    createTransport: jest.fn().mockReturnValue(mockTransporter as any)
+    createTransport: jest.fn()
   };
 });
 
@@ -132,7 +132,7 @@ describe('EmailService', () => {
         expect.objectContaining({
           to,
           subject: 'Recuperação de senha',
-          html: expect.stringContaining(code),
+          html: expect.stringContaining(code) as unknown as string,
           attachments: attachment,
         }),
       );
