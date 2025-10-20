@@ -22,11 +22,6 @@ import {
 } from './auth.helpers';
 import { App } from 'supertest/types';
 
-process.env.DATABASE_URL = 
-  process.env.DATABASE_URL_TEST || 
-  'postgresql://user_test:password_test@127.17.0.1:5433/postgres?schema=public';
-process.env.JWT_SECRET = 'e2e_test_jwt_secret';
-process.env.JWT_RESET_SECRET = 'e2e_test_jwt_reset_trsecret';
 process.env.EMAIL = 'test@example.com';
 process.env.PASS = 'testpassword';
 
@@ -38,7 +33,6 @@ describe('Auth (e2e) - Full Flow', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
 
-  // o erro tá vindo daqui, mas não eu não sei o que fazer a respeito
   const cleanDatabase = async () => {
     try {
       if (prismaService) {
@@ -414,7 +408,6 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/verify-reset-code (POST) - should return 401 Unauthorized if code is expired', async () => {
-      await cleanDatabase();
       await createTestUser(
         prismaService,
         'expiredcode@example.com',
@@ -471,7 +464,6 @@ describe('Auth (e2e) - Full Flow', () => {
     let resetTokenCookie: string = '';
 
     beforeEach(async () => {
-      await cleanDatabase();
       await createTestUser(
         prismaService,
         userEmail,
@@ -493,12 +485,13 @@ describe('Auth (e2e) - Full Flow', () => {
         code: generatedResetCode,
       }).expect(200);
 
- 
-      let resetTokenCookie = extractCookie(verifyRes, 'reset_token') as string;
-      if (!resetTokenCookie && verifyRes.body.resetToken) {
-        // Permite token no corpo se cookie não vier
-        resetTokenCookie = `reset_token=${verifyRes.body.resetToken}`;
-      }
+      // Captura o cookie correto sem sombrear a variável externa e aceita formatos alternativos
+      resetTokenCookie =
+        (extractCookie(verifyRes, 'reset-token') as string) ||
+        (extractCookie(verifyRes, 'reset_token') as string) ||
+        (verifyRes.body?.resetToken
+          ? `reset-token=${verifyRes.body.resetToken}`
+          : '');
       expect(resetTokenCookie).toBeDefined();
     });
 
@@ -593,7 +586,6 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/reset-password (POST) - should return 401 Unauthorized if reset-token is expired (via guard)', async () => {
-      await cleanDatabase();
       const expiredUserEmail = 'expiredreset@example.com';
       await createTestUser(
         prismaService,
@@ -650,7 +642,6 @@ describe('Auth (e2e) - Full Flow', () => {
     let sessionCookie: string;
 
     beforeEach(async () => {
-      await cleanDatabase();
       await createTestUser(
         prismaService,
         userEmail,
