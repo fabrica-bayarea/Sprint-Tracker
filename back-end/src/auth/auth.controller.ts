@@ -30,7 +30,6 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-
 import { AuthService } from '@/auth/auth.service';
 import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
@@ -41,6 +40,7 @@ import { IsEnabledAuthGuard } from '@/auth/guards/is-enable-oauth.guard';
 import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 import { ResetPasswordGuard } from '@/auth/guards/reset-password.guard';
 import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
+import { LdapLoginDto } from './dto/LdapLoginDto';
 
 @ApiTags('Autenticação e Autorização')
 @Controller({ path: 'auth', version: '1' })
@@ -553,6 +553,58 @@ export class AuthController {
     } catch (error) {
       this.logger.error(`Erro ao realizar logout: ${(error as Error).message}`);
       throw new InternalServerErrorException('Erro interno ao realizar logout');
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Autenticação de usuário via LDAP',
+    description: 'Realiza a autenticação do usuário contra o servidor LDAP.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Login LDAP bem-sucedido',
+  })
+  @ApiUnauthorizedResponse({ description: 'Credenciais LDAP inválidas' })
+  @ApiInternalServerErrorResponse({ description: 'Erro de comunicação LDAP' })
+  @HttpCode(HttpStatus.OK)
+  @Post('ldap/login')
+  async ldapLogin(
+    @Body() loginRequest: LdapLoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<object> {
+    const { enrollment, password } = loginRequest;
+
+    try {
+      const ldapUserAttributes = await this.authService.authenticateLdap(
+        enrollment,
+        password,
+      );
+
+      const { accessToken } = await this.authService.signInWithProvider(
+        'ldap',
+        {
+          providerId: ldapUserAttributes.uid,
+          email: ldapUserAttributes.mail,
+          name: ldapUserAttributes.displayName,
+        },
+      );
+
+      response.cookie(
+        'sprinttacker-session',
+        accessToken,
+        this.setCookieOptions(false),
+      );
+
+      return {
+        message: 'Login via LDAP bem-sucedido. Token armazenado no cookie.',
+        user: {
+          name: ldapUserAttributes.displayName,
+          email: ldapUserAttributes.mail,
+        },
+      };
+    } catch (e) {
+      this.logger.error(`LDAP Auth Falhou: ${(e as Error).message}`);
+      throw e;
     }
   }
 }

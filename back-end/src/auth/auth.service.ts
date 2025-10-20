@@ -5,6 +5,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -22,19 +23,37 @@ import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
 import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
 import { EmailService } from '@/email/email.service';
 import { PrismaService } from '@/prisma/prisma.service';
-
 import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { AccessTokenPayload } from './interface/jwt';
+import { Client } from 'ldapts';
+
+// Payload de retorno do LDAP (Mantido para clareza nos métodos LDAP)
+interface LdapUserPayload {
+  uid: string;
+  displayName: string;
+  mail: string;
+}
 
 @Injectable()
 export class AuthService {
+  private adminClient: Client;
+  private userBaseDn: string;
   constructor(
     private prisma: PrismaService,
     private readonly jwtService: JwtService,
     private configService: ConfigService,
     private readonly emailService: EmailService,
-  ) {}
+  ) {
+    // Configuração do LDAP, movida do construtor do LdapAuthService
+    this.userBaseDn =
+      this.configService.getOrThrow<string>('LDAP_USER_BASE_DN');
+
+    // Inicializa o cliente Admin do LDAP para buscas
+    this.adminClient = new Client({
+      url: this.configService.getOrThrow<string>('LDAP_URL'),
+    });
+  }
 
   /**
    * Gera um token JWT com base no payload fornecido.
@@ -329,5 +348,134 @@ export class AuthService {
       where: { id },
       data: { passwordHash: hashedNewPassword },
     });
+  }
+
+  /**
+   * Tenta autenticar o usuário contra o servidor LDAP (usando a Matrícula/Identificador).
+   * @param enrollment A matrícula ou identificador para busca no LDAP.
+   * @param password A senha do usuário.
+   * @returns Os atributos essenciais do usuário.
+   */
+  async authenticateLdap(
+    enrollment: string,
+    password: string,
+  ): Promise<LdapUserPayload> {
+    if (!password) {
+      throw new UnauthorizedException('A senha não pode ser vazia.');
+    }
+
+    const userDN = await this.findUserDn(enrollment);
+    const cleanPassword = password.trim();
+
+    if (!userDN) {
+      throw new UnauthorizedException(
+        'Usuário não encontrado no diretório LDAP.',
+      );
+    }
+
+    const userClient = new Client({
+      url: this.configService.getOrThrow<string>('LDAP_URL'),
+    });
+
+    try {
+      await userClient.bind(userDN, cleanPassword);
+
+      const userAttributes: LdapUserPayload =
+        await this.getUserAttributes(userDN);
+
+      return {
+        uid: userAttributes.uid,
+        displayName: userAttributes.displayName,
+        mail: userAttributes.mail,
+      };
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: unknown }).code === 49
+      ) {
+        throw new UnauthorizedException('Credenciais LDAP inválidas.');
+      }
+      console.error('LDAP Connection or Binding Error:', error);
+      throw new InternalServerErrorException(
+        'Erro ao se comunicar com o servidor LDAP.',
+      );
+    } finally {
+      await userClient.unbind().catch(() => {});
+    }
+  }
+
+  private async findUserDn(enrollment: string): Promise<string | null> {
+    const adminDn = this.configService.getOrThrow<string>('LDAP_ADMIN_DN');
+    const adminPassword = this.configService.getOrThrow<string>(
+      'LDAP_ADMIN_PASSWORD',
+    );
+
+    const adminClient = new Client({
+      url: this.configService.getOrThrow<string>('LDAP_URL'),
+    });
+
+    try {
+      await adminClient.bind(adminDn, adminPassword);
+
+      const searchOptions = {
+        filter: `(uid=${enrollment})`,
+        scope: 'sub' as const,
+        attributes: ['dn'],
+      };
+
+      const { searchEntries } = await adminClient.search(
+        this.userBaseDn,
+        searchOptions,
+      );
+
+      return searchEntries.length > 0 ? searchEntries[0].dn : null;
+    } catch (error) {
+      console.error('LDAP Admin Bind or Search Error:', error);
+      throw new InternalServerErrorException(
+        'Erro de configuração LDAP: falha ao buscar DN do usuário.',
+      );
+    } finally {
+      await adminClient.unbind().catch(() => {});
+    }
+  }
+
+  private async getUserAttributes(userDN: string): Promise<LdapUserPayload> {
+    await this.adminClient.bind(
+      this.configService.getOrThrow<string>('LDAP_ADMIN_DN'),
+      this.configService.getOrThrow<string>('LDAP_ADMIN_PASSWORD'),
+    );
+
+    const { searchEntries } = await this.adminClient.search(userDN, {
+      scope: 'base',
+      attributes: ['cn', 'mail', 'uid', 'memberOf'],
+    });
+
+    await this.adminClient.unbind();
+
+    if (searchEntries.length > 0) {
+      const entry = searchEntries[0];
+      return {
+        uid: Array.isArray(entry.uid)
+          ? String(entry.uid[0])
+          : Buffer.isBuffer(entry.uid)
+            ? entry.uid.toString()
+            : String(entry.uid),
+        displayName: Array.isArray(entry.cn)
+          ? String(entry.cn[0])
+          : Buffer.isBuffer(entry.cn)
+            ? entry.cn.toString()
+            : String(entry.cn),
+        mail: Array.isArray(entry.mail)
+          ? String(entry.mail[0])
+          : Buffer.isBuffer(entry.mail)
+            ? entry.mail.toString()
+            : String(entry.mail),
+      };
+    }
+    throw new InternalServerErrorException(
+      'Atributos de usuário LDAP não encontrados após o BIND bem-sucedido.',
+    );
   }
 }

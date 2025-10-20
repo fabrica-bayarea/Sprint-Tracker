@@ -1,8 +1,7 @@
 import { DynamicModule, Module, Logger } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
 import { JwtStrategy } from 'src/auth/strategy/jwt.strategy';
 import { GoogleStrategy } from 'src/auth/strategy/google.strategy';
 import { MicrosoftStrategy } from 'src/auth/strategy/microsoft.strategy';
@@ -10,12 +9,55 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
 import { AuthController } from 'src/auth/auth.controller';
 import { EmailModule } from '../email/email.module';
-import { LdapAuthService } from 'src/ldap/LdapAuthService';
-import { LdapAuthController } from 'src/ldap/LdapAuthController';
+import { EmailService } from 'src/email/email.service';
 
 @Module({})
 export class AuthModule {
   static register(): DynamicModule {
+    const isLdapEnabled = (config: ConfigService) =>
+      config.get<string>('ENABLE_LDAP_OAUTH') === 'true';
+
+    const baseProviders = [
+      Logger,
+      JwtStrategy,
+      PrismaService,
+      {
+        provide: 'OAUTH_STRATEGIES',
+        useFactory: (configService: ConfigService) => [
+          ...(configService.get<string>('ENABLE_GOOGLE_OAUTH') === 'true'
+            ? [new GoogleStrategy(configService)]
+            : []),
+          ...(configService.get<string>('ENABLE_MICROSOFT_OAUTH') === 'true'
+            ? [new MicrosoftStrategy(configService)]
+            : []),
+        ],
+        inject: [ConfigService],
+      },
+    ];
+
+    const authServiceProvider = {
+      provide: AuthService,
+      useFactory: (
+        prismaService: PrismaService,
+        jwtService: JwtService,
+        configService: ConfigService,
+        emailService: EmailService,
+      ) => {
+        if (isLdapEnabled(configService)) {
+          Logger.log('LDAP Auth está HABILITADO', 'AuthModule');
+        } else {
+          Logger.log('LDAP Auth está DESABILITADO', 'AuthModule');
+        }
+        return new AuthService(
+          prismaService,
+          jwtService,
+          configService,
+          emailService,
+        );
+      },
+      inject: [PrismaService, JwtService, ConfigService, EmailService],
+    };
+
     return {
       module: AuthModule,
       imports: [
@@ -31,27 +73,9 @@ export class AuthModule {
           }),
         }),
       ],
-      providers: [
-        Logger,
-        JwtStrategy,
-        PrismaService,
-        AuthService,
-        LdapAuthService,
-        {
-          provide: 'OAUTH_STRATEGIES',
-          useFactory: (configService: ConfigService) => [
-            ...(configService.get<string>('ENABLE_GOOGLE_OAUTH') === 'true'
-              ? [new GoogleStrategy(configService)]
-              : []),
-            ...(configService.get<string>('ENABLE_MICROSOFT_OAUTH') === 'true'
-              ? [new MicrosoftStrategy(configService)]
-              : []),
-          ],
-          inject: [ConfigService],
-        },
-      ],
-      controllers: [AuthController, LdapAuthController],
-      exports: [AuthService, JwtModule, LdapAuthService],
+      providers: [...baseProviders, authServiceProvider],
+      controllers: [AuthController],
+      exports: [AuthService, JwtModule],
     };
   }
 }
