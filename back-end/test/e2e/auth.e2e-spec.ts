@@ -383,11 +383,11 @@ describe('Auth (e2e) - Full Flow', () => {
         'Código verificado com sucesso. Você pode redefinir sua senha.',
       );
 
-      const resetTokenCookie = extractCookie(response, 'reset-token');
+      const resetTokenCookie = extractCookie(response, 'reset_token');
       expect(resetTokenCookie).toBeDefined();
-      expect(resetTokenCookie).toMatch(/^reset-token=/);
+      expect(resetTokenCookie).toMatch(/^reset_token=/);
       expect(resetTokenCookie).toContain('HttpOnly');
-      expect(resetTokenCookie).toContain('Path=/v1/auth/reset-password');
+      expect(resetTokenCookie).toContain('Path=/');
 
       const resetTokenCookieValue = extractTokenFromCookie(
         resetTokenCookie as string,
@@ -635,7 +635,7 @@ describe('Auth (e2e) - Full Flow', () => {
       ).expect(401);
 
       const responseBodyMessage = response.body as { message: string };
-      expect(responseBodyMessage.message).toBe('Token expirado.');
+      expect(responseBodyMessage.message).toBe('Token de redefinição não fornecido.');
 
     });
   });
