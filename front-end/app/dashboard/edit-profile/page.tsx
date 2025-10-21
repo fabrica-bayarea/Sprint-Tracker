@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 
 import { getUserProfile } from "@/lib/actions/profile";
-import { useWarningStore } from '@/lib/stores/warning';
+import { useWarningStore } from "@/lib/stores/warning";
 
 import EditProfileForm from "@/components/features/dashboard/editProfile/formEditUser";
 import DeleteAccountButton from "@/components/features/dashboard/editProfile/deleteProfile";
+import Link from "next/link";
 
 import styles from "./style.module.css";
 
 export default function EditProfilePage() {
-  const { showWarning } = useWarningStore()
+  const { showWarning } = useWarningStore();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function EditProfilePage() {
       const response = await getUserProfile();
 
       if (!response.success) {
-        showWarning(response.error || "Erro ao carregar perfil", 'failed')
+        showWarning(response.error || "Erro ao carregar perfil", "failed");
       } else {
         setProfile(response.data);
       }
@@ -30,10 +31,25 @@ export default function EditProfilePage() {
 
   return (
     <div className={styles.container}>
-      {/* TODO: criar um componente para mostrar para isso */}
-      <p className={styles.history}>
-        Dashboard &gt; edit-profile
-      </p>
+      <p className={styles.history}>Dashboard &gt; edit-profile</p>
+      <Link href="/dashboard" className={styles.backToDashboard}>
+        <span>
+          <svg
+            width="38"
+            height="38"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Voltar
+        </span>
+      </Link>
+
       <h1 className={styles.title}>Informações Pessoais</h1>
       {profile && <EditProfileForm profile={profile} />}
       <DeleteAccountButton />

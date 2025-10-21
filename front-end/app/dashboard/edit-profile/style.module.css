@@ -11,7 +11,7 @@
 .history {
   color: #777;
   font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 2rem;
 }
 
 .title {
@@ -23,4 +23,28 @@
   display: flex;
   gap: 2rem;
   margin-top: 1rem;
+}
+
+.backToDashboard {
+  color: #000;
+  width: min-content;
+  font-size: 15px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  transition: color 0.2s, background 0.2s;
+  padding: 0px 12px 0px 0px;
+  margin-bottom: 15px;
+  border-radius: 16px;
+}
+
+.backToDashboard span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.backToDashboard:hover {
+  background-color: #f0f0f0;
 }
