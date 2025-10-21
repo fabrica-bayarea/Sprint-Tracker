@@ -28,7 +28,6 @@ import { SignUpDto } from './dto/signup.dto';
 import { AccessTokenPayload } from './interface/jwt';
 import { Client } from 'ldapts';
 
-// Payload de retorno do LDAP (Mantido para clareza nos métodos LDAP)
 interface LdapUserPayload {
   uid: string;
   displayName: string;
@@ -45,11 +44,9 @@ export class AuthService {
     private configService: ConfigService,
     private readonly emailService: EmailService,
   ) {
-    // Configuração do LDAP, movida do construtor do LdapAuthService
     this.userBaseDn =
       this.configService.getOrThrow<string>('LDAP_USER_BASE_DN');
 
-    // Inicializa o cliente Admin do LDAP para buscas
     this.adminClient = new Client({
       url: this.configService.getOrThrow<string>('LDAP_URL'),
     });
