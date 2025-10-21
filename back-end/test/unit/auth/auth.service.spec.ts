@@ -40,9 +40,17 @@ const mockJwtService = {
 
 const mockConfigService = {
   get: jest.fn((key: string) => {
+    if (key === 'ENABLE_LDAP_OAUTH') return 'false';
     if (key === 'JWT_SECRET') return 'test_jwt_secret';
     if (key === 'JWT_RESET_SECRET') return 'test_jwt_reset_secret';
     return undefined;
+  }),
+
+  getOrThrow: jest.fn((key: string) => {
+    if (key === 'JWT_SECRET') return 'test_jwt_secret';
+    if (key === 'LDAP_USER_BASE_DN') return 'ou=users,dc=test,dc=com'; // Valor placeholder
+    if (key === 'LDAP_URL') return 'ldap://mock-url:389'; // Valor placeholder
+    throw new Error(`Config ${key} não mockado em getOrThrow`);
   }),
 };
 
