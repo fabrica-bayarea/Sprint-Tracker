@@ -31,7 +31,6 @@ export default function EditProfilePage() {
 
   return (
     <div className={styles.container}>
-      <p className={styles.history}>Dashboard &gt; edit-profile</p>
       <Link href="/dashboard" className={styles.backToDashboard}>
         <span>
           <svg
