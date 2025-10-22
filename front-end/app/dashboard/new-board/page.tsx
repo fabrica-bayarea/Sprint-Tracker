@@ -46,7 +46,6 @@ export default function NewBoardPage() {
 
   return (
     <div className={styles.container}>
-      <p className={styles.history}>Dashboard &gt; new-board</p>
       <Link href="/dashboard" className={styles.backToDashboard}>
         <span>
           <svg
