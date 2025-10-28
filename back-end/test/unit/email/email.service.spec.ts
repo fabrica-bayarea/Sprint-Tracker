@@ -22,7 +22,7 @@ var mockTransporter: { sendMail: jest.Mock<Promise<void>, [MailOptions]> } = {
 
 jest.mock('nodemailer', () => {
   return {
-    createTransport: jest.fn().mockReturnValue(mockTransporter as any)
+    createTransport: jest.fn()
   };
 });
 
@@ -121,8 +121,7 @@ describe('EmailService', () => {
   describe ('Testes da função sendForgotPasswordEmail()', () => {
     
     it('deve enviar email de recuperação de senha com sucesso', async () => {
-      mockTransporter.sendMail.mockResolvedValueOnce(undefined);
-
+      
       const to = 'teste@teste.com';
       const code = '123456';
 
@@ -132,7 +131,7 @@ describe('EmailService', () => {
         expect.objectContaining({
           to,
           subject: 'Recuperação de senha',
-          html: expect.stringContaining(code),
+          html: expect.stringContaining(code) as unknown as string,
           attachments: attachment,
         }),
       );
