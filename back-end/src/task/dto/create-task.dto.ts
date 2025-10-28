@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDateString, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsDateString } from 'class-validator';
 import { TaskStatus } from 'src/common/enums/task-status.enum';
 
 export class CreateTaskDto {
@@ -15,9 +15,6 @@ export class CreateTaskDto {
     example: 'Implementar a funcionalidade de autenticação',
   })
   @IsString()
-  @IsNotEmpty({
-    message: 'Título da tarefa é obrigatório'
-  })
   title: string;
 
   @ApiProperty({

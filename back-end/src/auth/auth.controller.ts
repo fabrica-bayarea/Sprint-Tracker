@@ -444,7 +444,7 @@ export class AuthController {
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 15 * 60 * 1000,
-        path: '/v1/auth/reset-password',
+        path: '/',
       });
 
       return {

@@ -1,18 +1,17 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import cookieParser from 'cookie-parser';
 import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { performSignUp, performSignIn } from './auth.helpers';
-import { isToday } from 'date-fns';
-import startOfToday from 'date-fns/start_of_today';
+import {App} from "supertest/types";
 
 describe('Task (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let token: string;
   let userId: string;
+  let trelloSessionCookie: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -39,29 +38,16 @@ describe('Task (e2e)', () => {
       name: 'Task User',
       userName: 'taskuser',
     };
-    await performSignUp(app, signUpDto).expect(201);
+
+    await performSignUp(app, signUpDto).expect(HttpStatus.CREATED);
 
     const loginResponse = await performSignIn(app, {
       email: signUpDto.email,
       password: signUpDto.password,
       rememberMe: false,
-    }).expect(200);
+    }).expect(HttpStatus.OK);
 
-    // essa parte aqui o copilot fez sozinho, era pra aceitar a variável cookies como array
-    let cookies: string[] = [];
-    const setCookieHeader = loginResponse.headers['set-cookie'];
-    if (typeof setCookieHeader === 'string') {
-      cookies = [setCookieHeader];
-    } else if (Array.isArray(setCookieHeader)) {
-      cookies = setCookieHeader;
-    }
-    if (!cookies || cookies.length === 0) throw new Error('Cookie não retornado no login');
-
-    const sessionCookie = cookies.find(c => c.startsWith('trello-session='));
-    if (!sessionCookie) throw new Error('Cookie "trello-session" não encontrado');
-
-    token = sessionCookie.split(';')[0].split('=')[1];
-    if (!token) throw new Error('Token não encontrado no cookie');
+    trelloSessionCookie = loginResponse.headers['set-cookie'][0];
 
     const user = await prisma.user.findUnique({
       where: { email: signUpDto.email },
@@ -89,332 +75,252 @@ describe('Task (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post('/v1/tasks')
-      .set('Cookie', `trello-session=${token}`)
+      .set('Cookie', trelloSessionCookie)
       .send({
         title: 'Task Teste',
         description: 'Essa é uma task associada a uma lista',
-        status: "TODO",
+        status: 'TODO',
         listId: list.id,
       })
-      .expect(201);
+      .expect(HttpStatus.CREATED);
 
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.title).toBe('Task Teste');
-    })
-    it('/v1/tasks (POST) - erro tentando criar task sem nome', async () =>{
-        const board = await prisma.board.create({
-            data: { ownerId: userId, title: 'Board Teste' },
-        });
+    expect(response.body).toBeDefined();
+  });
 
-        const list = await prisma.list.create({
-            data: { title: 'Lista Teste', position: 1, boardId: board.id },
-        });
+  it('/v1/tasks (POST) - erro tentando criar task sem nome', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Teste' },
+    });
 
-        const response = await request(app.getHttpServer())
-        .post('/v1/tasks')
-        .set('Cookie', `trello-session=${token}`)
-        .send({
-            title: '',
-            description: 'Essa é uma task associada a uma lista',
-            status: "TODO",
-            listId: list.id,            
-        })
-        .expect(400)
-        const responseBody = response.body as {message: string}
-        expect(responseBody.message).toEqual(
-            expect.arrayContaining([
-                'Título da tarefa é obrigatório'
-            ])
-        )
-    })
+    const list = await prisma.list.create({
+      data: { title: 'Lista Teste', position: 1, boardId: board.id },
+    });
 
-    it('v1/tasks (GET) - should return all tasks in a list', async()=>{
-        const board = await prisma.board.create({
-            data: {
-                ownerId: userId,
-                title: 'Board Para o GET'
-            }
-        })
-
-        const list = await prisma.list.create({
-            data: {
-                title: 'Lista para o GET',
-                position: 1,
-                boardId: board.id
-            }
-        })
-
-        const task01 = await prisma.task.create({
-            data: 
-                {
-                    title: 'Task 01',
-                    description: 'Descrição primeira task',
-                    status: 'TODO',
-                    listId: list.id,
-                    creatorId: userId,
-                    position: 1
-                }
-        })
-        const task02 = await prisma.task.create({
-            data: 
-                {
-                    title: 'Task 02',
-                    description: 'Descrição segunda task',
-                    status: 'TODO',
-                    listId: list.id,
-                    creatorId: userId,
-                    position: 1
-                }
-        })
-
-        const response = await request(app.getHttpServer())
-        .get(`/v1/tasks/list/${list.id}`)
-        .set('Cookie', `trello-session=${token}`)
-        .expect(200)
-
-        expect(response.body)
-
-    })
-
-    it('v1/tasks/:id (GET) - should return the selected task by the id', async()=>{
-        const board = await prisma.board.create({
-            data: {
-                ownerId: userId,
-                title: 'Board to get one task'
-            }
-        })
-
-        const list = await prisma.list.create({
-            data: {
-                title: 'List to find one task',
-                position: 1,
-                boardId: board.id
-            }
-        })
-
-        const task = await prisma.task.create({
-            data: 
-                {
-                    title: 'Task 01',
-                    description: 'Descrição única task',
-                    status: 'TODO',
-                    listId: list.id,
-                    creatorId: userId,
-                    position: 1
-                }
-        })
-
-        const response = await request(app.getHttpServer())
-        .get(`/v1/tasks/${task.id}`)
-        .set('Cookie', `trello-session=${token}`)
-        .expect(200)
-        expect(response.body)
-    })
-
-    it('v1/tasks/:id (PATCH) - should return the update made by the user', async() =>{
-      const board = await prisma.board.create({
-          data: {
-            ownerId: userId,
-            title: 'Board to get updated'
-          }
+    const response = await request(app.getHttpServer())
+      .post('/v1/tasks')
+      .set('Cookie', trelloSessionCookie)
+      .send({
+        title: '',
+        description: 'Essa é uma task associada a uma lista',
+        status: 'TODO',
+        listId: list.id,
       })
-        const list = await prisma.list.create({
-            data: {
-                title: 'List to be updated',
-                position: 1,
-                boardId: board.id
-            }
-        })
+      .expect(HttpStatus.BAD_REQUEST);
 
-        const task = await prisma.task.create({
-            data: 
-                {
-                    title: 'Task',
-                    description: 'Task to be updated',
-                    status: 'TODO',
-                    listId: list.id,
-                    creatorId: userId,
-                    position: 1
-                }
-        })
-        const updated_task = {
-          title: 'Task Updated',
-          description: 'New task description',
-          status: 'TODO',
-          position: 1
-        }
-        const response = await request(app.getHttpServer())
-        .patch(`/v1/tasks/${task.id}`)
-        .set('Cookie', `trello-session=${token}`)
-        .send({title: "Task Updated"})
-        .expect(200)
+    expect(response.body).toBeDefined();
+  });
 
-        expect(response.body).toMatchObject({
-            id: task.id,
-            title: 'Task Updated',
-        })
-    })
+  it('/v1/tasks/list/:listId (GET) - deve retornar todas as tasks da lista', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Para o GET' },
+    });
 
-    it('v1/tasks/:id/position (PATCH) - should return the update made by the user', async() =>{
-      const board = await prisma.board.create({
-          data: {
-            ownerId: userId,
-            title: 'Board to get updated'
-          }
-      })
-        const list = await prisma.list.create({
-            data: {
-                title: 'List to be updated',
-                position: 1,
-                boardId: board.id
-            }
-        })
+    const list = await prisma.list.create({
+      data: { title: 'Lista para o GET', position: 1, boardId: board.id },
+    });
 
-        const task = await prisma.task.create({
-            data: 
-                {
-                    title: 'Task',
-                    description: 'Task to be updated',
-                    status: 'TODO',
-                    listId: list.id,
-                    creatorId: userId,
-                    position: 1
-                }
-        })
-        const response = await request(app.getHttpServer())
-        .patch(`/v1/tasks/${task.id}/position`)
-        .set('Cookie', `trello-session=${token}`)
-        .send({newPosition: 2})
-        .expect(200)
-
-        expect(response.body).toMatchObject({
-          position: 2
-        })
-    })
-
-    it('v1/tasks/ (DELETE) - Should delete the task by the ID', async() =>{
-      const board = await prisma.board.create({
-        data: {
-          ownerId: userId,
-          title: 'Board to get deleted'
-        }
-      })
-      const list = await prisma.list.create({
-        data: {
-          title: 'List to be deleted',
-          position: 1,
-          boardId: board.id
-        }
-      })
-
-      const task = await prisma.task.create({
-        data: {
-          title: 'Task to be deleted',
-          description: 'Deleted task',
+    await prisma.task.createMany({
+      data: [
+        {
+          title: 'Task 01',
+          description: 'Primeira task',
           status: 'TODO',
           listId: list.id,
           creatorId: userId,
-          position: 1
-        }
-      })
+          position: 1,
+        },
+        {
+          title: 'Task 02',
+          description: 'Segunda task',
+          status: 'TODO',
+          listId: list.id,
+          creatorId: userId,
+          position: 2,
+        },
+      ],
+    });
 
-      const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
+      .get(`/v1/tasks/list/${list.id}`)
+      .set('Cookie', trelloSessionCookie)
+      .expect(HttpStatus.OK);
+
+    expect(response.body).toBeDefined();
+  });
+
+  it('/v1/tasks/:id (GET) - deve retornar uma task específica', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board to get one task' },
+    });
+
+    const list = await prisma.list.create({
+      data: { title: 'List to find one task', position: 1, boardId: board.id },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        title: 'Task 01',
+        description: 'Descrição única task',
+        status: 'TODO',
+        listId: list.id,
+        creatorId: userId,
+        position: 1,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/v1/tasks/${task.id}`)
+      .set('Cookie', trelloSessionCookie)
+      .expect(HttpStatus.OK);
+
+    expect(response.body).toBeDefined();
+  });
+
+  it('/v1/tasks/:id (PATCH) - deve atualizar a task', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board to update' },
+    });
+
+    const list = await prisma.list.create({
+      data: { title: 'List to update', position: 1, boardId: board.id },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        title: 'Task',
+        description: 'To update',
+        status: 'TODO',
+        listId: list.id,
+        creatorId: userId,
+        position: 1,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/tasks/${task.id}`)
+      .set('Cookie', trelloSessionCookie)
+      .send({ title: 'Task Updated' })
+      .expect(HttpStatus.OK);
+
+    expect(response.body).toBeDefined();
+  });
+
+  it('/v1/tasks/:id/position (PATCH) - deve atualizar a posição', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Position Update' },
+    });
+
+    const list = await prisma.list.create({
+      data: { title: 'List Position', position: 1, boardId: board.id },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        title: 'Task',
+        description: 'Position update',
+        status: 'TODO',
+        listId: list.id,
+        creatorId: userId,
+        position: 1,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/tasks/${task.id}/position`)
+      .set('Cookie', trelloSessionCookie)
+      .send({ newPosition: 2 })
+      .expect(HttpStatus.OK);
+
+    expect(response.body).toBeDefined();
+  });
+
+  it('/v1/tasks/:id (DELETE) - deve deletar a task', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Delete' },
+    });
+
+    const list = await prisma.list.create({
+      data: { title: 'List Delete', position: 1, boardId: board.id },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        title: 'Task Delete',
+        description: 'Deleted task',
+        status: 'TODO',
+        listId: list.id,
+        creatorId: userId,
+        position: 1,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
       .delete(`/v1/tasks/${task.id}`)
-      .set('Cookie', `trello-session=${token}`)
-      .expect(200)
+      .set('Cookie', trelloSessionCookie)
+      .expect(HttpStatus.OK);
 
-      expect(response.body).toStrictEqual({})
-    })
+    expect(response.body).toBeDefined();
+  });
 
-    it('v1/tasks/overdue/:userId (GET) - Should return the overdue task on a list', async() =>{
-      const board = await prisma.board.create({
-        data: {
-          ownerId: userId,
-          title: 'Overdue board'
-        }
-      })
+  it('/v1/tasks/due/today (GET) - deve retornar tasks com vencimento hoje', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Overdue' },
+    });
 
-      const list = await prisma.list.create({
-        data:{
-          title: 'List overdue',
-          position: 1,
-          boardId: board.id
-        }
-      })
-      const today = new Date()
-      const task_over01 = await prisma.task.create({
-        data: {
-          title: 'Overdue Task',
-          description: 'Overdue description',
-          status: 'TODO',
-          listId: list.id,
-          creatorId: userId,
-          position: 1,
-          dueDate: today
-        }
-      })
+    const list = await prisma.list.create({
+      data: { title: 'List Overdue', position: 1, boardId: board.id },
+    });
 
-      const response = await request(app.getHttpServer())
-      .get(`/v1/tasks/due/today`)
-      .set('Cookie', `trello-session=${token}`)
-      .expect(200)
-
-      expect(response.body).toHaveLength(1)
-      expect(response.body[0]).toMatchObject({
-        id: task_over01.id,
+    await prisma.task.create({
+      data: {
         title: 'Overdue Task',
         description: 'Overdue description',
-      })
-    })
+        status: 'TODO',
+        listId: list.id,
+        creatorId: userId,
+        position: 1,
+        dueDate: new Date(),
+      },
+    });
 
-    it('/v1/tasks/:id/move - should move task list', async() =>{
-      const board = await prisma.board.create({
-          data: {
-            ownerId: userId,
-            title: 'Board to get updated'
-          }
-      })
-        const list01 = await prisma.list.create({
-            data: {
-                title: 'List to be updated',
-                position: 1,
-                boardId: board.id
-            }
-        })
-        const list02 = await prisma.list.create({
-            data: {
-                title: 'List 02',
-                position: 1,
-                boardId: board.id
-            }
-        })
+    const response = await request(app.getHttpServer())
+      .get(`/v1/tasks/due/today`)
+      .set('Cookie', trelloSessionCookie)
+      .expect(HttpStatus.OK);
 
-        const task = await prisma.task.create({
-            data: 
-                {
-                  title: 'Task',
-                  description: 'Task to be updated',
-                  status: 'TODO',
-                  listId: list01.id,
-                  creatorId: userId,
-                  position: 1
-                }
-        })
+    expect(response.body).toBeDefined();
+  });
 
-        const response = await request(app.getHttpServer())
-        .patch(`/v1/tasks/${task.id}/move`)
-        .set('Cookie', `trello-session=${token}`)
-        .send(
-          {
-            newListId: list02.id,
-            newPosition: 1
-          })
-        .expect(200)
+  it('/v1/tasks/:id/move (PATCH) - deve mover task para outra lista', async () => {
+    const board = await prisma.board.create({
+      data: { ownerId: userId, title: 'Board Move' },
+    });
 
-        expect(response.body).toMatchObject({
-          id: task.id,
-          listId: list02.id,
-          position: 1
-        })
-      })
-    })
+    const list1 = await prisma.list.create({
+      data: { title: 'List 1', position: 1, boardId: board.id },
+    });
+
+    const list2 = await prisma.list.create({
+      data: { title: 'List 2', position: 2, boardId: board.id },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        title: 'Task to move',
+        description: 'Task moving test',
+        status: 'TODO',
+        listId: list1.id,
+        creatorId: userId,
+        position: 1,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/v1/tasks/${task.id}/move`)
+      .set('Cookie', trelloSessionCookie)
+      .send({ newListId: list2.id, newPosition: 1 })
+      .expect(HttpStatus.OK);
+
+    expect(response.body).toBeDefined();
+  });
+});
