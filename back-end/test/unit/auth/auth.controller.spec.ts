@@ -1,139 +1,28 @@
-
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from 'src/auth/auth.controller';
-import { AuthService } from 'src/auth/auth.service';
-import { ConfigService } from '@nestjs/config';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { Response } from 'express';
-import { JwtService } from '@nestjs/jwt';
-import { BadRequestException } from '@nestjs/common';
-
-describe('AuthController', () => {
-  let controller: AuthController;
-
-  const mockResponse: Partial<Response> = {
-    cookie: jest.fn().mockReturnThis(),
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-  };
-
-  const mockAuthService = {
-    signUp: jest.fn(),
-  };
-
-  const mockConfigService = {
-    get: jest.fn((key: string) => {
-      if (key === 'NODE_ENV') return 'development';
-      if (key === 'BASE_URL') return 'http://localhost';
-      if (key === 'BASE_URL_UI') return 'http://localhost:3001';
-      return null;
-    }),
-  };
-
-  const mockJwtService = {
-    verify: jest.fn(),
-    sign: jest.fn(),
-  };
-
-  const mockLogger = {
-  log: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  verbose: jest.fn(),
-};
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: [
-        { provide: AuthService, useValue: mockAuthService },
-        { provide: ConfigService, useValue: mockConfigService },
-        { provide: JwtService, useValue: mockJwtService },
-      ],
-
-    }).setLogger(mockLogger).compile();
-
-    controller = module.get<AuthController>(AuthController);
-  });
-
-  describe('signUp', () => {
-    it('deve retornar sucesso e definir cookie ao cadastrar usuário', async () => {
-      const dto: SignUpDto = {
-        email: 'test@example.com',
-        password: 'Password123!',
-        name: 'Test User',
-        userName: 'testuser',
-      };
-
-      mockAuthService.signUp.mockResolvedValueOnce({
-        accessToken: 'fake-token',
-      });
-
-      await controller.signUp(dto, mockResponse as Response);
-
-      expect(mockAuthService.signUp).toHaveBeenCalledWith(dto);
-      expect(mockResponse.cookie).toHaveBeenCalledWith(
-        'sprinttacker-session',
-        'fake-token',
-        expect.objectContaining({
-          httpOnly: true,
-        }),
-      );
-      expect(mockResponse.status).toHaveBeenCalledWith(201);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: 'Usuário cadastrado com sucesso',
-      });
-    });
-
-    it('deve lançar BadRequestException se email ou senha forem ausentes', async () => {
-      const dto = {
-        email: '',
-        password: '',
-        name: 'Jhon Doe',
-        userName: 'jhon_doe',
-      };
-
-      mockAuthService.signUp.mockRejectedValueOnce(
-        new BadRequestException('E-mail já cadastrado'),
-      );
-
-      await expect(
-        controller.signUp(dto, mockResponse as Response),
-      ).rejects.toThrow(BadRequestException);
-
-    });
-  });
-});
-/*
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from 'src/auth/auth.controller';
 import { AuthService } from 'src/auth/auth.service';
 import {
   BadRequestException,
   InternalServerErrorException,
-  Logger,
   UnauthorizedException,
   HttpStatus,
-  ForbiddenException,
-  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
+import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { SignInDto } from 'src/auth/dto/signin.dto';
 import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
 
-// --- Mocks de Serviços e Objetos ---
-
-// Mock para o ConfigService
 const mockConfigService = {
   get: jest.fn((key: string) => {
     switch (key) {
       case 'NODE_ENV':
         return 'development';
+      case 'BASE_URL':
+        return 'http://localhost';
       case 'BASE_URL_UI':
         return 'http://localhost:3001';
       default:
@@ -142,7 +31,6 @@ const mockConfigService = {
   }),
 };
 
-// Mock para o AuthService
 const mockAuthService = {
   signUp: jest.fn(),
   signIn: jest.fn(),
@@ -153,7 +41,6 @@ const mockAuthService = {
   changePassword: jest.fn(),
 };
 
-// Mock para o objeto Response (Express)
 const mockResponse = {
   cookie: jest.fn().mockReturnThis(),
   clearCookie: jest.fn().mockReturnThis(),
@@ -162,10 +49,19 @@ const mockResponse = {
   redirect: jest.fn().mockReturnThis(),
 } as unknown as Response;
 
-// Mock de Logger para evitar logs durante o teste e permitir espião
-jest.spyOn(Logger, 'log').mockImplementation(() => {});
-jest.spyOn(Logger, 'error').mockImplementation(() => {});
-jest.spyOn(Logger, 'warn').mockImplementation(() => {});
+const mockJwtService = {
+    verify: jest.fn(),
+    sign: jest.fn(),
+  };
+
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -176,8 +72,9 @@ describe('AuthController', () => {
       providers: [
         { provide: ConfigService, useValue: mockConfigService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: JwtService, useValue: mockJwtService },
       ],
-    }).compile();
+    }).setLogger(mockLogger).compile();
 
     controller = module.get<AuthController>(AuthController);
     jest.clearAllMocks();
@@ -188,34 +85,19 @@ describe('AuthController', () => {
     jest.useRealTimers();
   });
 
-  // --- Testes para Propriedade Privada ---
-
   describe('get BASE_URL_UI', () => {
     it('should return BASE_URL_UI in development environment', () => {
       mockConfigService.get.mockImplementationOnce((key) =>
         key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
       );
-      // @ts-ignore: Acessando getter privado para teste unitário
       const baseUrlUI = controller['BASE_URL_UI'];
       expect(baseUrlUI).toBe('http://localhost:3001');
     });
-
-    it('should return BASE_URL in production environment', () => {
-      mockConfigService.get.mockImplementation((key) => {
-        if (key === 'NODE_ENV') return 'production';
-        if (key === 'BASE_URL') return 'https://api.prod.com';
-        return null;
-      });
-      // @ts-ignore
-      const baseUrl = controller['BASE_URL_UI'];
-      expect(baseUrl).toBe('https://api.prod.com');
-    });
   });
-
-  // --- Testes para signUp ---
 
   describe('signUp', () => {
     const dto: SignUpDto = {
+      userName : 'userTest' ,
       email: 'test@example.com',
       password: 'password',
       name: 'Test User',
@@ -224,6 +106,7 @@ describe('AuthController', () => {
 
     beforeEach(() => {
       mockAuthService.signUp.mockResolvedValue(authResult);
+
     });
 
     it('should call authService.signUp and set cookie on success', async () => {
@@ -313,8 +196,6 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para googleAuth e microsoftAuth (Guards) ---
-
   describe('googleAuth and microsoftAuth', () => {
     it('googleAuth should return nothing (handled by guard)', async () => {
       // O teste de unidade não executa Guards, apenas verifica o retorno
@@ -326,8 +207,6 @@ describe('AuthController', () => {
       expect(result).toBeUndefined();
     });
   });
-
-  // --- Testes para googleAuthRedirect ---
 
   describe('googleAuthRedirect', () => {
     const mockReq = {
@@ -393,8 +272,6 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para microsoftAuthRedirect ---
-
   describe('microsoftAuthRedirect', () => {
     const mockReq = {
       user: {
@@ -436,8 +313,6 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para forgotPassword ---
-
   describe('forgotPassword', () => {
     const dto: ForgotPasswordDto = { email: 'forgot@test.com' };
 
@@ -466,11 +341,8 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para verifyResetCode ---
-
   describe('verifyResetCode', () => {
     const dto: VerifyResetCodeDto = {
-      email: 'reset@test.com',
       code: '123456',
     };
     const resetJwtToken = 'reset-jwt-token';
@@ -505,8 +377,6 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para resetPassword ---
-
   describe('resetPassword', () => {
     const mockReq = { user: { userId: 'user-reset-1' } };
     const dto = { newPassword: 'new-secure-password' };
@@ -528,13 +398,13 @@ describe('AuthController', () => {
     // Falhas de Unauthorized são tratadas pelo Guard.
   });
 
-  // --- Testes para changePassword ---
 
   describe('changePassword', () => {
     const mockReq = { user: { id: 'user-change-1' } };
     const dto: ChangePasswordDto = {
-      currentPassword: 'old',
-      newPassword: 'new',
+      oldPassword: 'oldPassword123!',
+      newPassword: 'newPassword123!',
+      confirmNewPassword : 'newPassword123!',
     };
 
     it('should call authService.changePassword and return success message', async () => {
@@ -571,52 +441,4 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para logout ---
-
-  describe('logout', () => {
-    it('should clear the session cookie and return success message', async () => {
-      // Configuramos o NODE_ENV para 'production' para testar o 'secure: true'
-      mockConfigService.get.mockImplementation((key) =>
-        key === 'NODE_ENV' ? 'production' : 'http://localhost:3001',
-      );
-
-      await controller.logout(mockResponse);
-
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
-        'sprinttacker-session',
-        expect.objectContaining({
-          httpOnly: true,
-          path: '/',
-          secure: true, // Verifica se secure: true foi usado em produção
-          sameSite: 'lax',
-        }),
-      );
-      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.OK);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: 'Logout realizado com sucesso',
-      });
-
-      // Volta o mock de NODE_ENV
-      mockConfigService.get.mockImplementation((key) =>
-        key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
-      );
-    });
-
-    /*
-    it('should throw InternalServerErrorException on unknown error', async () => {
-      // Simula uma falha na chamada do clearCookie
-      mockResponse.clearCookie.mockImplementation(() => {
-        throw new Error('Cookie fail');
-      });
-
-      await expect(controller.logout(mockResponse)).rejects.toThrow(
-        InternalServerErrorException,
-      );
-
-      // Reverter o mock após a falha
-      mockResponse.clearCookie.mockReturnThis();
-    });
-    
-  });
 });
-*/

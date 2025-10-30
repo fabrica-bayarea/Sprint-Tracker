@@ -183,10 +183,11 @@ describe('TaskService', () => {
 
       mockPrisma.task.delete.mockReturnValue(deleteMock as unknown);
       mockPrisma.task.updateMany.mockReturnValue(updateManyMock as unknown);
-
+      /*
       mockPrisma.$transaction = jest.fn().mockImplementation((operations) => {
         return Promise.resolve(operations);
       });
+      */
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const result = await service.remove(taskId);
@@ -211,7 +212,6 @@ describe('TaskService', () => {
 
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const operations: unknown[] = mockPrisma.$transaction.mock.calls[0][0];
 
       expect(operations[0]).toMatchObject({
@@ -348,7 +348,7 @@ describe('TaskService', () => {
         mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
         mockPrisma.task.update.mockResolvedValue(updatedTask);
     });
-    
+
     it('should execute transaction to move task and adjust positions in both lists', async () => {
 
         const result = await service.moveTaskToList(taskId, newListId, newPosition);
@@ -357,7 +357,6 @@ describe('TaskService', () => {
         expect(mockPrisma.list.findUnique).toHaveBeenCalledWith({ where: { id: newListId } });
         expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 
-        // PROBLEMAS A PARTIR DAQUI, POR ALGUM MOTIVO O JEST NÃO CHAMA A FUNÇÃO mockPrisma.task.updateMany e todos os expects seguintes desse teste falham
         expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
             where: {
                 listId: oldListId,
@@ -387,7 +386,6 @@ describe('TaskService', () => {
         });
         
         expect(result).toEqual(updatedTask);
-        //PROBLEMAS TERMINAM AQUI, todos os demais testes não tem problemas
     });
 
     it('should throw NotFoundException if task is not found', async () => {
