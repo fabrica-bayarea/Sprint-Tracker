@@ -393,6 +393,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(ResetPasswordGuard)
   async resetPassword(
+    @Query('token') token: string,
     @Body() resetPasswordDto: ResetPasswordDto,
     @Req() req: { user: { userId: string } },
   ){
@@ -440,11 +441,11 @@ export class AuthController {
       const resetJwtToken =
         await this.authService.verifyResetCode(verifyResetCodeDto);
 
-      res.cookie('reset_token', resetJwtToken, {
+      res.cookie('reset-token', resetJwtToken, {
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 15 * 60 * 1000,
-        path: '/',
+        path: '/v1/auth/reset-password',
       });
 
       return {

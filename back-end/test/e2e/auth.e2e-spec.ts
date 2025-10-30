@@ -22,6 +22,11 @@ import {
 } from './auth.helpers';
 import { App } from 'supertest/types';
 
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL_TEST ||
+  'postgresql://user_test:password_test@127.17.0.1:5433/postgres?schema=public';
+process.env.JWT_SECRET = 'e2e_test_jwt_secret';
+process.env.JWT_RESET_SECRET = 'e2e_test_jwt_reset_secret';
 process.env.EMAIL = 'test@example.com';
 process.env.PASS = 'testpassword';
 
@@ -377,11 +382,11 @@ describe('Auth (e2e) - Full Flow', () => {
         'Código verificado com sucesso. Você pode redefinir sua senha.',
       );
 
-      const resetTokenCookie = extractCookie(response, 'reset_token');
+      const resetTokenCookie = extractCookie(response, 'reset-token');
       expect(resetTokenCookie).toBeDefined();
-      expect(resetTokenCookie).toMatch(/^reset_token=/);
+      expect(resetTokenCookie).toMatch(/^reset-token=/);
       expect(resetTokenCookie).toContain('HttpOnly');
-      expect(resetTokenCookie).toContain('Path=/');
+      expect(resetTokenCookie).toContain('Path=/v1/auth/reset-password');
 
       const resetTokenCookieValue = extractTokenFromCookie(
         resetTokenCookie as string,
@@ -408,6 +413,7 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/verify-reset-code (POST) - should return 401 Unauthorized if code is expired', async () => {
+      await cleanDatabase()
       await createTestUser(
         prismaService,
         'expiredcode@example.com',
@@ -461,9 +467,10 @@ describe('Auth (e2e) - Full Flow', () => {
     const userEmail = 'resetpass@example.com';
     const userPassword = 'OldPassword123!';
     const userName = 'resetpassuser';
-    let resetTokenCookie: string = '';
+    let resetTokenCookie: string;
 
     beforeEach(async () => {
+      await cleanDatabase()
       await createTestUser(
         prismaService,
         userEmail,
@@ -481,16 +488,16 @@ describe('Auth (e2e) - Full Flow', () => {
       );
       expect(generatedResetCode).toBeDefined();
 
-      const verifyRes = await performVerifyResetCode(app, {
+      const verifyResponse = await performVerifyResetCode(app, {
         code: generatedResetCode,
       }).expect(200);
 
       // Captura o cookie correto sem sombrear a variável externa e aceita formatos alternativos
       resetTokenCookie =
-        (extractCookie(verifyRes, 'reset-token') as string) ||
-        (extractCookie(verifyRes, 'reset_token') as string) ||
-        (verifyRes.body?.resetToken
-          ? `reset-token=${verifyRes.body.resetToken}`
+        (extractCookie(verifyResponse, 'reset-token') as string) ||
+        (extractCookie(verifyResponse, 'reset-token') as string) ||
+        (verifyResponse.body?.resetToken
+          ? `reset-token=${verifyResponse.body.resetToken}`
           : '');
       expect(resetTokenCookie).toBeDefined();
     });
@@ -568,6 +575,7 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/reset-password (POST) - should return 400 Bad Request if passwords do not match', async () => {
+      await cleanDatabase()
       const mismatchPasswordDto = {
         newPassword: 'StrongPassword123!',
         confirmNewPassword: 'MismatchPassword!',
@@ -626,8 +634,10 @@ describe('Auth (e2e) - Full Flow', () => {
         expiredResetCookie,
       ).expect(401);
 
-      const responseBodyMessage = response.body as { message: string };
-      expect(responseBodyMessage.message).toBe('Token de redefinição não fornecido.');
+      const responseBody = response.body as { message: string };
+      expect(responseBody.message).toBe(
+        'Token de redefinição expirado ou inválido.',
+      );
 
     });
   });
@@ -642,6 +652,7 @@ describe('Auth (e2e) - Full Flow', () => {
     let sessionCookie: string;
 
     beforeEach(async () => {
+      await cleanDatabase()
       await createTestUser(
         prismaService,
         userEmail,

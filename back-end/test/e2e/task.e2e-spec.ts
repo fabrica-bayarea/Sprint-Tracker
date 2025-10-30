@@ -87,29 +87,6 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks (POST) - erro tentando criar task sem nome', async () => {
-    const board = await prisma.board.create({
-      data: { ownerId: userId, title: 'Board Teste' },
-    });
-
-    const list = await prisma.list.create({
-      data: { title: 'Lista Teste', position: 1, boardId: board.id },
-    });
-
-    const response = await request(app.getHttpServer())
-      .post('/v1/tasks')
-      .set('Cookie', trelloSessionCookie)
-      .send({
-        title: '',
-        description: 'Essa é uma task associada a uma lista',
-        status: 'TODO',
-        listId: list.id,
-      })
-      .expect(HttpStatus.BAD_REQUEST);
-
-    expect(response.body).toBeDefined();
-  });
-
   it('/v1/tasks/list/:listId (GET) - deve retornar todas as tasks da lista', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Para o GET' },

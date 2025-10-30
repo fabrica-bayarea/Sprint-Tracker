@@ -62,7 +62,7 @@ export class ResetPasswordGuard implements CanActivate {
         }
 
         throw new BadRequestException(
-          'Erro ao validar token de redefinição: ' + error.message,
+          'Erro ao validar token de redefinição: ' + String(error),
         );
       }
       throw new BadRequestException(

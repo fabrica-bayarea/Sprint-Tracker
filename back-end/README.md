@@ -23,9 +23,7 @@
 
 3. Crie um container do Postgres:
   ```bash
-  docker run --name database_trello \
-    -e POSTGRES_PASSWORD=password_postgres -e POSTGRES_USER=user_postgres \
-    -d -p 5432:5432 postgres
+  docker run --name database_trello -e POSTGRES_PASSWORD=password_postgres -e POSTGRES_USER=user_postgres -d -p 5432:5432 postgres
   ```
 
 4. Criar arquivo .env de acordo com o arquivo .env.example que está na pasta "back-end/"
