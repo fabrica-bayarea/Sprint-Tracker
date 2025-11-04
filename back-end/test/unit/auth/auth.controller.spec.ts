@@ -149,8 +149,6 @@ describe('AuthController', () => {
     });
   });
 
-  // --- Testes para signIn ---
-
   describe('signIn', () => {
     const dto: SignInDto = {
       email: 'test@example.com',
@@ -240,7 +238,7 @@ describe('AuthController', () => {
 
     it('should redirect to error page if user data is incomplete', async () => {
       const invalidReq = { user: { email: 'a', name: 'b' } }; // Falta google_id
-      // @ts-ignore
+      // @ts-expect-error
       await controller.googleAuthRedirect(invalidReq, mockResponse);
 
       expect(mockResponse.redirect).toHaveBeenCalledWith(
@@ -270,6 +268,7 @@ describe('AuthController', () => {
         'http://localhost:3001/auth/error?message=google_login_failed',
       );
     });
+
   });
 
   describe('microsoftAuthRedirect', () => {
@@ -302,9 +301,27 @@ describe('AuthController', () => {
       );
     });
 
+    it('should redirect to error page if token generation fails', async () => {
+        mockAuthService.signInWithProvider.mockResolvedValue({
+            accessToken: null, // Simula falha na geração do token
+        });
+
+        await controller.microsoftAuthRedirect(mockReq, mockResponse);
+
+        expect(mockAuthService.signInWithProvider).toHaveBeenCalled();
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            expect.stringContaining('Erro no callback da Microsoft: Token de acesso não gerado'),
+            undefined,
+            expect.stringContaining('AuthController'),
+        );
+        expect(mockResponse.redirect).toHaveBeenCalledWith(
+            'http://localhost:3001/auth/error?message=microsoft_login_failed',
+        );
+    });
+
     it('should redirect to error page if user data is incomplete', async () => {
       const invalidReq = { user: { email: 'a', name: 'b' } }; // Falta microsoftId
-      // @ts-ignore
+      // @ts-expect-error
       await controller.microsoftAuthRedirect(invalidReq, mockResponse);
 
       expect(mockResponse.redirect).toHaveBeenCalledWith(
@@ -385,7 +402,7 @@ describe('AuthController', () => {
     it('should call authService.resetPassword and return success message', async () => {
       mockAuthService.resetPassword.mockResolvedValue(undefined);
 
-      // @ts-ignore
+      // @ts-expect-error
       const result = await controller.resetPassword(mockToken, dto, mockReq);
 
       expect(mockAuthService.resetPassword).toHaveBeenCalledWith(
@@ -410,7 +427,7 @@ describe('AuthController', () => {
     it('should call authService.changePassword and return success message', async () => {
       mockAuthService.changePassword.mockResolvedValue(undefined);
 
-      // @ts-ignore
+      //aqui tinha um ts-ignore
       const result = await controller.changePassword(mockReq, dto);
 
       expect(mockAuthService.changePassword).toHaveBeenCalledWith(
@@ -424,7 +441,7 @@ describe('AuthController', () => {
       mockAuthService.changePassword.mockRejectedValue(
         new UnauthorizedException('Senha atual incorreta'),
       );
-      // @ts-ignore
+      //aqui tinha um ts-ignore
       await expect(controller.changePassword(mockReq, dto)).rejects.toThrow(
         UnauthorizedException,
       );
@@ -434,11 +451,78 @@ describe('AuthController', () => {
       mockAuthService.changePassword.mockRejectedValue(
         new Error('Encryption failure'),
       );
-      // @ts-ignore
+      //aqui tinha um ts-ignore
       await expect(controller.changePassword(mockReq, dto)).rejects.toThrow(
         InternalServerErrorException,
       );
     });
   });
+  
+  describe('logout', () => {
+    it('should clear the session cookie and return success message', async () => {
+      //@ts-ignore
+      mockConfigService.get.mockImplementation((key) =>
+        key === 'NODE_ENV' ? 'production' : 'http://localhost:3001',
+      );
 
+      await controller.logout(mockResponse);
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        'sprinttacker-session',
+        expect.objectContaining({
+          httpOnly: true,
+          path: '/',
+          secure: true, // Verifica se secure: true foi usado em produção
+          sameSite: 'lax',
+        }),
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Logout realizado com sucesso',
+      });
+
+      // Volta o mock de NODE_ENV
+      mockConfigService.get.mockImplementation((key) =>
+        key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
+      );
+    });
+
+    /*
+    //ESSE TESTE COBRE A LINHA 553-554 MAS TEM UM PROBLEMA
+    // QUANDO O TESTE É RODADO, O BLOCO TRY-CATCH DO AUTHCONTROLLER MANDA UMA MENSAGEM (ESPERADA):
+    //  InternalServerErrorException: Erro interno ao realizar logout
+    // NÃO CONSEGUI OMITIR A IMPRESSÃO DESSA MENSAGEM DE JEITO NENHUM
+
+    it('should throw InternalServerErrorException if clearCookie fails', async () => {
+
+      const loggerSpy = jest.spyOn(controller['logger'], 'error').mockImplementation(() => {});
+      const mockError = new Error();
+
+      // //@ts-expect-error
+      mockResponse.clearCookie.mockImplementationOnce(() => {
+        throw mockError;
+      });
+      
+      mockConfigService.get.mockImplementationOnce((key: string) => {
+        if (key === 'NODE_ENV') return 'development';
+        return null;
+      });
+
+      await expect(controller.logout(mockResponse)).rejects.toThrow(
+        InternalServerErrorException,
+      );
+
+      expect(mockResponse.clearCookie).toHaveBeenCalled(); 
+      expect(loggerSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Erro ao realizar logout'),
+      );
+
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+
+      loggerSpy.mockRestore();
+      
+    });
+    */
+  });
 });

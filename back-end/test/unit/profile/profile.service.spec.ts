@@ -94,6 +94,34 @@ describe('ProfileService', () => {
         }),
       ).rejects.toThrow('Erro ao atualizar o perfil');
     });
+
+    it('should throw an error if trying to update profile of external provider user', async () => {
+      const userId = 'provider-user-1';
+      const dto: ProfileDto = {
+        name: 'Social User',
+        userName: 'socialuser',
+        email: 'social@email.com',
+      };
+
+      const userWithProvider = {
+        id: userId,
+        ...dto,
+        providerId: 'google-oauth-123', // O campo que aciona o erro
+      };
+
+      mockPrisma.user.update.mockResolvedValue(userWithProvider);
+
+      await expect(service.updateProfile(userId, dto)).rejects.toThrow(
+        'Não é possível atualizar o email de um usuário cadastrado por provedor externo',
+      );
+      /*
+      // Opcional: Verificar se o update do Prisma foi chamado antes do erro
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: dto,
+      });
+      */
+    });
   });
 
   describe('deleteProfile', () => {

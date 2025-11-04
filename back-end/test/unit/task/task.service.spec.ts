@@ -183,11 +183,6 @@ describe('TaskService', () => {
 
       mockPrisma.task.delete.mockReturnValue(deleteMock as unknown);
       mockPrisma.task.updateMany.mockReturnValue(updateManyMock as unknown);
-      /*
-      mockPrisma.$transaction = jest.fn().mockImplementation((operations) => {
-        return Promise.resolve(operations);
-      });
-      */
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const result = await service.remove(taskId);

@@ -21,7 +21,10 @@ import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { 
+  PrismaClientKnownRequestError,
+  PrismaClientValidationError,
+} from '@prisma/client/runtime/library';
 
 const mockPrismaService = {
   user: {
@@ -148,6 +151,35 @@ describe('AuthService', () => {
       expect(jwtService.sign).not.toHaveBeenCalled();
     });
 
+    it('should throw ConflictException if userName already exists', async () => {
+        const userByUserName = {
+            id: 'user-diff-email',
+            email: 'other@example.com',
+            name: signUpDto.name,
+            userName: signUpDto.userName,
+            passwordHash: 'hashed_password_other',
+            authProvider: 'local',
+        };
+
+        (prisma.user.findUnique as jest.Mock)
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(userByUserName);
+
+        await expect(service.signUp(signUpDto)).rejects.toThrow(
+            new ConflictException('Email ou nome de usuário já estão em uso'),
+        );
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            where: { email: signUpDto.email },
+        });
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            where: { userName: signUpDto.userName },
+        });
+
+        expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
     it('should throw ConflictException for Prisma P2002 error (unique constraint)', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.user.create as jest.Mock).mockRejectedValue(
@@ -162,6 +194,30 @@ describe('AuthService', () => {
         new ConflictException('Email ou nome de usuário já estão em uso'),
       );
       expect(prisma.user.create).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for PrismaClientValidationError (invalid input)', async () => {
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+        (prisma.user.create as jest.Mock).mockRejectedValue(
+            new PrismaClientValidationError('Required field missing or invalid type.', {
+                clientVersion: 'test',
+            } as any),
+        );
+        
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        await expect(service.signUp(signUpDto)).rejects.toThrow(
+            new BadRequestException('Dados de entrada inválidos fornecidos.'),
+        );
+
+        // 4. Verificações:
+        expect(prisma.user.create).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'PrismaClientValidationError:',
+            'Required field missing or invalid type.',
+        );
+
+        consoleErrorSpy.mockRestore();
     });
 
     it('should throw BadRequestException for other errors during user creation', async () => {
@@ -270,6 +326,41 @@ describe('AuthService', () => {
         service.signInWithProvider(provider, invalidReq),
       ).rejects.toThrow(new ForbiddenException(`No user from ${provider}`));
     });
+
+    it('should find an existing user and return an access token', async () => {
+        const provider = 'google';
+        const req = {
+            providerId: 'google123',
+            email: 'existing@example.com',
+            name: 'Existing User',
+        };
+        const existingUser = {
+            id: 'user2',
+            email: req.email,
+            name: req.name,
+            userName: 'existinguser',
+            passwordHash: 'hashed_password',
+            authProvider: provider,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            resetToken: null,
+            resetTokenExpiresAt: null,
+        };
+
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue(existingUser);
+        //(prisma.user.create as jest.Mock).not.toHaveBeenCalled(); 
+        (jwtService.sign as jest.Mock).mockReturnValue('mockAccessTokenForExisting');
+
+        const result = await service.signInWithProvider(provider, req);
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            where: { email: req.email },
+        });
+        expect(prisma.user.create).not.toHaveBeenCalled();
+        expect(jwtService.sign).toHaveBeenCalled(); 
+        expect(result).toEqual({ accessToken: 'mockAccessTokenForExisting' });
+    });
+
   });
 
   describe('forgotPassword', () => {
@@ -470,6 +561,27 @@ describe('AuthService', () => {
       passwordHash: 'hashed_oldPassword123',
       authProvider: 'local',
     };
+
+    it('should throw BadRequestException if user is not found', async () => {
+        const userId = 'non-existent-user';
+        const changePasswordDto: ChangePasswordDto = { 
+            oldPassword: 'anyPassword',
+            newPassword: 'newPassword456',
+            confirmNewPassword: 'newPassword456',
+        };
+
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+        await expect(service.changePassword(userId, changePasswordDto)).rejects.toThrow(
+            new BadRequestException('Usuário não encontrado.'),
+        );
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            where: { id: userId },
+        });
+        expect(argon2.verify).not.toHaveBeenCalled();
+        expect(prisma.user.update).not.toHaveBeenCalled();
+    });
 
     it('should change the user password successfully', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);

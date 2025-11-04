@@ -15,6 +15,9 @@ describe('TaskController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    updatePosition: jest.fn(),
+    findTasksOverdueDate: jest.fn(),
+    moveTaskToList: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -99,6 +102,48 @@ describe('TaskController', () => {
     });
   });
 
+  describe('updatePosition', () => {
+    it('should call taskService.updatePosition with id and newPosition', async () => {
+      const taskId = 'task-1';
+      const newPosition = 5;
+      const dto = { newPosition }; // Mapeia para o DTO de entrada
+      const updatedTask = { id: taskId, position: newPosition };
+
+      mockTaskService.updatePosition.mockResolvedValue(updatedTask);
+
+      // O método recebe o ID do @Param e o DTO do @Body
+      const result = await controller.updatePosition(taskId, dto);
+
+      expect(mockTaskService.updatePosition).toHaveBeenCalledWith(
+        taskId,
+        newPosition,
+      );
+      expect(result).toEqual(updatedTask);
+    });
+  });
+
+  describe('getTodayOrOverdueTasks', () => {
+    it('should call taskService.findTasksOverdueDate with user.id', async () => {
+      const user: AuthenticatedUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        userName: 'testuser',
+        role: 'ADMIN',
+        authProvider: 'local',
+      };
+      const expectedTasks = [{ id: 'task-1' }, { id: 'task-3' }];
+
+      mockTaskService.findTasksOverdueDate.mockResolvedValue(expectedTasks);
+
+      // O método recebe o usuário do decorador @CurrentUser
+      const result = await controller.getTodayOrOverdueTasks(user);
+
+      expect(mockTaskService.findTasksOverdueDate).toHaveBeenCalledWith(user.id);
+      expect(result).toEqual(expectedTasks);
+    });
+  });
+
   describe('remove', () => {
     it('should call taskService.remove with id', async () => {
       const id = 'task-1';
@@ -110,6 +155,29 @@ describe('TaskController', () => {
 
       expect(mockTaskService.remove).toHaveBeenCalledWith(id);
       expect(result).toEqual(removed);
+    });
+  });
+
+  describe('moveTask', () => {
+    it('should call taskService.moveTaskToList with taskId, newListId, and newPosition', async () => {
+      const taskId = 'task-1';
+      const dto = {
+        newListId: 'list-new',
+        newPosition: 1,
+      };
+      const movedTask = { id: taskId, listId: dto.newListId };
+
+      mockTaskService.moveTaskToList.mockResolvedValue(movedTask);
+
+      // O método recebe o taskId do @Param e o DTO do @Body
+      const result = await controller.moveTask(taskId, dto);
+
+      expect(mockTaskService.moveTaskToList).toHaveBeenCalledWith(
+        taskId,
+        dto.newListId,
+        dto.newPosition,
+      );
+      expect(result).toEqual(movedTask);
     });
   });
 });
