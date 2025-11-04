@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import {
   BadRequestException,
   ConflictException,
@@ -5,23 +7,25 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { SignInDto } from './dto/signin.dto';
-import { SignUpDto } from './dto/signup.dto';
-import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { User } from '@prisma/client';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
 } from '@prisma/client/runtime/library';
-import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
-import { randomBytes } from 'crypto';
+
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import 'dotenv/config';
-import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
-import { ConfigService } from '@nestjs/config';
-import { EmailService } from 'src/email/email.service';
+import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
+import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
+import { EmailService } from '@/email/email.service';
+import { PrismaService } from '@/prisma/prisma.service';
+
+import { SignInDto } from './dto/signin.dto';
+import { SignUpDto } from './dto/signup.dto';
+import { AccessTokenPayload } from './interface/jwt';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +38,7 @@ export class AuthService {
 
   // Gera um token JWT com base no payload fornecido.
   private generateJwt(user: User, rememberMe = false): { accessToken: string } {
-    const payload = {
+    const payload: AccessTokenPayload = {
       sub: user.id,
       email: user.email,
       name: user.name,
@@ -250,6 +254,24 @@ export class AuthService {
     return resetJwtToken;
   }
 
+  /**
+   * Valida um usuário a partir de um token JWT.
+   */
+  async validateUserFromToken(token: string): Promise<User | null> {
+    try {
+      const decoded = this.jwtService.verify<AccessTokenPayload>(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+      return user || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Redefine a senha de um usuário usando o ID do usuário e a nova senha.
+   */
   async resetPassword(userId: string, newPasswordPlain: string): Promise<void> {
     try {
       const hashedPassword = await this.hashPassword(newPasswordPlain);

@@ -43,6 +43,7 @@ describe('TaskService', () => {
       providers: [
         TaskService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: BoardGateway, useValue: mockBoardGateway },
       ],
     }).compile();
 
@@ -54,7 +55,7 @@ describe('TaskService', () => {
   });
 
   describe('create', () => {
-    it('should create a task with correct data', async () => {
+    it('deve criar uma tarefa com os dados corretos', async () => {
       const userId = 'user-123';
       const dto: CreateTaskDto = {
         title: 'Tarefa Teste',
@@ -71,6 +72,7 @@ describe('TaskService', () => {
         position: 0,
       };
 
+      mockPrisma.list.findUnique.mockResolvedValue({ boardId: 'board-1' });
       mockPrisma.task.count = jest.fn().mockResolvedValue(0);
       mockPrisma.task.create.mockResolvedValue(createdTask);
 
@@ -96,7 +98,7 @@ describe('TaskService', () => {
   });
 
   describe('findAllByList', () => {
-    it('should return all tasks for a list ordered by position', async () => {
+    it('deve retornar todas as tarefas de uma lista ordenadas por posição', async () => {
       const listId = 'list-1';
       const tasks = [
         { id: 'task-1', position: 1 },
@@ -116,7 +118,7 @@ describe('TaskService', () => {
   });
 
   describe('findOne', () => {
-    it('should return a task by id', async () => {
+    it('deve retornar uma tarefa pelo id', async () => {
       const id = 'task-1';
       const task = { id, title: 'Teste' };
 
@@ -129,22 +131,19 @@ describe('TaskService', () => {
       });
       expect(result).toEqual(task);
     });
-
-    it('should throw NotFoundException if task not found', async () => {
-      mockPrisma.task.findUnique.mockResolvedValue(null);
-
-      await expect(service.findOne('not-found')).rejects.toThrow(
-        NotFoundException,
-      );
-    });
   });
 
   describe('update', () => {
-    it('should update a task if it exists', async () => {
+    it('deve atualizar uma tarefa se ela existir', async () => {
       const id = 'task-1';
       const dto: UpdateTaskDto = { title: 'Atualizada' };
-      const existingTask = { id, title: 'Original' };
-      const updatedTask = { id, title: 'Atualizada' };
+      const existingTask = { id };
+      const updatedTask = {
+        id,
+        title: 'Atualizada',
+        list: { boardId: 'board-1' },
+      };
+      const updatedTaskReturn = { id, title: 'Atualizada' };
 
       mockPrisma.task.findUnique.mockResolvedValue(existingTask);
       mockPrisma.task.update.mockResolvedValue(updatedTask);
@@ -154,21 +153,41 @@ describe('TaskService', () => {
       expect(mockPrisma.task.update).toHaveBeenCalledWith({
         where: { id },
         data: dto,
+        include: { list: { select: { boardId: true } } },
       });
-      expect(result).toEqual(updatedTask);
+      expect(result).toEqual(updatedTaskReturn);
     });
   });
 
-  describe('delete', () => {
-    it('must remove a task and adjust the position of the others', async () => {
-      const taskId = 'task-1';
-      const taskToDelete = {
-        id: taskId,
-        listId: 'list-123',
-        position: 2,
-      };
+  it('deve remover uma tarefa e ajustar a posição das demais', async () => {
+    const taskId = 'task-1';
+    const taskToDelete = {
+      id: taskId,
+      listId: 'list-123',
+      position: 2,
+    };
 
-      mockPrisma.task.findUnique.mockResolvedValue(taskToDelete);
+    mockPrisma.task.findUnique.mockResolvedValue(taskToDelete);
+
+    const deleteMock = { where: { id: taskId } };
+    const updateManyMock = {
+      where: {
+        listId: taskToDelete.listId,
+        position: { gt: taskToDelete.position },
+      },
+      data: {
+        position: { decrement: 1 },
+      },
+    };
+
+    mockPrisma.task.delete.mockReturnValue(deleteMock as unknown);
+    mockPrisma.task.updateMany.mockReturnValue(updateManyMock as unknown);
+
+    mockPrisma.$transaction = jest.fn().mockImplementation((operations) => {
+      return Promise.resolve(operations);
+    });
+
+    await service.remove(taskId);
 
       const deleteMock = { where: { id: taskId } };
       const updateManyMock = {

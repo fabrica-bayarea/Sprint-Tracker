@@ -3,11 +3,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from '@nestjs/testing';
-import { ProfileService } from 'src/profile/profile.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { ProfileDto } from 'src/profile/dto/update-profile.dto';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { ProfileDto } from '@/me/dto/update-profile.dto';
+import { ProfileService } from '@/me/me.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 describe('ProfileService', () => {
   let service: ProfileService;
@@ -40,7 +41,7 @@ describe('ProfileService', () => {
   });
 
   describe('getProfile', () => {
-    it('should return the user profile', async () => {
+    it('deve retornar o perfil do usuário', async () => {
       const mockUser = {
         id: '1',
         name: 'João',
@@ -58,7 +59,7 @@ describe('ProfileService', () => {
       });
     });
 
-    it('should throw error if user not found', async () => {
+    it('deve lançar erro se o usuário não for encontrado', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
       await expect(service.getProfile('1')).rejects.toThrow(
@@ -68,7 +69,7 @@ describe('ProfileService', () => {
   });
 
   describe('updateProfile', () => {
-    it('must update and return the user profile', async () => {
+    it('deve atualizar e retornar o perfil do usuário', async () => {
       const dto: ProfileDto = {
         name: 'Novo Nome',
         userName: 'novoUser',
@@ -83,7 +84,7 @@ describe('ProfileService', () => {
       expect(result).toEqual(updatedUser);
     });
 
-    it('should throw error if update fails', async () => {
+    it('deve lançar erro se a atualização falhar', async () => {
       mockPrisma.user.update.mockResolvedValue(null);
 
       await expect(
@@ -125,7 +126,7 @@ describe('ProfileService', () => {
   });
 
   describe('deleteProfile', () => {
-    it('must delete the user and all associated data', async () => {
+    it('deve deletar o usuário e todos os dados associados', async () => {
       const userId = 'user-123';
 
       const mockTransaction = jest.fn(async (callback: any) => {
@@ -143,7 +144,7 @@ describe('ProfileService', () => {
         .mockResolvedValue({ id: userId }) as any;
       mockPrisma.$transaction = mockTransaction;
 
-      const result = await service.deleteProfile(userId);
+      const result = await service.deleteAccount(userId);
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },
@@ -154,10 +155,10 @@ describe('ProfileService', () => {
       });
     });
 
-    it('should throw NotFoundException if the user does not exist', async () => {
+    it('deve lançar NotFoundException se o usuário não existir', async () => {
       mockPrisma.user.findUnique = jest.fn().mockResolvedValue(null);
 
-      await expect(service.deleteProfile('invalid-id')).rejects.toThrow(
+      await expect(service.deleteAccount('invalid-id')).rejects.toThrow(
         NotFoundException,
       );
     });
