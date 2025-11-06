@@ -26,19 +26,19 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
 
-  const isProtectedRoute = !request.nextUrl.pathname.startsWith("/auth");
-  if (isProtectedRoute) {
-    const tokenCookie = request.cookies.get("sprinttacker-session");
-    if (!tokenCookie?.value) {
-      const loginURL = new URL("/auth/login", request.url);
-      const redirectResponse = NextResponse.redirect(loginURL);
-      redirectResponse.headers.set(
-        "Content-Security-Policy",
-        sanitizedCspHeader
-      );
-      return redirectResponse;
-    }
-  }
+  // const isProtectedRoute = !request.nextUrl.pathname.startsWith("/auth");
+  // if (isProtectedRoute) {
+  //   const tokenCookie = request.cookies.get("sprinttacker-session");
+  //   if (!tokenCookie?.value) {
+  //     const loginURL = new URL("/auth/login", request.url);
+  //     const redirectResponse = NextResponse.redirect(loginURL);
+  //     redirectResponse.headers.set(
+  //       "Content-Security-Policy",
+  //       sanitizedCspHeader
+  //     );
+  //     return redirectResponse;
+  //   }
+  // }
 
   const homeToDashboard = request.nextUrl.pathname === "/";
   if (homeToDashboard) {

@@ -1,7 +1,7 @@
 .wrapperDelete {
-  color: red;
+  /* color: red; */
   margin-top: 40px;
-  border: 1px solid red;
+  border: 1px solid #333;
   padding: 20px;
   display: flex;
   font-size: 1.1rem;
@@ -18,20 +18,22 @@
 .deleteInfo p {
   margin: 0;
   font-size: 0.9rem;
+  color: #555;
 }
 
 .deleteButton {
-  background-color: red;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: red;
+  border: 1px solid red;
   font-size: 1rem;
   font-weight: bold;
   border-radius: 8px;
   padding: 10px 30px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
 .deleteButton:hover {
   background-color: #a80000;
+  color: white;
 }
