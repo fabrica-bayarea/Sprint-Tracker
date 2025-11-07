@@ -1,11 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from 'src/auth/auth.controller';
-import { AuthService } from 'src/auth/auth.service';
-import { ConfigService } from '@nestjs/config';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { Response } from 'express';
-import { JwtService } from '@nestjs/jwt';
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Response } from 'express';
+
+import { AuthController } from '@/auth/auth.controller';
+import { AuthService } from '@/auth/auth.service';
+import { SignUpDto } from '@/auth/dto/signup.dto';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -34,6 +35,14 @@ describe('AuthController', () => {
     sign: jest.fn(),
   };
 
+  const mockLogger = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    verbose: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -42,11 +51,14 @@ describe('AuthController', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: JwtService, useValue: mockJwtService },
       ],
-    }).compile();
+    })
+      .setLogger(mockLogger)
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     controller = module.get<AuthController>(AuthController);
   });
+
   describe('signUp', () => {
     it('deve retornar sucesso e definir cookie ao cadastrar usuário', async () => {
       const dto: SignUpDto = {
@@ -64,7 +76,7 @@ describe('AuthController', () => {
 
       expect(mockAuthService.signUp).toHaveBeenCalledWith(dto);
       expect(mockResponse.cookie).toHaveBeenCalledWith(
-        'trello-session',
+        'sprinttacker-session',
         'fake-token',
         expect.objectContaining({
           httpOnly: true,

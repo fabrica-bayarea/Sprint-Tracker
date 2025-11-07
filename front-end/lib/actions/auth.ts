@@ -3,7 +3,7 @@
 import { handleFetchError } from "@/lib/utils/handleFetchError";
 import { setSessioCookie, getCookie } from "@/lib/utils/sessionCookie";
 
-const BASE_URL_API = process.env.BASE_URL_API || 'http://trello-api:3000';
+const BASE_URL_API = process.env.BASE_URL_API || 'http://sprinttacker-api:3000';
 
 export async function login(email: string, password: string, rememberMe: boolean) {
   const response = await fetch(`${BASE_URL_API}/v1/auth/signin`, {

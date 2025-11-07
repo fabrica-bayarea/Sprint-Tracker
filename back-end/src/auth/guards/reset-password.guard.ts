@@ -1,4 +1,4 @@
-// src/auth/guards/reset-password.guard.ts
+// @/auth/guards/reset-password.guard.ts
 import {
   CanActivate,
   ExecutionContext,
@@ -6,11 +6,12 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Observable } from 'rxjs';
-import { ResetPasswordPayload } from 'src/types/jwt-payload.interface';
+import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { Observable } from 'rxjs';
+
+import { ResetPasswordPayload } from '@/types/jwt-payload.interface';
 
 @Injectable()
 export class ResetPasswordGuard implements CanActivate {

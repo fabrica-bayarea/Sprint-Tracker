@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import styles from "./style.module.css";
 
@@ -12,8 +12,8 @@ const icons = {
   info: "ℹ️"
 };
 
-export default function Notification() {
-  const { message, type, show, hideNotification } = useNotificationStore();
+export default function Warning() {
+  const { message, type, show, hideWarning } = useWarningStore();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function Notification() {
         setIsVisible(false);
       }, 5000);
       hideStoreTimer = setTimeout(() => {
-        hideNotification();
+        hideWarning();
       }, 5000 + 500);
 
     } else {
@@ -38,7 +38,7 @@ export default function Notification() {
       clearTimeout(visibilityTimer);
       clearTimeout(hideStoreTimer);
     };
-  }, [show, message, type, hideNotification]);
+  }, [show, message, type, hideWarning]);
 
   if (!show) {
     return null;
@@ -47,12 +47,12 @@ export default function Notification() {
   return (
     <div
       className={[
-        styles.notification,
-        styles[`notification--${type}`],
-        !isVisible && styles["notification--hidden"]
+        styles.warning,
+        styles[`warning--${type}`],
+        !isVisible && styles["warning--hidden"]
       ].filter(Boolean).join(" ")}
     >
-      <span className={styles.notification__icon}>{icons[type]}</span>
+      <span className={styles.warning__icon}>{icons[type]}</span>
       <span>
         {typeof message === "string" ? message : String(message)}
       </span>

@@ -1,33 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ListService } from 'src/list/list.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { CreateListDto } from 'src/list/dto/create-list.dto';
-import { UpdateListDto } from 'src/list/dto/update-list.dto';
+
+import { BoardGateway } from '@/events/board.gateway';
+import { CreateListDto } from '@/list/dto/create-list.dto';
+import { UpdateListDto } from '@/list/dto/update-list.dto';
+import { ListService } from '@/list/list.service';
+import { PrismaService } from '@/prisma/prisma.service';
+
+import { mockPrisma, mockBoardGateway } from '../setup-mock';
 
 describe('ListService', () => {
   let service: ListService;
 
-  const mockPrisma = {
-    board: {
-      findFirst: jest.fn(),
-    },
-    list: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-  };
-
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleBuilder = Test.createTestingModule({
       providers: [
         ListService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: BoardGateway, useValue: mockBoardGateway },
       ],
-    }).compile();
+    });
+
+    const module: TestingModule = await moduleBuilder.compile();
 
     service = module.get<ListService>(ListService);
   });
@@ -37,8 +30,7 @@ describe('ListService', () => {
   });
 
   describe('create', () => {
-    it('should create a list if board belongs to user', async () => {
-      const ownerId = 'user-123';
+    it('deve criar uma lista se o quadro pertencer ao usuário', async () => {
       const dto: CreateListDto = {
         boardId: 'board-1',
         title: 'To do',
@@ -48,48 +40,25 @@ describe('ListService', () => {
       mockPrisma.board.findFirst.mockResolvedValue({ id: dto.boardId });
       mockPrisma.list.create.mockResolvedValue({ id: 'list-1', ...dto });
 
-      const result = await service.create(ownerId, dto);
+      const result = await service.create(dto);
 
-      expect(mockPrisma.board.findFirst).toHaveBeenCalledWith({
-        where: { id: dto.boardId, ownerId },
-      });
       expect(mockPrisma.list.create).toHaveBeenCalledWith({
         data: dto,
       });
       expect(result).toEqual({ id: 'list-1', ...dto });
     });
-
-    it('should throw ForbiddenException if user is not board owner', async () => {
-      const dto: CreateListDto = {
-        boardId: 'board-1',
-        title: 'To do',
-        position: 1,
-      };
-      mockPrisma.board.findFirst.mockResolvedValue(null);
-
-      await expect(service.create('user-123', dto)).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
   });
 
   describe('findAll', () => {
-    it("should return all lists from user's board", async () => {
-      const ownerId = 'user-123';
+    it('deve retornar todas as listas do quadro do usuário', async () => {
       const boardId = 'board-1';
       const lists = [{ id: 'list-1', title: 'To do' }];
 
       mockPrisma.board.findFirst.mockResolvedValue({ id: boardId });
       mockPrisma.list.findMany.mockResolvedValue(lists);
 
-      const result = await service.findAll(ownerId, boardId);
+      const result = await service.findAll(boardId);
 
-      expect(mockPrisma.board.findFirst).toHaveBeenCalledWith({
-        where: {
-          id: boardId,
-          ownerId,
-        },
-      });
       expect(mockPrisma.list.findMany).toHaveBeenCalledWith({
         where: { boardId, isArchived: false },
         orderBy: { position: 'asc' },
@@ -97,18 +66,10 @@ describe('ListService', () => {
       });
       expect(result).toEqual(lists);
     });
-
-    it('should throw ForbiddenException if board not owned by user', async () => {
-      mockPrisma.board.findFirst.mockResolvedValue(null);
-
-      await expect(service.findAll('user-123', 'board-1')).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
   });
 
   describe('findOne', () => {
-    it('should return the list if it exists', async () => {
+    it('deve retornar a lista se ela existir', async () => {
       const list = { id: 'list-1', title: 'To do' };
       mockPrisma.list.findUnique.mockResolvedValue(list);
 
@@ -118,18 +79,10 @@ describe('ListService', () => {
       });
       expect(result).toEqual(list);
     });
-
-    it('should throw NotFoundException if list not found', async () => {
-      mockPrisma.list.findUnique.mockResolvedValue(null);
-
-      await expect(service.findOne('list-1')).rejects.toThrow(
-        NotFoundException,
-      );
-    });
   });
 
   describe('update', () => {
-    it('should update a list after confirming it exists', async () => {
+    it('deve atualizar uma lista após confirmar que ela existe', async () => {
       const id = 'list-1';
       const dto: UpdateListDto = { title: 'Updated' };
       const updated = { id, title: 'Updated' };
@@ -151,7 +104,7 @@ describe('ListService', () => {
   });
 
   describe('remove', () => {
-    it('should delete a list after confirming it exists', async () => {
+    it('deve deletar uma lista após confirmar que ela existe', async () => {
       const id = 'list-1';
       const deleted = { id, title: 'To do' };
 

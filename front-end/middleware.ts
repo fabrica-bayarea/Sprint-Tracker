@@ -1,14 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server";
 
-const isDev = process.env.NODE_ENV === 'development'
+const isDev = process.env.NODE_ENV === "development";
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
   const cspHeader = `
     default-src 'self';
-    script-src 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''};
-    style-src 'self' https://fonts.googleapis.com ${isDev ? "'unsafe-inline'" : ''};
+    script-src 'nonce-${nonce}' 'strict-dynamic' ${
+    isDev ? "'unsafe-eval'" : ""
+  };
+    style-src 'self' https://fonts.googleapis.com ${
+      isDev ? "'unsafe-inline'" : ""
+    };
     img-src 'self' data:;
     font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
     connect-src 'self';
@@ -17,44 +21,44 @@ export function middleware(request: NextRequest) {
     base-uri 'self';
     object-src 'none';
   `;
-  const sanitizedCspHeader = cspHeader.replace(/\s{2,}/g, ' ').trim();
+  const sanitizedCspHeader = cspHeader.replace(/\s{2,}/g, " ").trim();
 
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set("x-nonce", nonce);
 
-  const isProtectedRoute = !request.nextUrl.pathname.startsWith('/auth');
+  const isProtectedRoute = !request.nextUrl.pathname.startsWith("/auth");
   if (isProtectedRoute) {
-    const tokenCookie = request.cookies.get('trello-session');
+    const tokenCookie = request.cookies.get("sprinttacker-session");
     if (!tokenCookie?.value) {
-      const loginURL = new URL('/auth/login', request.url);
+      const loginURL = new URL("/auth/login", request.url);
       const redirectResponse = NextResponse.redirect(loginURL);
-      redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
+      redirectResponse.headers.set(
+        "Content-Security-Policy",
+        sanitizedCspHeader
+      );
       return redirectResponse;
     }
   }
 
-  const homeToDashboard = request.nextUrl.pathname === '/';
+  const homeToDashboard = request.nextUrl.pathname === "/";
   if (homeToDashboard) {
-    const dashboardURL = new URL('/dashboard', request.url);
+    const dashboardURL = new URL("/dashboard", request.url);
     const redirectResponse = NextResponse.redirect(dashboardURL);
-    redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
+    redirectResponse.headers.set("Content-Security-Policy", sanitizedCspHeader);
     return redirectResponse;
   }
 
   const response = NextResponse.next();
 
- response.headers.set(
-    'Content-Security-Policy',
-    sanitizedCspHeader
-  );
+  response.headers.set("Content-Security-Policy", sanitizedCspHeader);
 
-  return response
+  return response;
 }
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|public|images).*)',
-    '/dashboard/:path*',
-    '/profile',
+    "/((?!api|_next/static|_next/image|favicon.ico|public|images).*)",
+    "/dashboard/:path*",
+    "/profile",
   ],
 };

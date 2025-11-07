@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TaskController } from 'src/task/task.controller';
-import { TaskService } from 'src/task/task.service';
-import { CreateTaskDto } from 'src/task/dto/create-task.dto';
-import { UpdateTaskDto } from 'src/task/dto/update-task.dto';
-import { AuthenticatedUser } from 'src/types/user.interface';
-import { TaskStatus } from 'src/common/enums/task-status.enum';
+
+import { BoardRoleGuard } from '@/auth/guards/board-role.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { TaskStatus } from '@/common/enums/task-status.enum';
+import { CreateTaskDto } from '@/task/dto/create-task.dto';
+import { UpdateTaskDto } from '@/task/dto/update-task.dto';
+import { TaskController } from '@/task/task.controller';
+import { TaskService } from '@/task/task.service';
+import { AuthenticatedUser } from '@/types/user.interface';
 
 describe('TaskController', () => {
   let controller: TaskController;
@@ -18,10 +21,16 @@ describe('TaskController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleBuilder = Test.createTestingModule({
       controllers: [TaskController],
       providers: [{ provide: TaskService, useValue: mockTaskService }],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(BoardRoleGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) });
+
+    const module: TestingModule = await moduleBuilder.compile();
 
     controller = module.get<TaskController>(TaskController);
   });
@@ -31,7 +40,7 @@ describe('TaskController', () => {
   });
 
   describe('create', () => {
-    it('should call taskService.create with user.id and dto', async () => {
+    it('deve chamar taskService.create com user.id e o dto', async () => {
       const user: AuthenticatedUser = {
         id: 'user-123',
         email: 'test@example.com',
@@ -57,7 +66,7 @@ describe('TaskController', () => {
   });
 
   describe('findAll', () => {
-    it('should call taskService.findAllByList with listId', async () => {
+    it('deve chamar taskService.findAllByList com o listId', async () => {
       const listId = 'list-1';
       const expectedTasks = [{ id: 'task-1' }, { id: 'task-2' }];
 
@@ -71,7 +80,7 @@ describe('TaskController', () => {
   });
 
   describe('findOne', () => {
-    it('should call taskService.findOne with task id', async () => {
+    it('deve chamar taskService.findOne com o id da tarefa', async () => {
       const id = 'task-1';
       const expectedTask = { id, title: 'Tarefa' };
 
@@ -85,7 +94,7 @@ describe('TaskController', () => {
   });
 
   describe('update', () => {
-    it('should call taskService.update with id and dto', async () => {
+    it('deve chamar taskService.update com o id e o dto', async () => {
       const id = 'task-1';
       const dto: UpdateTaskDto = { title: 'Atualizado' };
       const updatedTask = { id, title: 'Atualizado' };
@@ -100,7 +109,7 @@ describe('TaskController', () => {
   });
 
   describe('remove', () => {
-    it('should call taskService.remove with id', async () => {
+    it('deve chamar taskService.remove com o id', async () => {
       const id = 'task-1';
       const removed = { id };
 

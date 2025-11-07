@@ -1,6 +1,6 @@
 ![Centro Universitário IESB](assets/logoIesb.png)
 
-# Novo Trello - Next.js + NestJS
+# Sprint Tacker - Next.js + NestJS
 
 Uma plataforma de gerenciamento de tarefas baseada no modelo Kanban, desenvolvida com **Next.js** (front-end) e **NestJS** (back-end). Oferece funcionalidades como criação de quadros, listas e cartões, autenticação, atribuição de responsáveis, notificações e integração com outros serviços.
 
@@ -27,7 +27,7 @@ Certifique-se de ter as seguintes ferramentas instaladas no seu ambiente:
 1. Clone o repositório:
 
   ```bash
-  git clone https://github.com/fabrica-bayarea/novoTrello.git .
+  git clone https://github.com/fabrica-bayarea/Sprint-Tracker.git .
   ```
 
 2. Inicie a aplicação:

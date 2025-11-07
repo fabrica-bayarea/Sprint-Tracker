@@ -1,12 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { PrismaService } from '../../src/prisma/prisma.service';
-import cookieParser from 'cookie-parser';
-import { EmailService } from '../../src/email/email.service';
-import * as jwt from 'jsonwebtoken';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Role } from '@prisma/client';
+import cookieParser from 'cookie-parser';
+import * as jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { App } from 'supertest/types';
+
+import { AppModule } from '@/app.module';
+import { EmailService } from '@/email/email.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 import {
   createTestUser,
@@ -20,7 +22,6 @@ import {
   extractCookie,
   extractTokenFromCookie,
 } from './auth.helpers';
-import { App } from 'supertest/types';
 
 process.env.DATABASE_URL =
   process.env.DATABASE_URL_TEST ||
@@ -91,7 +92,7 @@ describe('Auth (e2e) - Full Flow', () => {
   // --- Testes E2E para SignUp ---
 
   describe('SignUp Flow', () => {
-    it('/v1/auth/signup (POST) - should register a new user and set trello-session cookie', async () => {
+    it('/v1/auth/signup (POST) - should register a new user and set sprinttacker-session cookie', async () => {
       const signUpDto = {
         email: 'newuser@example.com',
         password: 'StrongPassword123!',
@@ -101,9 +102,9 @@ describe('Auth (e2e) - Full Flow', () => {
 
       const response = await performSignUp(app, signUpDto).expect(201);
 
-      const sessionCookie = extractCookie(response, 'trello-session');
+      const sessionCookie = extractCookie(response, 'sprinttacker-session');
       expect(sessionCookie).toBeDefined();
-      expect(sessionCookie).toMatch(/^trello-session=/);
+      expect(sessionCookie).toMatch(/^sprinttacker-session=/);
       expect(sessionCookie).toContain('HttpOnly');
       expect(sessionCookie).toContain('Path=/');
 
@@ -198,7 +199,7 @@ describe('Auth (e2e) - Full Flow', () => {
       );
     });
 
-    it('/v1/auth/signin (POST) - should login a user with valid credentials and set trello-session cookie', async () => {
+    it('/v1/auth/signin (POST) - should login a user with valid credentials and set sprinttacker-session cookie', async () => {
       const signInDto = {
         email: userEmail,
         password: userPassword,
@@ -207,9 +208,9 @@ describe('Auth (e2e) - Full Flow', () => {
 
       const response = await performSignIn(app, signInDto).expect(200);
 
-      const sessionCookie = extractCookie(response, 'trello-session');
+      const sessionCookie = extractCookie(response, 'sprinttacker-session');
       expect(sessionCookie).toBeDefined();
-      expect(sessionCookie).toMatch(/^trello-session=/);
+      expect(sessionCookie).toMatch(/^sprinttacker-session=/);
       expect(sessionCookie).toContain('HttpOnly');
       expect(sessionCookie).toContain('Path=/');
 
@@ -525,9 +526,12 @@ describe('Auth (e2e) - Full Flow', () => {
       };
       const loginResponse = await performSignIn(app, signInDto).expect(200);
 
-      const sessionCookie = extractCookie(loginResponse, 'trello-session');
+      const sessionCookie = extractCookie(
+        loginResponse,
+        'sprinttacker-session',
+      );
       expect(sessionCookie).toBeDefined();
-      expect(sessionCookie).toMatch(/^trello-session=/);
+      expect(sessionCookie).toMatch(/^sprinttacker-session=/);
 
       const userInDbAfterReset = await prismaService.user.findUnique({
         where: { email: userEmail },
@@ -669,7 +673,10 @@ describe('Auth (e2e) - Full Flow', () => {
       };
       const loginResponse = await performSignIn(app, signInDto).expect(200);
 
-      sessionCookie = extractCookie(loginResponse, 'trello-session') as string;
+      sessionCookie = extractCookie(
+        loginResponse,
+        'sprinttacker-session',
+      ) as string;
       expect(sessionCookie).toBeDefined();
     });
 
@@ -697,10 +704,10 @@ describe('Auth (e2e) - Full Flow', () => {
 
       const newSessionCookie = extractCookie(
         loginWithNewPassResponse,
-        'trello-session',
+        'sprinttacker-session',
       );
       expect(newSessionCookie).toBeDefined();
-      expect(newSessionCookie).toMatch(/^trello-session=/);
+      expect(newSessionCookie).toMatch(/^sprinttacker-session=/);
     });
 
     it('/v1/auth/change-password (PUT) - should return 400 Bad Request if old password is incorrect', async () => {

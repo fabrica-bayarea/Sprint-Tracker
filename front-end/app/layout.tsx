@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from 'next/headers';
 
-import Notification from "@/components/features/shared/notification";
+import Warning from "@/components/features/shared/warning";
 
 import "./globals.css";
 
@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Home",
-  description: "A simple Trello",
+  description: "A simple Sprint Tacker",
 };
 
 export default async function RootLayout(
@@ -32,7 +32,7 @@ export default async function RootLayout(
     <html lang="pt-br">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
-        <Notification />
+        <Warning />
       </body>
     </html>
   );

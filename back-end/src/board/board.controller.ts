@@ -10,18 +10,25 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { CurrentUser } from 'src/auth/strategy/decorators/current-user.decorator';
-import { BoardService } from './board.service';
-import { CreateBoardDto } from './dto/create-board.dto';
-import { UpdateBoardDto } from './dto/update-board.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import {
   ApiOperation,
   ApiResponse,
   ApiCookieAuth,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthenticatedUser } from 'src/types/user.interface';
+import { Role } from '@prisma/client';
+
+import { BoardRoleGuard } from '@/auth/guards/board-role.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { BoardRoles } from '@/auth/strategy/decorators/board-rules.decorator';
+import { CurrentUser } from '@/auth/strategy/decorators/current-user.decorator';
+import { AuthenticatedUser } from '@/types/user.interface';
+
+import { BoardService } from './board.service';
+import { CreateBoardDto } from './dto/create-board.dto';
+import { InviteBoardDto } from './dto/invite-to-board.dto';
+import { ResponseInviteBoardDto } from './dto/response-invite.dto';
+import { UpdateBoardDto } from './dto/update-board.dto';
 
 @ApiCookieAuth()
 @ApiTags('Quadros')
@@ -39,6 +46,7 @@ export class BoardController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateBoardDto) {
     return this.boardService.create(user.id, dto);
   }
@@ -77,14 +85,11 @@ export class BoardController {
   @ApiResponse({ status: 400, description: 'Erro ao atualizar o quadro' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
-  @Patch(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  update(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpdateBoardDto,
-  ) {
-    return this.boardService.update(id, user.id, dto);
+  @Patch(':boardId')
+  @UseGuards(JwtAuthGuard, BoardRoleGuard)
+  @BoardRoles(Role.ADMIN)
+  update(@Param('boardId') boardId: string, @Body() dto: UpdateBoardDto) {
+    return this.boardService.update(boardId, dto);
   }
 
   @ApiOperation({
@@ -95,9 +100,48 @@ export class BoardController {
   @ApiResponse({ status: 400, description: 'Erro ao remover o quadro' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.boardService.remove(id, user.id);
+  @Delete(':boardId')
+  @UseGuards(JwtAuthGuard, BoardRoleGuard)
+  @BoardRoles(Role.ADMIN)
+  remove(@Param('boardId') boardId: string) {
+    return this.boardService.remove(boardId);
+  }
+
+  @ApiOperation({
+    summary: 'Convida um usuario para um quadro.',
+    description: 'Convida um usuario para um quadro específico pelo UserName',
+  })
+  @ApiResponse({ status: 200, description: 'Usuário convidado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Erro ao convidar o usuário' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado' })
+  @Post('invite/:boardId')
+  @UseGuards(JwtAuthGuard, BoardRoleGuard)
+  @BoardRoles(Role.ADMIN)
+  invite(
+    @CurrentUser() sender: AuthenticatedUser,
+    @Param('boardId') boardId: string,
+    @Body() dto: InviteBoardDto,
+  ) {
+    return this.boardService.invite(boardId, sender.id, dto);
+  }
+
+  @ApiOperation({
+    summary: 'Responde a um convite para um quadro.',
+    description:
+      'Aceita ou recusa um convite para um quadro específico pelo ID do convite',
+  })
+  @ApiResponse({ status: 200, description: 'Convite respondido com sucesso' })
+  @ApiResponse({ status: 400, description: 'Erro ao responder o convite' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado' })
+  @Post('invite/:boardId/response')
+  @UseGuards(JwtAuthGuard)
+  responseInvite(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('boardId') boardId: string,
+    @Body() dto: ResponseInviteBoardDto,
+  ) {
+    return this.boardService.responseInvite(boardId, user.id, dto);
   }
 }

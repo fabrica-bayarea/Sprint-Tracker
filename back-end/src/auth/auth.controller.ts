@@ -19,6 +19,7 @@ import {
   ForbiddenException,
   HttpException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiOperation,
   ApiResponse,
@@ -28,18 +29,18 @@ import {
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
-import { AuthService } from 'src/auth/auth.service';
-import { SignInDto } from 'src/auth/dto/signin.dto';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 import { Response } from 'express';
-import { IsEnabledAuthGuard } from 'src/auth/guards/is-enable-oauth.guard';
-import { ConfigService } from '@nestjs/config';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
-import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
-import { ResetPasswordGuard } from 'src/auth/guards/reset-password.guard';
+
+import { AuthService } from '@/auth/auth.service';
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
+import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
+import { SignInDto } from '@/auth/dto/signin.dto';
+import { SignUpDto } from '@/auth/dto/signup.dto';
+import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
+import { IsEnabledAuthGuard } from '@/auth/guards/is-enable-oauth.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { ResetPasswordGuard } from '@/auth/guards/reset-password.guard';
+import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
 
 @ApiTags('Autenticação e Autorização')
 @Controller({ path: 'auth', version: '1' })
@@ -112,7 +113,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           result.accessToken,
           this.setCookieOptions(false),
         )
@@ -161,7 +162,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           result.accessToken,
           this.setCookieOptions(dto.rememberMe),
         )
@@ -239,7 +240,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           authResult.accessToken,
           this.setCookieOptions(false),
         )
@@ -311,7 +312,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           authResult.accessToken,
           this.setCookieOptions(false),
         )
@@ -541,7 +542,7 @@ export class AuthController {
   logout(@Res() res: Response) {
     try {
       return res
-        .clearCookie('trello-session', {
+        .clearCookie('sprinttacker-session', {
           httpOnly: true,
           path: '/',
           secure: this.configService.get<string>('NODE_ENV') === 'production',

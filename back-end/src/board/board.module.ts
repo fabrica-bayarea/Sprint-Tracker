@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
+
+import { EventsModule } from '@/events/events.module';
+import { PrismaModule } from '@/prisma/prisma.module';
+
+import { BoardController } from './board.controller';
 import { BoardService } from './board.service';
-import { BoardController } from '../board/board.controller';
-import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
+  providers: [BoardService],
   controllers: [BoardController],
-  providers: [BoardService, PrismaService],
+  imports: [EventsModule, PrismaModule],
 })
 export class BoardModule {}

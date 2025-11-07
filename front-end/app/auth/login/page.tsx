@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link";
 
 import { login } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 
@@ -16,7 +16,7 @@ import styles from "./style.module.css";
 
 export default function Home() {
   const router = useRouter()
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -30,7 +30,7 @@ export default function Home() {
       router.push("/dashboard");
       router.refresh();
     } else {
-      showNotification(result.error || "Erro desconhecido", 'failed')
+      showWarning(result.error || "Erro desconhecido", 'failed')
     }
   }
 
