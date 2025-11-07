@@ -92,7 +92,6 @@ export class ListService {
         where: {
           boardId: list.boardId,
           position: { gte: newPosition, lt: oldPosition },
-          boardId: list.boardId, // Adicionando filtro por boardId para evitar bugs
         },
         data: {
           position: { increment: 1 },
@@ -103,7 +102,6 @@ export class ListService {
         where: {
           boardId: list.boardId,
           position: { gt: oldPosition, lte: newPosition },
-          boardId: list.boardId, // Adicionando filtro por boardId para evitar bugs
         },
         data: {
           position: { decrement: 1 },
@@ -111,8 +109,7 @@ export class ListService {
       });
     }
 
-    // A operação de update final, que a rota PATCH esperava retornar
-    await this.prisma.list.update({
+    const updatedList = await this.prisma.list.update({
       where: { id: listId },
       data: { position: newPosition },
     });
@@ -123,6 +120,8 @@ export class ListService {
       at: new Date().toISOString(),
     };
     this.boardGateway.emitModifiedInBoard(list.boardId, payload);
+
+    return updatedList;
   }
 
   /**

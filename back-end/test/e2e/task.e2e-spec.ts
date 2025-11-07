@@ -1,13 +1,15 @@
 import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
 import cookieParser from 'cookie-parser';
-import { AppModule } from 'src/app.module';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { performSignUp, performSignIn } from './auth.helpers';
-import {App} from "supertest/types";
+import request from 'supertest';
+import { App } from 'supertest/types';
 
-describe('Task (e2e)', () => {
+import { AppModule } from '@/app.module';
+import { PrismaService } from '@/prisma/prisma.service';
+
+import { performSignUp, performSignIn } from './auth.helpers';
+
+describe('Tarefas (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let userId: string;
@@ -59,21 +61,27 @@ describe('Task (e2e)', () => {
   afterAll(async () => {
     await prisma.task.deleteMany();
     await prisma.list.deleteMany();
+    await prisma.invite.deleteMany();
+    await prisma.boardMember.deleteMany();
     await prisma.board.deleteMany();
     await prisma.user.deleteMany();
     await app.close();
   });
 
-  it('/v1/tasks (POST) - deve criar uma task vinculada a list e user', async () => {
+  it('/v1/tasks (POST) - deve criar uma tarefa vinculada a lista e usuário', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Teste' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
       data: { title: 'Lista Teste', position: 1, boardId: board.id },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .post('/v1/tasks')
       .set('Cookie', trelloSessionCookie)
       .send({
@@ -87,9 +95,13 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks/list/:listId (GET) - deve retornar todas as tasks da lista', async () => {
+  it('/v1/tasks/list/:listId (GET) - deve retornar todas as tarefas da lista', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Para o GET' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
@@ -117,7 +129,7 @@ describe('Task (e2e)', () => {
       ],
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .get(`/v1/tasks/list/${list.id}`)
       .set('Cookie', trelloSessionCookie)
       .expect(HttpStatus.OK);
@@ -125,9 +137,13 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks/:id (GET) - deve retornar uma task específica', async () => {
+  it('/v1/tasks/:id (GET) - deve retornar uma tarefa específica', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board to get one task' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
@@ -145,7 +161,7 @@ describe('Task (e2e)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .get(`/v1/tasks/${task.id}`)
       .set('Cookie', trelloSessionCookie)
       .expect(HttpStatus.OK);
@@ -153,9 +169,13 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks/:id (PATCH) - deve atualizar a task', async () => {
+  it('/v1/tasks/:id (PATCH) - deve atualizar a tarefa', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board to update' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
@@ -173,7 +193,7 @@ describe('Task (e2e)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .patch(`/v1/tasks/${task.id}`)
       .set('Cookie', trelloSessionCookie)
       .send({ title: 'Task Updated' })
@@ -185,6 +205,10 @@ describe('Task (e2e)', () => {
   it('/v1/tasks/:id/position (PATCH) - deve atualizar a posição', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Position Update' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
@@ -202,7 +226,7 @@ describe('Task (e2e)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .patch(`/v1/tasks/${task.id}/position`)
       .set('Cookie', trelloSessionCookie)
       .send({ newPosition: 2 })
@@ -211,9 +235,13 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks/:id (DELETE) - deve deletar a task', async () => {
+  it('/v1/tasks/:id (DELETE) - deve deletar a tarefa', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Delete' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
@@ -231,7 +259,7 @@ describe('Task (e2e)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .delete(`/v1/tasks/${task.id}`)
       .set('Cookie', trelloSessionCookie)
       .expect(HttpStatus.OK);
@@ -239,9 +267,13 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks/due/today (GET) - deve retornar tasks com vencimento hoje', async () => {
+  it('/v1/tasks/due/today (GET) - deve retornar tarefas com vencimento hoje', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Overdue' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list = await prisma.list.create({
@@ -260,7 +292,7 @@ describe('Task (e2e)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .get(`/v1/tasks/due/today`)
       .set('Cookie', trelloSessionCookie)
       .expect(HttpStatus.OK);
@@ -268,9 +300,13 @@ describe('Task (e2e)', () => {
     expect(response.body).toBeDefined();
   });
 
-  it('/v1/tasks/:id/move (PATCH) - deve mover task para outra lista', async () => {
+  it('/v1/tasks/:id/move (PATCH) - deve mover tarefa para outra lista', async () => {
     const board = await prisma.board.create({
       data: { ownerId: userId, title: 'Board Move' },
+    });
+
+    await prisma.boardMember.create({
+      data: { boardId: board.id, userId: userId, role: 'ADMIN' },
     });
 
     const list1 = await prisma.list.create({
@@ -292,7 +328,7 @@ describe('Task (e2e)', () => {
       },
     });
 
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as App)
       .patch(`/v1/tasks/${task.id}/move`)
       .set('Cookie', trelloSessionCookie)
       .send({ newListId: list2.id, newPosition: 1 })
