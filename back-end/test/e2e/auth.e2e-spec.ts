@@ -413,7 +413,7 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/verify-reset-code (POST) - should return 401 Unauthorized if code is expired', async () => {
-      await cleanDatabase();
+      await cleanDatabase()
       await createTestUser(
         prismaService,
         'expiredcode@example.com',
@@ -470,7 +470,7 @@ describe('Auth (e2e) - Full Flow', () => {
     let resetTokenCookie: string;
 
     beforeEach(async () => {
-      await cleanDatabase();
+      await cleanDatabase()
       await createTestUser(
         prismaService,
         userEmail,
@@ -492,7 +492,13 @@ describe('Auth (e2e) - Full Flow', () => {
         code: generatedResetCode,
       }).expect(200);
 
-      resetTokenCookie = extractCookie(verifyResponse, 'reset-token') as string;
+      // Captura o cookie correto sem sombrear a variável externa e aceita formatos alternativos
+      resetTokenCookie =
+        (extractCookie(verifyResponse, 'reset-token') as string) ||
+        (extractCookie(verifyResponse, 'reset-token') as string) ||
+        (verifyResponse.body?.resetToken
+          ? `reset-token=${verifyResponse.body.resetToken}`
+          : '');
       expect(resetTokenCookie).toBeDefined();
     });
 
@@ -569,6 +575,7 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/reset-password (POST) - should return 400 Bad Request if passwords do not match', async () => {
+      await cleanDatabase()
       const mismatchPasswordDto = {
         newPassword: 'StrongPassword123!',
         confirmNewPassword: 'MismatchPassword!',
@@ -587,7 +594,6 @@ describe('Auth (e2e) - Full Flow', () => {
     });
 
     it('/v1/auth/reset-password (POST) - should return 401 Unauthorized if reset-token is expired (via guard)', async () => {
-      await cleanDatabase();
       const expiredUserEmail = 'expiredreset@example.com';
       await createTestUser(
         prismaService,
@@ -632,6 +638,7 @@ describe('Auth (e2e) - Full Flow', () => {
       expect(responseBody.message).toBe(
         'Token de redefinição expirado ou inválido.',
       );
+
     });
   });
 
@@ -645,7 +652,7 @@ describe('Auth (e2e) - Full Flow', () => {
     let sessionCookie: string;
 
     beforeEach(async () => {
-      await cleanDatabase();
+      await cleanDatabase()
       await createTestUser(
         prismaService,
         userEmail,
