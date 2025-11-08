@@ -59,11 +59,11 @@ export class TaskController {
   @ApiResponse({ status: 400, description: 'Erro ao buscar as tarefas' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
-  @Get('list/:listtaskId')
+  @Get('list/:listId')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER, Role.OBSERVER)
-  findAll(@Param('listtaskId') listtaskId: string) {
-    return this.taskService.findAllByList(listtaskId);
+  findAll(@Param('listId') listId: string) {
+    return this.taskService.findAllByList(listId);
   }
 
   @ApiOperation({
@@ -157,10 +157,7 @@ export class TaskController {
   @Patch(':taskId/move')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  moveTask(
-    @Param('taskId') taskId: string,
-    @Body() dto: MoveTaskOtherListDto,
-  ) {
+  moveTask(@Param('taskId') taskId: string, @Body() dto: MoveTaskOtherListDto) {
     return this.taskService.moveTaskToList(
       taskId,
       dto.newListId,

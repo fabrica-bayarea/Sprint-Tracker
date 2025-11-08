@@ -4,10 +4,20 @@
   "testEnvironment": "node",
   "testRegex": "test/e2e/.*\\.e2e-spec\\.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "baseUrl": ".",
+          "paths": {
+            "@/*": ["src/*"]
+          }
+        }
+      }
+    ]
   },
   "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/src/$1"
+    "^@/(.*)$": "<rootDir>/src/$1"
   },
   "testPathIgnorePatterns": ["<rootDir>/dist/", "<rootDir>/node_modules/"],
   "modulePathIgnorePatterns": ["<rootDir>/dist/", "<rootDir>/node_modules/"]
