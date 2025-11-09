@@ -2,19 +2,12 @@
 
 import { useState } from "react";
 
-import { updateUserProfile } from "@/lib/actions/me";
+import { updateUserProfile, UserProfile } from "@/lib/actions/me";
 import { useWarningStore } from '@/lib/stores/warning';
 
 import { Input, Image } from "@/components/ui";
 
 import styles from "./style.module.css";
-
-interface UserProfile {
-  name: string;
-  userName: string;
-  email: string;
-  photoUrl?: string;
-}
 
 export default function EditProfileForm({ profile }: { profile: UserProfile }) {
   

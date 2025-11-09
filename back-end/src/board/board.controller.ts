@@ -85,7 +85,7 @@ export class BoardController {
     description:
       'Atualiza um quadro específico pelo ID. Autorizado apenas para administradores.',
   })
-  @ApiResponse({ status: 200, description: 'Quadro atualizado com sucesso' })
+  @ApiResponse({ status: 204, description: 'Quadro atualizado com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao atualizar o quadro' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
@@ -101,7 +101,7 @@ export class BoardController {
     description:
       'Remove um quadro específico pelo ID. Autorizado apenas para administradores.',
   })
-  @ApiResponse({ status: 200, description: 'Quadro removido com sucesso' })
+  @ApiResponse({ status: 204, description: 'Quadro removido com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao remover o quadro' })
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })

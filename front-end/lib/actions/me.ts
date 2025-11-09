@@ -3,8 +3,15 @@
 import { apiClient } from "@/lib/utils/apiClient";
 import { BoardRole } from "@/lib/types/board";
 
+export interface UserProfile {
+  name: string;
+  userName: string;
+  email: string;
+  photoUrl?: string;
+}
+
 export async function getUserProfile() {
-  return apiClient('/v1/me/profile', {
+  return apiClient<UserProfile>('/v1/me/profile', {
     method: "GET",
     errorMessage: "Erro ao obter perfil do usuário",
   });

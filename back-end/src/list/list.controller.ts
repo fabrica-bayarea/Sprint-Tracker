@@ -126,7 +126,8 @@ export class ListController {
   @Delete(':listId')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  remove(@Param('listId') listId: string) {
-    return this.listService.remove(listId);
+  async remove(@Param('listId') listId: string) {
+    await this.listService.remove(listId);
+    return { message: 'Lista removida com sucesso' };
   }
 }
