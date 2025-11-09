@@ -37,7 +37,8 @@ export class TaskController {
 
   @ApiOperation({
     summary: 'Cria uma nova tarefa',
-    description: 'Cria uma nova tarefa para o usuário autenticado',
+    description:
+      'Cria uma nova tarefa para o usuário autenticado. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 201, description: 'Tarefa criada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao criar a tarefa' })
@@ -51,24 +52,9 @@ export class TaskController {
   }
 
   @ApiOperation({
-    summary: 'Busca todas as tarefas de uma lista',
-    description:
-      'Busca todas as tarefas de uma lista específica do usuário autenticado',
-  })
-  @ApiResponse({ status: 200, description: 'Tarefas encontradas com sucesso' })
-  @ApiResponse({ status: 400, description: 'Erro ao buscar as tarefas' })
-  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
-  @ApiResponse({ status: 403, description: 'Acesso negado' })
-  @Get('list/:listtaskId')
-  @UseGuards(JwtAuthGuard, BoardRoleGuard)
-  @BoardRoles(Role.ADMIN, Role.MEMBER, Role.OBSERVER)
-  findAll(@Param('listtaskId') listtaskId: string) {
-    return this.taskService.findAllByList(listtaskId);
-  }
-
-  @ApiOperation({
     summary: 'Busca uma tarefa específica',
-    description: 'Busca uma tarefa específica pelo taskId',
+    description:
+      'Busca uma tarefa específica pelo taskId. Autorizado para todos.',
   })
   @ApiResponse({ status: 200, description: 'Tarefa encontrada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao buscar a tarefa' })
@@ -83,7 +69,8 @@ export class TaskController {
 
   @ApiOperation({
     summary: 'Atualiza uma tarefa',
-    description: 'Atualiza uma tarefa específica pelo taskId',
+    description:
+      'Atualiza uma tarefa específica pelo taskId. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'Tarefa atualizada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao atualizar a tarefa' })
@@ -98,7 +85,8 @@ export class TaskController {
 
   @ApiOperation({
     summary: 'Atualiza a posição de uma tarefa',
-    description: 'Atualiza a posição de uma tarefa específica pelo taskId',
+    description:
+      'Atualiza a posição de uma tarefa específica pelo taskId. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'tarefa atualizada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao atualizar a tarefa' })
@@ -116,7 +104,8 @@ export class TaskController {
 
   @ApiOperation({
     summary: 'Remove uma tarefa',
-    description: 'Remove uma tarefa específica pelo taskId',
+    description:
+      'Remove uma tarefa específica pelo taskId. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'Tarefa removida com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao remover a tarefa' })
@@ -132,7 +121,7 @@ export class TaskController {
   @ApiOperation({
     summary: 'Busca tarefas vencidas ou com vencimento hoje',
     description:
-      'Busca todas as tarefas que estão vencidas ou com vencimento no dia atual do usuário autenticado',
+      'Busca todas as tarefas que estão vencidas ou com vencimento no dia atual do usuário autenticado. Autorizado para usuários autenticados.',
   })
   @ApiResponse({ status: 200, description: 'Tarefas encontradas com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao buscar as tarefas' })
@@ -146,7 +135,8 @@ export class TaskController {
 
   @ApiOperation({
     summary: 'Move uma tarefa para outra lista',
-    description: 'Move uma tarefa específica para uma nova lista',
+    description:
+      'Move uma tarefa específica para uma nova lista. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'Tarefa movida com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao mover a tarefa' })
@@ -157,10 +147,7 @@ export class TaskController {
   @Patch(':taskId/move')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  moveTask(
-    @Param('taskId') taskId: string,
-    @Body() dto: MoveTaskOtherListDto,
-  ) {
+  moveTask(@Param('taskId') taskId: string, @Body() dto: MoveTaskOtherListDto) {
     return this.taskService.moveTaskToList(
       taskId,
       dto.newListId,

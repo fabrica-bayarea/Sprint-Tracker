@@ -43,7 +43,6 @@ async function bootstrap() {
         directives: {
           ...helmet.contentSecurityPolicy.getDefaultDirectives(),
           'script-src': ["'self'", 'https://cdn.socket.io'],
-          // Adicionamos 'https://cdn.socket.io' à lista de fontes permitidas para scripts.
         },
       },
     }),

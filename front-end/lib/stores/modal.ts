@@ -8,6 +8,7 @@ interface ModalState {
   isEditTaskModalOpen: boolean;
   isTaskDetailsModalOpen: boolean;
   isRenameListModalOpen: boolean;
+  isMembersModalOpen: boolean;
   
   // Estados específicos
   selectedListId: string;
@@ -28,6 +29,10 @@ interface ModalState {
   // Actions para modal de detalhes
   openTaskDetailsModal: (task: Task) => void;
   closeTaskDetailsModal: () => void;
+
+  // Actions para modal de membros
+  openMembersModal: () => void;
+  closeMembersModal: () => void;
 }
 
 export const useModalStore = create<ModalState>()((set) => ({
@@ -37,6 +42,7 @@ export const useModalStore = create<ModalState>()((set) => ({
   isEditTaskModalOpen: false,
   isTaskDetailsModalOpen: false,
   isRenameListModalOpen: false,
+  isMembersModalOpen: false,
   selectedListId: "",
   selectedTask: null,
 
@@ -75,4 +81,8 @@ export const useModalStore = create<ModalState>()((set) => ({
     isTaskDetailsModalOpen: false, 
     selectedTask: null 
   }),
+
+  // Actions para modal de membros
+  openMembersModal: () => set({ isMembersModalOpen: true }),
+  closeMembersModal: () => set({ isMembersModalOpen: false }),
 }));

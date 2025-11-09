@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { BoardGateway } from '@/events/board.gateway';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -42,9 +46,6 @@ export class ListService {
     return this.prisma.list.findMany({
       where: { boardId, isArchived: false },
       orderBy: { position: 'asc' },
-      include: {
-        tasks: true,
-      },
     });
   }
 
@@ -52,7 +53,14 @@ export class ListService {
    * Busca uma lista pelo ID ou lança erro se não for encontrada.
    */
   async findOne(listId: string) {
-    const list = await this.prisma.list.findUnique({ where: { id: listId } });
+    const list = await this.prisma.list.findUnique({
+      where: {
+        id: listId,
+      },
+      include: {
+        tasks: true,
+      },
+    });
     if (!list) throw new NotFoundException('Lista não encontrada');
     return list;
   }
@@ -62,7 +70,7 @@ export class ListService {
    */
   async update(listId: string, dto: UpdateListDto) {
     const exists = await this.prisma.list.findUnique({ where: { id: listId } });
-    if (!exists) throw new NotFoundException('List não encontrada');
+    if (!exists) throw new NotFoundException('Lista não encontrada');
 
     const updated = await this.prisma.list.update({
       where: { id: listId },
@@ -84,7 +92,7 @@ export class ListService {
    */
   async updatePosition(listId: string, newPosition: number) {
     const list = await this.prisma.list.findUnique({ where: { id: listId } });
-    if (!list) throw new NotFoundException('List não encontrada');
+    if (!list) throw new NotFoundException('Lista não encontrada');
     const oldPosition = list.position;
 
     if (newPosition < oldPosition) {
@@ -126,8 +134,17 @@ export class ListService {
    * Remove uma lista pelo ID e emite evento de exclusão.
    */
   async remove(listId: string) {
-    const exists = await this.prisma.list.findUnique({ where: { id: listId } });
-    if (!exists) throw new NotFoundException('List não encontrada');
+    const exists = await this.prisma.list.findUnique({
+      where: { id: listId },
+      include: { tasks: true },
+    });
+    if (!exists) throw new NotFoundException('Lista não encontrada');
+
+    if (exists.tasks && exists.tasks.length > 0) {
+      throw new BadRequestException(
+        'Não é possível excluir uma lista que contém tarefas',
+      );
+    }
 
     const deleted = await this.prisma.list.delete({ where: { id: listId } });
 

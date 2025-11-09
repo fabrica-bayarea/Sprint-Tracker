@@ -18,6 +18,7 @@ export class ProfileService {
     }
 
     const userData = {
+      id: profile.id,
       name: profile.name,
       userName: profile.userName,
       email: profile.email,

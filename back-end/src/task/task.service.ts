@@ -52,16 +52,6 @@ export class TaskService {
   }
 
   /**
-   * Lista tarefas de uma lista em ordem de posição.
-   */
-  findAllByList(listId: string) {
-    return this.prisma.task.findMany({
-      where: { listId },
-      orderBy: { position: 'asc' },
-    });
-  }
-
-  /**
    * Busca uma tarefa pelo ID ou lança erro se não existir.
    */
   async findOne(id: string) {
@@ -149,7 +139,7 @@ export class TaskService {
       where: { id: taskId },
     });
 
-    if (!taskToDelete) throw new NotFoundException('Task não encontrada');
+    if (!taskToDelete) throw new NotFoundException('Tarefa não encontrada');
 
     const list = await this.prisma.list.findUnique({
       where: { id: taskToDelete.listId },
@@ -220,7 +210,7 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Task não encontrada');
+      throw new NotFoundException('Tarefa não encontrada');
     }
 
     const [sourceList, targetList] = await Promise.all([

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getUserProfile } from "@/lib/actions/profile";
+import { getUserProfile } from "@/lib/actions/me";
 import { useWarningStore } from '@/lib/stores/warning';
 
 import EditProfileForm from "@/components/features/dashboard/editProfile/formEditUser";

@@ -25,12 +25,12 @@
   position: absolute;
   top: calc(100% + 0.75rem);
   right: 0;
-  width: 20rem;
+  width: 17rem;
   background-color: white;
   border: 1px solid #e0e0e0;
   border-radius: 5px;
   box-shadow: 0 0.5rem 0.8rem rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
+  padding: 1rem;
   z-index: 100;
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -61,6 +61,144 @@
   color: #707070;
   font-size: 1rem;
   text-align: center;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.item:hover {
+  background-color: #f6f6f7;
+}
+
+.title {
+  font-size: 14px;
+  color: #242424;
+}
+
+.time {
+  color: #666;
+  font-size: 12px;
+}
+
+/* Modal */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1000;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  max-width: calc(100% - 24px);
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 1001;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  color: #dc2626;
+  font-size: 1.125rem;
+}
+
+.closeButton {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: #9ca3af; /* gray-400 */
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 4px 8px;
+  margin: -4px -8px -4px 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  color: #4b5563; /* gray-600 */
+  background: #f3f4f6; /* gray-100 */
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid #2563eb; /* blue-600 */
+  outline-offset: 2px;
+}
+
+.modalBody {
+  padding: 16px;
+  color: #333;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px 16px;
+}
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.senderName {
+  font-size: 1.06em;
+}
+
+.btnSecondary {
+  background: #f1f1f3;
+  color: #333;
+}
+
+.btnSecondary:hover {
+  background: #e7e7ea;
+}
+
+.btnPrimary {
+  background: #b91c1c;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: #941616;
+}
+
+/* Bolinha vermelha de novas notificações */
+.badge {
+  position: absolute;
+  top: 0px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background-color: #dc2626; /* red-600 */
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px #fff;
 }
 
 @keyframes fadeIn {

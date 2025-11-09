@@ -31,8 +31,8 @@ import { AccessTokenPayload } from './interface/jwt';
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    private readonly jwtService: JwtService,
     private configService: ConfigService,
+    private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
   ) {}
 

@@ -71,26 +71,6 @@ describe('TaskService', () => {
     });
   });
 
-  describe('findAllByList', () => {
-    it('deve retornar todas as tarefas de uma lista ordenadas por posição', async () => {
-      const listId = 'list-1';
-      const tasks = [
-        { id: 'task-1', position: 1 },
-        { id: 'task-2', position: 2 },
-      ];
-
-      mockPrisma.task.findMany.mockResolvedValue(tasks);
-
-      const result = await service.findAllByList(listId);
-
-      expect(mockPrisma.task.findMany).toHaveBeenCalledWith({
-        where: { listId },
-        orderBy: { position: 'asc' },
-      });
-      expect(result).toEqual(tasks);
-    });
-  });
-
   describe('findOne', () => {
     it('deve retornar uma tarefa pelo id', async () => {
       const id = 'task-1';

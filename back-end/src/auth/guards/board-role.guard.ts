@@ -46,7 +46,7 @@ export class BoardRoleGuard implements CanActivate {
 
     const boardId = await this.resolveBoardId(req);
     if (!boardId) {
-      throw new ForbiddenException('Board não identificado para autorização');
+      throw new ForbiddenException('Ação não permitida');
     }
 
     const membership = await this.prisma.boardMember.findUnique({

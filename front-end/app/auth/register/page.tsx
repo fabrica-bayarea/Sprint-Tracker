@@ -1,15 +1,6 @@
 "use client"
 
 import { useState } from "react";
-// Função utilitária para checar requisitos de senha
-function getPasswordRequirements(password: string) {
-  return {
-    hasUppercase: /[A-Z]/.test(password),
-    hasLowercase: /[a-z]/.test(password),
-    hasNumber: /[0-9]/.test(password),
-    hasSpecial: /[^A-Za-z0-9]/.test(password),
-  };
-}
 import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 
@@ -35,6 +26,15 @@ export default function Register() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
 
+  // Função utilitária para checar requisitos de senha
+  function getPasswordRequirements(password: string) {
+    return {
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[^A-Za-z0-9]/.test(password),
+    };
+  }
   const passwordRequirements = getPasswordRequirements(password);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,11 +45,11 @@ export default function Register() {
       return;
     }
 
-    if(confirmEmail != email){
+    if (confirmEmail != email) {
       showWarning("E-mails não coincidem", 'failed');
       return;
     }
-    if(confirmPassword != password){
+    if (confirmPassword != password) {
       showWarning("Senhas não coincidem", 'failed')
       return;
     }
@@ -70,7 +70,7 @@ export default function Register() {
     return (
       <AuthFormContainer title="">
         <div className={styles.successDiv}>
-          <CheckCircle size={64} color="#fff"/>
+          <CheckCircle size={64} color="#fff" />
           <div className={styles.title}>
             CONTA CRIADA COM SUCESSO!
           </div>
@@ -140,7 +140,7 @@ export default function Register() {
             type="checkbox"
             checked={agreeTerms}
             onChange={() => setAgreeTerms(!agreeTerms)}
-            label="Concordo com ostermos de serviço"
+            label="Concordo com os termos de serviço."
           />
           <AuthButton type="submit">Cadastrar</AuthButton>
         </form>

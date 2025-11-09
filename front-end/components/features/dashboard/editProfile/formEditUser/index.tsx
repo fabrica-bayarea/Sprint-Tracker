@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { updateUserProfile } from "@/lib/actions/profile";
+import { updateUserProfile } from "@/lib/actions/me";
 import { useWarningStore } from '@/lib/stores/warning';
 
 import { Input, Image } from "@/components/ui";

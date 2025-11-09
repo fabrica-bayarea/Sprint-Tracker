@@ -1,0 +1,224 @@
+/* Base modal overlay */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal container */
+.modalContent {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 92%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.iconButton {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 6px;
+  border-radius: 6px;
+}
+.iconButton:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.membersList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  max-height: 50vh;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.memberItem:last-child {
+  border-bottom: none;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e02b2b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.memberInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.memberName {
+  font-weight: 600;
+  color: #111827;
+}
+.memberEmail {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Right side container (role + actions) */
+.memberRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.actionsWrapper {
+  position: relative;
+}
+
+
+.memberRight select, .memberRight button, .roleBadge {
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+.memberRight select:hover, .memberRight button:hover {
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(224, 43, 43, 0.15);
+  border-color: #e02b2b;
+}
+
+.applyRoleButton {
+  padding: 8px 10px;
+  border: none;
+  background: #e02b2b;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.applyRoleButton:hover {
+  background: #c91f1f;
+}
+
+.inviteBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inviteTitle {
+  margin: 6px 0 2px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.inviteRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.modalInput {
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.selectWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selectLabel {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.modalSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236b7280" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="6 9 12 15 18 9"/></svg>') no-repeat right 10px center;
+  background-size: 18px 18px;
+  color: #111827;
+}
+.modalSelect:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(224, 43, 43, 0.15);
+  border-color: #e02b2b;
+}
+
+.submitButton {
+  padding: 10px 14px;
+  border: none;
+  background: #e02b2b;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.submitButton:hover {
+  background: #c91f1f;
+}
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
