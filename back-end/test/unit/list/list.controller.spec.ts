@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ListController } from 'src/list/list.controller';
-import { ListService } from 'src/list/list.service';
-import { CreateListDto } from 'src/list/dto/create-list.dto';
-import { UpdateListDto } from 'src/list/dto/update-list.dto';
-import { AuthenticatedUser } from 'src/types/user.interface';
+
+import { BoardRoleGuard } from '@/auth/guards/board-role.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { CreateListDto } from '@/list/dto/create-list.dto';
+import { UpdateListDto } from '@/list/dto/update-list.dto';
+import { ListController } from '@/list/list.controller';
+import { ListService } from '@/list/list.service';
 
 describe('ListController', () => {
   let controller: ListController;
@@ -18,11 +20,16 @@ describe('ListController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ListController],
+    const moduleBuilder = Test.createTestingModule({
       providers: [{ provide: ListService, useValue: mockListService }],
-    }).compile();
+      controllers: [ListController],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(BoardRoleGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) });
 
+    const module: TestingModule = await moduleBuilder.compile();
     controller = module.get<ListController>(ListController);
   });
 
@@ -30,17 +37,8 @@ describe('ListController', () => {
     jest.clearAllMocks();
   });
 
-  const user: AuthenticatedUser = {
-    id: 'user-123',
-    email: 'test@example.com',
-    name: 'Test User',
-    userName: 'testuser',
-    role: 'ADMIN',
-    authProvider: 'local',
-  };
-
   describe('create', () => {
-    it('should call listService.create with correct params', async () => {
+    it('deve chamar listService.create com os parâmetros corretos', async () => {
       const dto: CreateListDto = {
         boardId: 'board-1',
         title: 'Nova Lista',
@@ -50,28 +48,28 @@ describe('ListController', () => {
       const expectedResult = { id: 'list-1', ...dto };
       mockListService.create.mockResolvedValue(expectedResult);
 
-      const result = await controller.create(user, dto);
+      const result = await controller.create(dto);
 
-      expect(mockListService.create).toHaveBeenCalledWith(user.id, dto);
+      expect(mockListService.create).toHaveBeenCalledWith(dto);
       expect(result).toEqual(expectedResult);
     });
   });
 
   describe('findAll', () => {
-    it('should call listService.findAll with correct params', async () => {
+    it('deve chamar listService.findAll com os parâmetros corretos', async () => {
       const boardId = 'board-1';
       const expectedLists = [{ id: 'list-1' }, { id: 'list-2' }];
       mockListService.findAll.mockResolvedValue(expectedLists);
 
-      const result = await controller.findAll(user, boardId);
+      const result = await controller.findAll(boardId);
 
-      expect(mockListService.findAll).toHaveBeenCalledWith(user.id, boardId);
+      expect(mockListService.findAll).toHaveBeenCalledWith(boardId);
       expect(result).toEqual(expectedLists);
     });
   });
 
   describe('findOne', () => {
-    it('should call listService.findOne with correct id', async () => {
+    it('deve chamar listService.findOne com o id correto', async () => {
       const id = 'list-123';
       const expectedList = { id, title: 'Minha Lista' };
       mockListService.findOne.mockResolvedValue(expectedList);
@@ -84,7 +82,7 @@ describe('ListController', () => {
   });
 
   describe('update', () => {
-    it('should call listService.update with correct params', async () => {
+    it('deve chamar listService.update com os parâmetros corretos', async () => {
       const id = 'list-123';
       const dto: UpdateListDto = { title: 'Atualizada', position: 2 };
       const expectedResult = { id, ...dto };
@@ -118,7 +116,7 @@ describe('ListController', () => {
   });
 
   describe('remove', () => {
-    it('should call listService.remove with correct id', async () => {
+    it('deve chamar listService.remove com o id correto', async () => {
       const id = 'list-123';
       const expectedResult = { id, deleted: true };
 

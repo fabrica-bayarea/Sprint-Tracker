@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { ProfileDto } from '../profile/dto/update-profile.dto';
+
+import { PrismaService } from '@/prisma/prisma.service';
+
+import { ProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfileService {
@@ -43,7 +45,7 @@ export class ProfileService {
     return updatedProfile;
   }
 
-  async deleteProfile(userId: string) {
+  async deleteAccount(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -89,5 +91,35 @@ export class ProfileService {
     });
 
     return { message: 'Conta e dados associados excluídos com sucesso' };
+  }
+
+  async getNotifications(userId: string) {
+    const notifications = await this.prisma.invite.findMany({
+      where: { recipientId: userId },
+      select: {
+        id: true,
+        createdAt: true,
+        statusInvite: true,
+        role: true,
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            userName: true,
+          },
+        },
+        board: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return notifications;
   }
 }

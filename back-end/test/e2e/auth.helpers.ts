@@ -1,15 +1,16 @@
 import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { PrismaService } from '../../src/prisma/prisma.service';
-import * as argon2 from 'argon2';
 import { Role, User } from '@prisma/client';
-import { SignInDto } from 'src/auth/dto/signin.dto';
-import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
-import { ChangePasswordDto } from '../../src//auth/dto/change-password.dto';
+import * as argon2 from 'argon2';
+import request from 'supertest';
 import { App } from 'supertest/types';
+
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
+import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
+import { SignInDto } from '@/auth/dto/signin.dto';
+import { SignUpDto } from '@/auth/dto/signup.dto';
+import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
+import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
+import { PrismaService } from '@/prisma/prisma.service';
 
 export async function createTestUser(
   prismaService: PrismaService,

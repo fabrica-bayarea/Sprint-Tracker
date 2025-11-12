@@ -9,23 +9,25 @@ datasource db {
 }
 
 model User {
-  id                  String        @id @default(uuid())
-  email               String        @unique
-  userName            String        @unique
+  id                  String         @id @default(uuid())
+  email               String         @unique
+  userName            String         @unique
   providerId          String?
   authProvider        AuthProvider
-  CreatedAt           DateTime      @default(now())
-  isVerified          Boolean       @default(false)
+  CreatedAt           DateTime       @default(now())
+  isVerified          Boolean        @default(false)
   name                String
   passwordHash        String
   resetToken          String?
   resetTokenExpiresAt DateTime?
   role                Role
-  updatedAt           DateTime      @updatedAt
+  updatedAt           DateTime       @updatedAt
   image               String?
-  boards              Board[]       @relation("OwnerBoards")
+  boards              Board[]        @relation("OwnerBoards")
   memberships         BoardMember[]
-  tasksCreated        Task[]        @relation("TaskCreator")
+  tasksCreated        Task[]         @relation("TaskCreator")
+  notifications       Notification[]
+  sentInvites         Invite[]       @relation("Sender")
 
   @@unique([authProvider, providerId], name: "AuthProviderAndIdUnique")
 }
@@ -43,6 +45,7 @@ model Board {
   members     BoardMember[]
   labels      Label[]
   lists       List[]
+  invites     Invite[]
 }
 
 model BoardMember {
@@ -54,6 +57,18 @@ model BoardMember {
   user     User     @relation(fields: [userId], references: [id])
 
   @@id([boardId, userId])
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+  OBSERVER
+}
+
+enum statusInvite {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 model List {
@@ -105,16 +120,42 @@ model TaskLabel {
   @@id([taskId, labelId])
 }
 
+model Invite {
+  id           String        @id @default(uuid())
+  boardId      String
+  senderId     String
+  recipientId  String
+  email        String
+  createdAt    DateTime      @default(now())
+  statusInvite statusInvite  @default(PENDING)
+  role         Role          @default(MEMBER)
+  board        Board         @relation(fields: [boardId], references: [id])
+  sender       User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  notification Notification?
+}
+
+model Notification {
+  id               String           @id @default(uuid())
+  userId           String
+  isRead           Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  typeNotification typeNotification
+  user             User             @relation(fields: [userId], references: [id])
+  inviteId         String?          @unique
+  invite           Invite?          @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+}
+
+enum typeNotification {
+  INVITE_BOARD
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  WARNING
+}
+
 enum AuthProvider {
   local
   google
   microsoft
-}
-
-enum Role {
-  ADMIN
-  MEMBER
-  OBSERVER
 }
 
 enum BoardVisibility {

@@ -5,7 +5,8 @@ import {
   IsStrongPassword,
   MinLength,
 } from 'class-validator';
-import { Match } from 'src/utils/match.decorator';
+
+import { Match } from '@/utils/match.decorator';
 
 export class ResetPasswordDto {
   @ApiProperty({ example: 'StrongP@ssword123' })

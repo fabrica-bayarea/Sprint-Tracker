@@ -75,7 +75,9 @@ describe('AuthController', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: JwtService, useValue: mockJwtService },
       ],
-    }).setLogger(mockLogger).compile();
+    })
+      .setLogger(mockLogger)
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     jest.clearAllMocks();
