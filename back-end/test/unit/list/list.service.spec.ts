@@ -8,19 +8,33 @@ import { UpdateListDto } from 'src/list/dto/update-list.dto';
 describe('ListService', () => {
   let service: ListService;
 
-  const mockPrisma = {
-    board: {
-      findFirst: jest.fn(),
-    },
-    list: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      updateMany : jest.fn(),
-      delete: jest.fn(),
-    },
-  };
+  interface MockPrisma {
+  board: {
+    findFirst: jest.Mock<any, any>;
+  },
+  list: {
+    create: jest.Mock<any, any>;
+    findMany: jest.Mock<any, any>;
+    findUnique: jest.Mock<any, any>;
+    update: jest.Mock<any, any>;
+    updateMany: jest.Mock<any, any>;
+    delete: jest.Mock<any, any>;
+  },
+}
+
+const mockPrisma : MockPrisma= {
+   board: {
+    findFirst: jest.fn(),
+  },
+  list: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    updateMany : jest.fn(),
+    delete: jest.fn(),
+  },
+};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

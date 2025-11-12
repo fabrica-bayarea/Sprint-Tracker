@@ -14,7 +14,23 @@ describe('TaskService', () => {
     endOfDay: jest.fn((date) => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)),
   }));
 
-  const mockPrisma = {
+  interface MockPrismaService {
+  list: {
+    findUnique: jest.Mock<any, any>;
+  };
+  task: {
+    create: jest.Mock<any, any>;
+    findMany: jest.Mock<any, any>;
+    findUnique: jest.Mock<any, any>;
+    update: jest.Mock<any, any>;
+    delete: jest.Mock<any, any>;
+    count: jest.Mock<any, any>;
+    updateMany: jest.Mock<any, any>;
+  };
+  $transaction: jest.Mock<any, any>; // Adicionar o $transaction também
+}
+
+  const mockPrisma : MockPrismaService = {
     list: {
       findUnique : jest.fn(),
     },
@@ -25,7 +41,7 @@ describe('TaskService', () => {
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
-      updateMany: jest.fn().mockResolvedValue({ count : 1}),
+      updateMany: jest.fn(),
     },
 
     $transaction: jest.fn().mockImplementation((arg) => {
@@ -38,6 +54,7 @@ describe('TaskService', () => {
 
   beforeEach(async () => {
     mockPrisma.task.count.mockResolvedValue(0);
+    mockPrisma.task.updateMany.mockResolvedValue({count : 1});
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

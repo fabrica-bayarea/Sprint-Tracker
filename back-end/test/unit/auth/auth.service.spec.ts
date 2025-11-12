@@ -88,11 +88,11 @@ describe('AuthService', () => {
       ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
-    prisma = module.get(PrismaService);
-    jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
-    emailService = module.get(EmailService);
+    service = module.get<AuthService>(AuthService) ;
+    prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+    jwtService = module.get(JwtService) as jest.Mocked<JwtService>;
+    configService = module.get(ConfigService) as jest.Mocked<ConfigService>;
+    emailService = module.get(EmailService) as jest.Mocked<EmailService>;
 
     jest.clearAllMocks();
   });
@@ -201,10 +201,10 @@ describe('AuthService', () => {
         (prisma.user.create as jest.Mock).mockRejectedValue(
             new PrismaClientValidationError('Required field missing or invalid type.', {
                 clientVersion: 'test',
-            } as any),
+            }),
         );
         
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleErrorSpy : jest.SpyInstance = jest.spyOn(console, 'error').mockImplementation(() => {});
 
         await expect(service.signUp(signUpDto)).rejects.toThrow(
             new BadRequestException('Dados de entrada inválidos fornecidos.'),

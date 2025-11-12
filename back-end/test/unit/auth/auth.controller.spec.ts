@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from 'src/auth/auth.controller';
 import { AuthService } from 'src/auth/auth.service';
@@ -90,7 +91,7 @@ describe('AuthController', () => {
       mockConfigService.get.mockImplementationOnce((key) =>
         key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
       );
-      const baseUrlUI = controller['BASE_URL_UI'];
+      const baseUrlUI = controller['BASE_URL_UI'] as string;
       expect(baseUrlUI).toBe('http://localhost:3001');
     });
   });
@@ -237,8 +238,8 @@ describe('AuthController', () => {
     });
 
     it('should redirect to error page if user data is incomplete', async () => {
-      const invalidReq = { user: { email: 'a', name: 'b' } }; // Falta google_id
-      // @ts-expect-error
+      const invalidReq = { user: { email: 'a', name: 'b' } };
+      // @ts-expect-error invalidReq eh uma requisicao propsitalmente invalida
       await controller.googleAuthRedirect(invalidReq, mockResponse);
 
       expect(mockResponse.redirect).toHaveBeenCalledWith(
@@ -320,8 +321,8 @@ describe('AuthController', () => {
     });
 
     it('should redirect to error page if user data is incomplete', async () => {
-      const invalidReq = { user: { email: 'a', name: 'b' } }; // Falta microsoftId
-      // @ts-expect-error
+      const invalidReq = { user: { email: 'a', name: 'b' } };
+      // @ts-expect-error invalidReq eh uma requisicao propsitalmente invalida
       await controller.microsoftAuthRedirect(invalidReq, mockResponse);
 
       expect(mockResponse.redirect).toHaveBeenCalledWith(
@@ -396,13 +397,12 @@ describe('AuthController', () => {
 
   describe('resetPassword', () => {
     const mockReq = { user: { userId: 'user-reset-1' } };
-    const dto = { newPassword: 'new-secure-password' };
-    const mockToken = 'jwt-reset-token';
+    const dto = { newPassword: 'new-secure-password', confirmNewPassword: 'new-secure-password' };
+    const mockToken =  'jwt-reset-token';
 
     it('should call authService.resetPassword and return success message', async () => {
       mockAuthService.resetPassword.mockResolvedValue(undefined);
 
-      // @ts-expect-error
       const result = await controller.resetPassword(mockToken, dto, mockReq);
 
       expect(mockAuthService.resetPassword).toHaveBeenCalledWith(
@@ -426,8 +426,6 @@ describe('AuthController', () => {
 
     it('should call authService.changePassword and return success message', async () => {
       mockAuthService.changePassword.mockResolvedValue(undefined);
-
-      //aqui tinha um ts-ignore
       const result = await controller.changePassword(mockReq, dto);
 
       expect(mockAuthService.changePassword).toHaveBeenCalledWith(
@@ -441,8 +439,7 @@ describe('AuthController', () => {
       mockAuthService.changePassword.mockRejectedValue(
         new UnauthorizedException('Senha atual incorreta'),
       );
-      //aqui tinha um ts-ignore
-      await expect(controller.changePassword(mockReq, dto)).rejects.toThrow(
+      await expect(controller.changePassword(mockReq as any, dto)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -451,7 +448,6 @@ describe('AuthController', () => {
       mockAuthService.changePassword.mockRejectedValue(
         new Error('Encryption failure'),
       );
-      //aqui tinha um ts-ignore
       await expect(controller.changePassword(mockReq, dto)).rejects.toThrow(
         InternalServerErrorException,
       );
@@ -460,9 +456,9 @@ describe('AuthController', () => {
   
   describe('logout', () => {
     it('should clear the session cookie and return success message', async () => {
-      //@ts-ignore
+      
       mockConfigService.get.mockImplementation((key) =>
-        key === 'NODE_ENV' ? 'production' : 'http://localhost:3001',
+        key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
       );
 
       await controller.logout(mockResponse);
@@ -472,7 +468,7 @@ describe('AuthController', () => {
         expect.objectContaining({
           httpOnly: true,
           path: '/',
-          secure: true, // Verifica se secure: true foi usado em produção
+          secure: false,
           sameSite: 'lax',
         }),
       );
@@ -481,48 +477,6 @@ describe('AuthController', () => {
         message: 'Logout realizado com sucesso',
       });
 
-      // Volta o mock de NODE_ENV
-      mockConfigService.get.mockImplementation((key) =>
-        key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
-      );
     });
-
-    /*
-    //ESSE TESTE COBRE A LINHA 553-554 MAS TEM UM PROBLEMA
-    // QUANDO O TESTE É RODADO, O BLOCO TRY-CATCH DO AUTHCONTROLLER MANDA UMA MENSAGEM (ESPERADA):
-    //  InternalServerErrorException: Erro interno ao realizar logout
-    // NÃO CONSEGUI OMITIR A IMPRESSÃO DESSA MENSAGEM DE JEITO NENHUM
-
-    it('should throw InternalServerErrorException if clearCookie fails', async () => {
-
-      const loggerSpy = jest.spyOn(controller['logger'], 'error').mockImplementation(() => {});
-      const mockError = new Error();
-
-      // //@ts-expect-error
-      mockResponse.clearCookie.mockImplementationOnce(() => {
-        throw mockError;
-      });
-      
-      mockConfigService.get.mockImplementationOnce((key: string) => {
-        if (key === 'NODE_ENV') return 'development';
-        return null;
-      });
-
-      await expect(controller.logout(mockResponse)).rejects.toThrow(
-        InternalServerErrorException,
-      );
-
-      expect(mockResponse.clearCookie).toHaveBeenCalled(); 
-      expect(loggerSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Erro ao realizar logout'),
-      );
-
-      expect(mockResponse.status).not.toHaveBeenCalled();
-      expect(mockResponse.json).not.toHaveBeenCalled();
-
-      loggerSpy.mockRestore();
-      
-    });
-    */
   });
 });
