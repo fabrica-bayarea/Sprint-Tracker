@@ -109,7 +109,7 @@ export class ListService {
       });
     }
 
-    await this.prisma.list.update({
+    const updatedList = await this.prisma.list.update({
       where: { id: listId },
       data: { position: newPosition },
     });
@@ -120,6 +120,8 @@ export class ListService {
       at: new Date().toISOString(),
     };
     this.boardGateway.emitModifiedInBoard(list.boardId, payload);
+
+    return updatedList;
   }
 
   /**

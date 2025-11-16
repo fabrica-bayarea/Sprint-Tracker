@@ -122,9 +122,9 @@ describe('ListController', () => {
   describe('remove', () => {
     it('deve chamar listService.remove com o id correto', async () => {
       const id = 'list-123';
-      const expectedResult = { id, deleted: true };
+      const expectedResult = { message: 'Lista removida com sucesso' };
 
-      mockListService.remove.mockResolvedValue(expectedResult);
+      mockListService.remove.mockResolvedValue(undefined);
 
       const result = await controller.remove(id);
 

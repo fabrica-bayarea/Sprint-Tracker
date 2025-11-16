@@ -65,6 +65,27 @@ export class BoardService {
   }
 
   /**
+   * Busca um quadro pelo ID verificando se o usuário tem acesso.
+   */
+  async getBoardById(boardId: string, userId: string) {
+    const board = await this.prisma.board.findUnique({
+      where: { id: boardId },
+      include: {
+        members: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!board) throw new NotFoundException('Quadro não encontrado');
+    if (board.members.length === 0) {
+      throw new NotFoundException('Você não tem acesso a este quadro');
+    }
+
+    return board;
+  }
+
+  /**
    * Atualiza os dados de um quadro e emite evento de modificação.
    */
   async update(boardId: string, dto: UpdateBoardDto) {
