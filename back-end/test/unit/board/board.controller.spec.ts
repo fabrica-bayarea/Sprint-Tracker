@@ -70,7 +70,7 @@ describe('BoardController', () => {
       const board = { id: '1', title: 'Board 1' };
       mockBoardService.findOne.mockResolvedValue(board);
 
-      const result = await controller.findOne('1');
+      const result = await controller.findOne('1'); 
       expect(result).toEqual(board);
       expect(mockBoardService.findOne).toHaveBeenCalledWith('1');
     });
