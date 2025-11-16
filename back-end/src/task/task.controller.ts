@@ -157,10 +157,7 @@ export class TaskController {
   @Patch(':taskId/move')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  moveTask(
-    @Param('taskId') taskId: string,
-    @Body() dto: MoveTaskOtherListDto,
-  ) {
+  moveTask(@Param('taskId') taskId: string, @Body() dto: MoveTaskOtherListDto) {
     return this.taskService.moveTaskToList(
       taskId,
       dto.newListId,

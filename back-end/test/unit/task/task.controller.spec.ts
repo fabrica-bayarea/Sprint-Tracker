@@ -148,7 +148,9 @@ describe('TaskController', () => {
       // O método recebe o usuário do decorador @CurrentUser
       const result = await controller.getTodayOrOverdueTasks(user);
 
-      expect(mockTaskService.findTasksOverdueDate).toHaveBeenCalledWith(user.id);
+      expect(mockTaskService.findTasksOverdueDate).toHaveBeenCalledWith(
+        user.id,
+      );
       expect(result).toEqual(expectedTasks);
     });
   });

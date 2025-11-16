@@ -65,7 +65,7 @@ export class AuthService {
   /*
    * Busca um usuário pelo email ou cria um novo, dependendo do provedor de...
    * autenticação é guardado o providerId em vez da senha.
-  */
+   */
   private async findOrCreateUser(
     data: {
       email: string;

@@ -1,8 +1,8 @@
 import { validate } from 'class-validator';
-import { Match } from 'src/utils/match.decorator';
+
+import { Match } from '@/utils/match.decorator';
 
 class TestMatchDto {
-
   public password!: string;
 
   @Match('password', {
@@ -12,7 +12,6 @@ class TestMatchDto {
 }
 
 describe('MatchDecorator', () => {
-
   const DTO_SUCCESS_DATA = {
     password: 'Password123!',
     confirmPassword: 'Password123!',
@@ -42,15 +41,17 @@ describe('MatchDecorator', () => {
     expect(errors.length).toBe(1);
     expect(errors[0].property).toBe('confirmPassword');
     expect(errors[0].constraints).toHaveProperty('match');
-    expect(errors[0].constraints?.match).toBe('As senhas digitadas não coincidem!');
+    expect(errors[0].constraints?.match).toBe(
+      'As senhas digitadas não coincidem!',
+    );
   });
-  
+
   it('should use the default message when validationOptions is not provided', async () => {
     class TestDefaultMessageDto {
-        public propA!: string;
+      public propA!: string;
 
-        @Match('propA')
-        public propB!: string;
+      @Match('propA')
+      public propB!: string;
     }
 
     const dto = new TestDefaultMessageDto();
@@ -58,8 +59,7 @@ describe('MatchDecorator', () => {
     dto.propB = 'valor2'; // Vai falhar
 
     const errors = await validate(dto);
-    
+
     expect(errors[0].constraints?.match).toBe('propB deve ser igual a propA');
   });
-
 });

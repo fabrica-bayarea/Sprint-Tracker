@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-assignment */
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from 'src/auth/auth.controller';
-import { AuthService } from 'src/auth/auth.service';
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -9,13 +6,17 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { SignInDto } from 'src/auth/dto/signin.dto';
-import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
-import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Response } from 'express';
+
+import { AuthController } from '@/auth/auth.controller';
+import { AuthService } from '@/auth/auth.service';
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
+import { SignInDto } from '@/auth/dto/signin.dto';
+import { SignUpDto } from '@/auth/dto/signup.dto';
+import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
+import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
 
 const mockConfigService = {
   get: jest.fn((key: string) => {
@@ -51,9 +52,9 @@ const mockResponse = {
 } as unknown as Response;
 
 const mockJwtService = {
-    verify: jest.fn(),
-    sign: jest.fn(),
-  };
+  verify: jest.fn(),
+  sign: jest.fn(),
+};
 
 const mockLogger = {
   log: jest.fn(),
@@ -62,7 +63,6 @@ const mockLogger = {
   debug: jest.fn(),
   verbose: jest.fn(),
 };
-
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -93,14 +93,14 @@ describe('AuthController', () => {
       mockConfigService.get.mockImplementationOnce((key) =>
         key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
       );
-      const baseUrlUI = controller['BASE_URL_UI'] as string;
+      const baseUrlUI = controller['BASE_URL_UI'];
       expect(baseUrlUI).toBe('http://localhost:3001');
     });
   });
 
   describe('signUp', () => {
     const dto: SignUpDto = {
-      userName : 'userTest' ,
+      userName: 'userTest',
       email: 'test@example.com',
       password: 'password',
       name: 'Test User',
@@ -109,7 +109,6 @@ describe('AuthController', () => {
 
     beforeEach(() => {
       mockAuthService.signUp.mockResolvedValue(authResult);
-
     });
 
     it('should call authService.signUp and set cookie on success', async () => {
@@ -271,7 +270,6 @@ describe('AuthController', () => {
         'http://localhost:3001/auth/error?message=google_login_failed',
       );
     });
-
   });
 
   describe('microsoftAuthRedirect', () => {
@@ -305,21 +303,23 @@ describe('AuthController', () => {
     });
 
     it('should redirect to error page if token generation fails', async () => {
-        mockAuthService.signInWithProvider.mockResolvedValue({
-            accessToken: null, // Simula falha na geração do token
-        });
+      mockAuthService.signInWithProvider.mockResolvedValue({
+        accessToken: null, // Simula falha na geração do token
+      });
 
-        await controller.microsoftAuthRedirect(mockReq, mockResponse);
+      await controller.microsoftAuthRedirect(mockReq, mockResponse);
 
-        expect(mockAuthService.signInWithProvider).toHaveBeenCalled();
-        expect(mockLogger.error).toHaveBeenCalledWith(
-            expect.stringContaining('Erro no callback da Microsoft: Token de acesso não gerado'),
-            undefined,
-            expect.stringContaining('AuthController'),
-        );
-        expect(mockResponse.redirect).toHaveBeenCalledWith(
-            'http://localhost:3001/auth/error?message=microsoft_login_failed',
-        );
+      expect(mockAuthService.signInWithProvider).toHaveBeenCalled();
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Erro no callback da Microsoft: Token de acesso não gerado',
+        ),
+        undefined,
+        expect.stringContaining('AuthController'),
+      );
+      expect(mockResponse.redirect).toHaveBeenCalledWith(
+        'http://localhost:3001/auth/error?message=microsoft_login_failed',
+      );
     });
 
     it('should redirect to error page if user data is incomplete', async () => {
@@ -375,7 +375,10 @@ describe('AuthController', () => {
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         'reset-token',
         resetJwtToken,
-        expect.objectContaining({ httpOnly: true, path: '/v1/auth/reset-password' }),
+        expect.objectContaining({
+          httpOnly: true,
+          path: '/v1/auth/reset-password',
+        }),
       );
       expect(result).toHaveProperty('message');
     });
@@ -399,8 +402,11 @@ describe('AuthController', () => {
 
   describe('resetPassword', () => {
     const mockReq = { user: { userId: 'user-reset-1' } };
-    const dto = { newPassword: 'new-secure-password', confirmNewPassword: 'new-secure-password' };
-    const mockToken =  'jwt-reset-token';
+    const dto = {
+      newPassword: 'new-secure-password',
+      confirmNewPassword: 'new-secure-password',
+    };
+    const mockToken = 'jwt-reset-token';
 
     it('should call authService.resetPassword and return success message', async () => {
       mockAuthService.resetPassword.mockResolvedValue(undefined);
@@ -417,13 +423,12 @@ describe('AuthController', () => {
     // Falhas de Unauthorized são tratadas pelo Guard.
   });
 
-
   describe('changePassword', () => {
     const mockReq = { user: { id: 'user-change-1' } };
     const dto: ChangePasswordDto = {
       oldPassword: 'oldPassword123!',
       newPassword: 'newPassword123!',
-      confirmNewPassword : 'newPassword123!',
+      confirmNewPassword: 'newPassword123!',
     };
 
     it('should call authService.changePassword and return success message', async () => {
@@ -441,7 +446,7 @@ describe('AuthController', () => {
       mockAuthService.changePassword.mockRejectedValue(
         new UnauthorizedException('Senha atual incorreta'),
       );
-      await expect(controller.changePassword(mockReq as any, dto)).rejects.toThrow(
+      await expect(controller.changePassword(mockReq, dto)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -455,15 +460,14 @@ describe('AuthController', () => {
       );
     });
   });
-  
+
   describe('logout', () => {
-    it('should clear the session cookie and return success message', async () => {
-      
+    it('should clear the session cookie and return success message', () => {
       mockConfigService.get.mockImplementation((key) =>
         key === 'NODE_ENV' ? 'development' : 'http://localhost:3001',
       );
 
-      await controller.logout(mockResponse);
+      controller.logout(mockResponse);
 
       expect(mockResponse.clearCookie).toHaveBeenCalledWith(
         'sprinttacker-session',
@@ -478,7 +482,6 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Logout realizado com sucesso',
       });
-
     });
   });
 });

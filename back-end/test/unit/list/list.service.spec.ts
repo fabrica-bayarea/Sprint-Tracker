@@ -104,59 +104,64 @@ describe('ListService', () => {
   });
 
   describe('updatePosition', () => {
-    
     it('should move a list up and increment positions of lists between old and new position', async () => {
-        const id = 'list-2';
-        const oldPosition = 3;
-        const newPosition = 1;
+      const id = 'list-2';
+      const oldPosition = 3;
+      const newPosition = 1;
 
-        mockPrisma.list.findUnique.mockResolvedValue({ id, position: oldPosition });
-        mockPrisma.list.updateMany.mockResolvedValue({ count: 2 });
-        mockPrisma.list.update.mockResolvedValue({ id, position: newPosition });
+      mockPrisma.list.findUnique.mockResolvedValue({
+        id,
+        position: oldPosition,
+      });
+      mockPrisma.list.updateMany.mockResolvedValue({ count: 2 });
+      mockPrisma.list.update.mockResolvedValue({ id, position: newPosition });
 
-        await service.updatePosition(id, newPosition);
+      await service.updatePosition(id, newPosition);
 
-        expect(mockPrisma.list.updateMany).toHaveBeenCalledWith({
-            where: {
-                position: { gte: newPosition, lt: oldPosition },
-            },
-            data: {
-                position: { increment: 1 },
-            },
-        });
+      expect(mockPrisma.list.updateMany).toHaveBeenCalledWith({
+        where: {
+          position: { gte: newPosition, lt: oldPosition },
+        },
+        data: {
+          position: { increment: 1 },
+        },
+      });
 
-        expect(mockPrisma.list.update).toHaveBeenCalledWith({
-            where: { id },
-            data: { position: newPosition },
-        });
+      expect(mockPrisma.list.update).toHaveBeenCalledWith({
+        where: { id },
+        data: { position: newPosition },
+      });
     });
 
     it('should move a list down and decrement positions of lists between old and new position', async () => {
-        const id = 'list-1';
-        const oldPosition = 1;
-        const newPosition = 3;
+      const id = 'list-1';
+      const oldPosition = 1;
+      const newPosition = 3;
 
-        mockPrisma.list.findUnique.mockResolvedValue({ id, position: oldPosition });
-        mockPrisma.list.updateMany.mockResolvedValue({ count: 2 });
-        mockPrisma.list.update.mockResolvedValue({ id, position: newPosition });
+      mockPrisma.list.findUnique.mockResolvedValue({
+        id,
+        position: oldPosition,
+      });
+      mockPrisma.list.updateMany.mockResolvedValue({ count: 2 });
+      mockPrisma.list.update.mockResolvedValue({ id, position: newPosition });
 
-        await service.updatePosition(id, newPosition);
+      await service.updatePosition(id, newPosition);
 
-        expect(mockPrisma.list.updateMany).toHaveBeenCalledWith({
-            where: {
-                position: { gt: oldPosition, lte: newPosition },
-            },
-            data: {
-                position: { decrement: 1 },
-            },
-        });
+      expect(mockPrisma.list.updateMany).toHaveBeenCalledWith({
+        where: {
+          position: { gt: oldPosition, lte: newPosition },
+        },
+        data: {
+          position: { decrement: 1 },
+        },
+      });
 
-        expect(mockPrisma.list.update).toHaveBeenCalledWith({
-            where: { id },
-            data: { position: newPosition },
-        });
+      expect(mockPrisma.list.update).toHaveBeenCalledWith({
+        where: { id },
+        data: { position: newPosition },
+      });
     });
-});
+  });
 
   describe('remove', () => {
     it('deve deletar uma lista após confirmar que ela existe', async () => {

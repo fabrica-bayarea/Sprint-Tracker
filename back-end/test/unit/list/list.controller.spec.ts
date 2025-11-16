@@ -100,8 +100,12 @@ describe('ListController', () => {
     it('should call listService.updatePosition with id and newPosition', async () => {
       const id = 'list-123';
       const newPosition = 5;
-      const dto = { newPosition }; 
-      const expectedResult = { id, position: newPosition, title: 'Minha Lista' };
+      const dto = { newPosition };
+      const expectedResult = {
+        id,
+        position: newPosition,
+        title: 'Minha Lista',
+      };
 
       mockListService.updatePosition.mockResolvedValue(expectedResult);
 
