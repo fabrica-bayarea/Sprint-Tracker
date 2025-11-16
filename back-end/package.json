@@ -72,7 +72,6 @@
     "@types/passport-microsoft": "^2.1.0",
     "@types/supertest": "^6.0.3",
     "copyfiles": "^2.4.1",
-    "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",

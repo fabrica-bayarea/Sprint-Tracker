@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -95,25 +90,48 @@ describe('ProfileService', () => {
         }),
       ).rejects.toThrow('Erro ao atualizar o perfil');
     });
+
+    it('should throw an error if trying to update profile of external provider user', async () => {
+      const userId = 'provider-user-1';
+      const dto: ProfileDto = {
+        name: 'Social User',
+        userName: 'socialuser',
+        email: 'social@email.com',
+      };
+
+      const userWithProvider = {
+        id: userId,
+        ...dto,
+        providerId: 'google-oauth-123',
+      };
+
+      mockPrisma.user.update.mockResolvedValue(userWithProvider);
+
+      await expect(service.updateProfile(userId, dto)).rejects.toThrow(
+        'Não é possível atualizar o email de um usuário cadastrado por provedor externo',
+      );
+    });
   });
 
   describe('deleteProfile', () => {
     it('deve deletar o usuário e todos os dados associados', async () => {
       const userId = 'user-123';
 
-      const mockTransaction = jest.fn(async (callback: any) => {
-        return callback({
-          task: { deleteMany: jest.fn() },
-          list: { deleteMany: jest.fn() },
-          boardMember: { deleteMany: jest.fn() },
-          board: { deleteMany: jest.fn() },
-          user: { delete: jest.fn() },
-        });
-      });
+      const mockTransactionClient = {
+        task: { deleteMany: jest.fn() },
+        list: { deleteMany: jest.fn() },
+        boardMember: { deleteMany: jest.fn() },
+        board: { deleteMany: jest.fn() },
+        user: { delete: jest.fn() },
+      };
 
-      mockPrisma.user.findUnique = jest
-        .fn()
-        .mockResolvedValue({ id: userId }) as any;
+      const mockTransaction = jest.fn(
+        (callback: (client: typeof mockTransactionClient) => unknown) => {
+          return callback(mockTransactionClient);
+        },
+      );
+
+      mockPrisma.user.findUnique = jest.fn().mockResolvedValue({ id: userId });
       mockPrisma.$transaction = mockTransaction;
 
       const result = await service.deleteAccount(userId);
