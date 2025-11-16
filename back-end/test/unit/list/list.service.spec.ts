@@ -166,7 +166,7 @@ describe('ListService', () => {
   describe('remove', () => {
     it('deve deletar uma lista após confirmar que ela existe', async () => {
       const id = 'list-1';
-      const deleted = {"message": "Lista removida com sucesso"}
+      const deleted = { message: 'Lista removida com sucesso' };
 
       mockPrisma.list.findUnique.mockResolvedValue({ id });
       mockPrisma.list.delete.mockResolvedValue(deleted);
