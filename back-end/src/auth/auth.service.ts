@@ -36,9 +36,7 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  /**
-   * Gera um token JWT com base no payload fornecido.
-   */
+  // Gera um token JWT com base no payload fornecido.
   private generateJwt(user: User, rememberMe = false): { accessToken: string } {
     const payload: AccessTokenPayload = {
       sub: user.id,
@@ -54,9 +52,7 @@ export class AuthService {
     };
   }
 
-  /**
-   * Gera um hash seguro para a senha usando Argon2.
-   */
+  //Gera um hash seguro para a senha usando Argon2.
   private async hashPassword(password: string): Promise<string> {
     return argon2.hash(password, {
       type: argon2.argon2id,
@@ -66,9 +62,9 @@ export class AuthService {
     });
   }
 
-  /**
-   * Busca um usuário pelo email ou cria um novo, dependendo do provedor de autentica-
-   * ção é guardado o providerId em vez da senha.
+  /*
+   * Busca um usuário pelo email ou cria um novo, dependendo do provedor de...
+   * autenticação é guardado o providerId em vez da senha.
    */
   private async findOrCreateUser(
     data: {
@@ -103,9 +99,7 @@ export class AuthService {
     return existingUser;
   }
 
-  /**
-   * Trata erros específicos ao criar um usuário.
-   */
+  //Trata erros específicos ao criar um usuário.
   private handleSignUpError(error: unknown): never {
     if (
       error instanceof PrismaClientKnownRequestError &&
@@ -120,9 +114,7 @@ export class AuthService {
     throw new BadRequestException('Erro ao criar usuário');
   }
 
-  /**
-   * Registra um novo usuário localmente.
-   */
+  //Registra um novo usuário localmente.
   async signUp(dto: SignUpDto): Promise<{ accessToken: string }> {
     const hashedPassword = await this.hashPassword(dto.password);
 
@@ -153,9 +145,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * Realiza login de um usuário local.
-   */
+  //Realiza login de um usuário local.
   async signIn(dto: SignInDto): Promise<{ accessToken: string }> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -174,9 +164,7 @@ export class AuthService {
     return this.generateJwt(user, dto.rememberMe);
   }
 
-  /**
-   * Realiza login com um provedor externo (Google, Microsoft, etc.).
-   */
+  //Realiza login com um provedor externo (Google, Microsoft, etc.).
   async signInWithProvider(
     provider: string,
     req: { providerId: string; email: string; name: string },
@@ -190,9 +178,7 @@ export class AuthService {
     return this.generateJwt(user);
   }
 
-  /**
-   * Gera um código aleatório e envia por email para recuperação de senha.
-   */
+  // Gera um código aleatório e envia por email para recuperação de senha.
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: forgotPasswordDto.email },
@@ -219,9 +205,7 @@ export class AuthService {
     );
   }
 
-  /**
-   * Verifica se o código de recuperação de senha é válido e gera um token JWT.
-   */
+  // Verifica se o código de recuperação de senha é válido e gera um token JWT.
   async verifyResetCode(
     verifyResetCodeDto: VerifyResetCodeDto,
   ): Promise<string> {
@@ -303,9 +287,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * Altera a senha de um usuário após validar a senha atual.
-   */
+  //Altera a senha de um usuário após validar a senha atual.
   async changePassword(id: string, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { id },
