@@ -7,6 +7,9 @@ import {
   Param,
   Body,
   UseGuards,
+  Query,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -23,6 +26,7 @@ import { CurrentUser } from '@/auth/strategy/decorators/current-user.decorator';
 import { AuthenticatedUser } from '@/types/user.interface';
 
 import { CreateTaskDto } from './dto/create-task.dto';
+import { GetCompletedSummaryDto } from './dto/get-completed-summary.dto';
 import { MoveTaskOtherListDto } from './dto/move-task-other-list.dto';
 import { UpdatePositionDto } from './dto/update-position.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -163,5 +167,36 @@ export class TaskController {
       dto.newListId,
       dto.newPosition,
     );
+  }
+
+  @ApiOperation({
+    summary: 'Resumo de tarefas concluídas',
+    description:
+      'Obtém um resumo das tarefas concluídas em um período específico, com filtros opcionais',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumo de tarefas concluídas obtido com sucesso',
+  })
+  @ApiResponse({ status: 400, description: 'Erro ao obter o resumo' })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado' })
+  @Get('summary/completed')
+  async getCompletedTasksSummary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: GetCompletedSummaryDto,
+  ) {
+    if (!user?.id) {
+      throw new HttpException(
+        'User not authenticated.',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const summary = await this.taskService.getCompletedTasksSummary(
+      user.id,
+      query,
+    );
+    return summary;
   }
 }
