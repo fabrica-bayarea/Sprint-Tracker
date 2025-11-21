@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const isDev = process.env.NODE_ENV === "development";
+import { env } from "@/lib/config/env";
 
 export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
@@ -8,14 +7,14 @@ export function middleware(request: NextRequest) {
   const cspHeader = `
     default-src 'self';
     script-src 'nonce-${nonce}' 'strict-dynamic' ${
-    isDev ? "'unsafe-eval'" : ""
+    env.isDev ? "'unsafe-eval'" : ""
   };
     style-src 'self' https://fonts.googleapis.com ${
-      isDev ? "'unsafe-inline'" : ""
+      env.isDev ? "'unsafe-inline'" : ""
     };
     img-src 'self' data:;
     font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-    connect-src 'self';
+    connect-src 'self' ws://localhost:3000;
     frame-ancestors 'self';
     form-action 'self';
     base-uri 'self';

@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const wsUrl = process.env.BASE_URL_WS || 'ws://localhost:3000';
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
@@ -11,7 +13,7 @@ const nextConfig: NextConfig = {
       style-src 'self' https://fonts.googleapis.com;
       img-src 'self' data:;
       font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-      connect-src 'self';
+      connect-src 'self' ${wsUrl};
       frame-ancestors 'self';
       form-action 'self';
       base-uri 'self';

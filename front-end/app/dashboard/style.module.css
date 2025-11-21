@@ -6,7 +6,7 @@
   position: absolute;
   width: 450px;
   height: 450px;
-  z-index: 1;
+  z-index: -1;
   bottom: 0;
   left: 0;
   pointer-events: none;
@@ -185,7 +185,7 @@
   width: 220px;
   height: 120px;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
   background: #e02b2b;
   position: relative;
@@ -213,6 +213,8 @@
   left: 0;
   z-index: 1;
   background: #e02b2b;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .boardInfoCustom {
@@ -226,6 +228,62 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+}
+
+/* Garante que o dropdown fique acima de cards vizinhos quando ativo/hover */
+.boardCardCustom:hover,
+.boardCardCustom:focus-within {
+  z-index: 10;
+}
+
+/* Botão de menu (3 pontinhos) no card */
+.boardMenuButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 100;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.boardMenuButton:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Dropdown do menu */
+.boardMenu {
+  position: absolute;
+  top: 40px;
+  right: 8px;
+  z-index: 4;
+  min-width: 160px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border-radius: 10px;
+  padding: 6px;
+}
+.boardMenuItem {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 10px 10px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #222;
+  cursor: pointer;
+}
+.boardMenuItem:hover {
+  background: #f6f6f6;
 }
 
 .boardNameCustom {

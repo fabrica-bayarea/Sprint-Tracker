@@ -68,20 +68,6 @@ describe('TaskController', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('deve chamar taskService.findAllByList com o listId', async () => {
-      const listId = 'list-1';
-      const expectedTasks = [{ id: 'task-1' }, { id: 'task-2' }];
-
-      mockTaskService.findAllByList.mockResolvedValue(expectedTasks);
-
-      const result = await controller.findAll(listId);
-
-      expect(mockTaskService.findAllByList).toHaveBeenCalledWith(listId);
-      expect(result).toEqual(expectedTasks);
-    });
-  });
-
   describe('findOne', () => {
     it('deve chamar taskService.findOne com o id da tarefa', async () => {
       const id = 'task-1';

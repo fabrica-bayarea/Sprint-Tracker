@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { getUserProfile } from "@/lib/actions/profile";
-import { useWarningStore } from "@/lib/stores/warning";
+import { getUserProfile, UserProfile } from "@/lib/actions/me";
+import { useWarningStore } from '@/lib/stores/warning';
 
 import EditProfileForm from "@/components/features/dashboard/editProfile/formEditUser";
 import DeleteAccountButton from "@/components/features/dashboard/editProfile/deleteProfile";
@@ -13,7 +13,7 @@ import styles from "./style.module.css";
 
 export default function EditProfilePage() {
   const { showWarning } = useWarningStore();
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     async function fetchUserProfile() {

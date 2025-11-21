@@ -1,15 +1,21 @@
 import { useEffect } from 'react';
 
-import { getAllList } from '@/lib/actions/list';
-import { getTasksByList } from '@/lib/actions/task';
+import { getAllList, getListById } from '@/lib/actions/list';
 import { useBoardStore } from '@/lib/stores/board';
 import { useWarningStore } from '@/lib/stores/warning';
+import { useBoardWebSocket } from '@/lib/hooks/useBoardWebSocket';
 
-import { List, Status } from '@/lib/types/board'
+import { List, listResponseToList } from '@/lib/types/board'
 
+/**
+ * Hook para carregar e gerenciar os dados iniciais de um board
+ * Busca todas as listas e suas respectivas tarefas e configura a conexão WebSocket
+ */
 export function useBoardData(boardId: string) {
   const { setLists, setLoading } = useBoardStore();
   const { showWarning } = useWarningStore();
+  
+  useBoardWebSocket(boardId);
 
   useEffect(() => {
     if (!boardId) return;
@@ -22,17 +28,13 @@ export function useBoardData(boardId: string) {
         if (result.success) {
           const listsWithTasks = await Promise.all(
             (result.data || []).map(async (list: List) => {
-              const tasksResult = await getTasksByList(list.id);
+              const tasksResult = await getListById(list.id);
+              if (tasksResult.success && tasksResult.data) {
+                return listResponseToList(tasksResult.data);
+              }
               return {
                 ...list,
-                tasks: tasksResult.success && tasksResult.data ? tasksResult.data.map((taskResponse) => ({
-                  id: taskResponse.id,
-                  title: taskResponse.title,
-                  description: taskResponse.description,
-                  position: taskResponse.position,
-                  status: taskResponse.status as Status,
-                  dueDate: taskResponse.dueDate
-                })) : []
+                tasks: []
               };
             })
           );
