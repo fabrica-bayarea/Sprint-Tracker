@@ -22,6 +22,8 @@ export default function CreateTaskModal () {
   const [status, setStatus] = useState<Status>(Status.TODO);
   const [dueDate, setDueDate] = useState('');
 
+  const MAX_DESC_LENGTH = 500;
+
   const nextPosition = selectedListId ? getNextTaskPosition(selectedListId) : 0;
 
   useEffect(() => {
@@ -80,13 +82,19 @@ export default function CreateTaskModal () {
           autoFocus
         />
         
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descrição (opcional)"
-          className={styles.modalTextarea}
-          rows={3}
-        />
+        <div className={styles.textareaWrapper}>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Descrição (opcional)"
+            className={styles.modalTextarea}
+            rows={3}
+            maxLength={MAX_DESC_LENGTH} 
+          />
+          <div className={styles.charCounter}>
+            {description.length} / {MAX_DESC_LENGTH}
+          </div>
+        </div>
         
         <select
           value={status}
