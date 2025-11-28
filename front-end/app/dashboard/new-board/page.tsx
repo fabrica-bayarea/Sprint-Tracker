@@ -18,6 +18,8 @@ export default function NewBoardPage() {
   const [description, setDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const MAX_DESC_LENGTH = 500;
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
@@ -74,13 +76,21 @@ export default function NewBoardPage() {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <Textarea
-              label="Descrição"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              required
-            />
+            
+            <div>
+                <Textarea
+                  label="Descrição"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  required
+                  maxLength={MAX_DESC_LENGTH}
+                />
+                <div className={styles.charCounter}>
+                  {description.length} / {MAX_DESC_LENGTH}
+                </div>
+            </div>
+
           </div>
           <div className={styles.rightGroup}>
             <label className={styles.label}>
