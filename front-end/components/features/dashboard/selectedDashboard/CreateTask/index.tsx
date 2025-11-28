@@ -73,20 +73,24 @@ export default function CreateTaskModal () {
       <div className={styles.modalContent}>
         <h2>Criar Nova Tarefa</h2>
         
+        <label className={styles.inputLabel}>
+          Título da Tarefa <span className={styles.requiredMark}>*</span>
+        </label>
         <Input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título da tarefa"
+          placeholder="Ex: Finalizar relatório..."
           className={styles.modalInput}
           autoFocus
         />
         
+        <label className={styles.inputLabel}>Descrição</label>
         <div className={styles.textareaWrapper}>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descrição (opcional)"
+            placeholder="Adicione detalhes..."
             className={styles.modalTextarea}
             rows={3}
             maxLength={MAX_DESC_LENGTH} 
@@ -96,6 +100,9 @@ export default function CreateTaskModal () {
           </div>
         </div>
         
+        <label className={styles.inputLabel}>
+          Status <span className={styles.requiredMark}>*</span>
+        </label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as Status)}
@@ -106,11 +113,13 @@ export default function CreateTaskModal () {
           <option value="DONE">Concluído</option>
         </select>
         
+        <label className={styles.inputLabel}>
+          Data de Vencimento <span className={styles.requiredMark}>*</span>
+        </label>
         <input
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          placeholder="Data de vencimento (opcional)"
           className={styles.modalInput}
         />
               

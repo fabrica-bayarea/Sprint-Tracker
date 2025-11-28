@@ -26,7 +26,7 @@
 }
 
 .modalContent h2 {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   color: #333;
   font-size: 24px;
   font-weight: 600;
@@ -48,6 +48,21 @@
   outline: none;
   border-color: #e02b2b;
   box-shadow: 0 0 0 3px rgba(224, 43, 43, 0.1);
+}
+
+.inputLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px; 
+  margin-top: 4px;
+}
+
+.requiredMark {
+  color: #252525;
+  margin-left: 4px;
+  font-weight: bold;
 }
 
 .modalTextarea {
