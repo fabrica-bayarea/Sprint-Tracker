@@ -48,10 +48,6 @@
   align-items: center;
 }
 
-.passwordWrapper :global(input) {
-  width: 100%;
-}
-
 .eyeButton {
   position: absolute;
   right: 12px; 
