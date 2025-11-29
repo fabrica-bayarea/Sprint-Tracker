@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
 
 import { register } from "@/lib/actions/auth";
 import { useWarningStore } from '@/lib/stores/warning';
@@ -26,7 +26,9 @@ export default function Register() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
 
-  // Função utilitária para checar requisitos de senha
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   function getPasswordRequirements(password: string) {
     return {
       hasUppercase: /[A-Z]/.test(password),
@@ -68,18 +70,18 @@ export default function Register() {
 
   if (isSuccess) {
     return (
-      <AuthFormContainer title="">
-        <div className={styles.successDiv}>
-          <CheckCircle size={64} color="#fff" />
-          <div className={styles.title}>
-            CONTA CRIADA COM SUCESSO!
+        <AuthFormContainer title="">
+          <div className={styles.successDiv}>
+            <CheckCircle size={64} color="#fff" />
+            <div className={styles.title}>
+              CONTA CRIADA COM SUCESSO!
+            </div>
+            <div style={{ color: '#fff', textAlign: 'center', fontSize: 15, marginTop: 8 }}>
+              Aguarde!<br />Estamos redirecionando você para sua conta!
+            </div>
           </div>
-          <div style={{ color: '#fff', textAlign: 'center', fontSize: 15, marginTop: 8 }}>
-            Aguarde!<br />Estamos redirecionando você para sua conta!
-          </div>
-        </div>
-      </AuthFormContainer>
-    );
+        </AuthFormContainer>
+      );
   }
 
   return (
@@ -110,14 +112,26 @@ export default function Register() {
             placeholder="Confirme o e-mail"
             value={confirmEmail}
           />
-          <AuthInput
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            placeholder="Senha"
-            value={password}
-          />
+
+          <div className={styles.passwordWrapper}>
+            <AuthInput
+              onChange={(e) => setPassword(e.target.value)}
+              type={showPassword ? "text" : "password"}
+              placeholder="Senha"
+              value={password}
+            />
+            <button
+              type="button"
+              className={styles.eyeButton}
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1} 
+            >
+              {showPassword ? <EyeOff size={20} color="#888" /> : <Eye size={20} color="#888" />}
+            </button>
+          </div>
+
           <div className={styles.passwordRequirements}>
-            <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasUppercase ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
+             <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasUppercase ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
               {passwordRequirements.hasUppercase ? '✔' : '✖'} Pelo menos 1 letra maiúscula
             </div>
             <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasLowercase ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
@@ -130,12 +144,24 @@ export default function Register() {
               {passwordRequirements.hasSpecial ? '✔' : '✖'} Pelo menos 1 caractere especial
             </div>
           </div>
-          <AuthInput
-            onChange={(e) => setconfirmConfirmPassword(e.target.value)}
-            type="password"
-            placeholder="Confirme a senha"
-            value={confirmPassword}
-          />
+
+          <div className={styles.passwordWrapper}>
+            <AuthInput
+              onChange={(e) => setconfirmConfirmPassword(e.target.value)}
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirme a senha"
+              value={confirmPassword}
+            />
+             <button
+              type="button"
+              className={styles.eyeButton}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              tabIndex={-1}
+            >
+              {showConfirmPassword ? <EyeOff size={20} color="#888" /> : <Eye size={20} color="#888" />}
+            </button>
+          </div>
+
           <AuthInput
             type="checkbox"
             checked={agreeTerms}
