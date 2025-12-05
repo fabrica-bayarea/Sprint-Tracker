@@ -432,7 +432,7 @@ describe('TaskService', () => {
       mockPrisma.task.findUnique.mockResolvedValue(null);
       await expect(
         service.moveTaskToList(taskId, newListId, newPosition),
-      ).rejects.toThrow(new NotFoundException('Task não encontrada'));
+      ).rejects.toThrow(new NotFoundException('Tarefa não encontrada'));
     });
 
     it('should throw NotFoundException if target list is not found', async () => {

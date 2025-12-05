@@ -20,6 +20,23 @@ export async function login(email: string, password: string, rememberMe: boolean
   return { success: true as const, data: { message: 'success' } };
 }
 
+export async function loginLdap(enrollment: string, password: string) {
+  const result = await apiClient<{ message: string }>('/v1/auth/signin-ldap', {
+    method: "POST",
+    body: JSON.stringify({ enrollment, password }),
+    errorMessage: "Erro ao fazer login",
+    requiresAuth: false,
+    returnResponse: true,
+  });
+
+  if (!result.success) return result;
+
+  const rawSetCookie = result.response!.headers.get("set-cookie");
+  await setSessioCookie(rawSetCookie!);
+
+  return { success: true as const, data: { message: 'success' } };
+}
+
 export async function register(fullName: string, userName: string, email: string, password: string) {
   const result = await apiClient<{ message: string }>('/v1/auth/signup', {
     method: "POST",
