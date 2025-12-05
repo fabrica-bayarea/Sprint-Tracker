@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ProfileDto } from '@/me/dto/update-profile.dto';
+import { updateProfileDto } from '@/me/dto/update-profile.dto';
 import { ProfileService } from '@/me/me.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -66,14 +66,15 @@ describe('ProfileService', () => {
 
   describe('updateProfile', () => {
     it('deve atualizar e retornar o perfil do usuário', async () => {
-      const dto: ProfileDto = {
+      const dto: updateProfileDto = {
         name: 'Novo Nome',
         userName: 'novoUser',
         email: 'novo@email.com',
       };
 
-      const updatedUser = { id: '1', ...dto };
+      const updatedUser = { id: '1', authProvider: 'local', ...dto };
 
+      mockPrisma.user.findUnique.mockResolvedValue(updatedUser);
       mockPrisma.user.update.mockResolvedValue(updatedUser);
 
       const result = await service.updateProfile('1', dto);
@@ -94,7 +95,7 @@ describe('ProfileService', () => {
 
     it('should throw an error if trying to update profile of external provider user', async () => {
       const userId = 'provider-user-1';
-      const dto: ProfileDto = {
+      const dto: updateProfileDto = {
         name: 'Social User',
         userName: 'socialuser',
         email: 'social@email.com',
@@ -103,10 +104,10 @@ describe('ProfileService', () => {
       const userWithProvider = {
         id: userId,
         ...dto,
-        providerId: 'google-oauth-123',
+        authProvider: 'google',
       };
 
-      mockPrisma.user.update.mockResolvedValue(userWithProvider);
+      mockPrisma.user.findUnique.mockResolvedValue(userWithProvider);
 
       await expect(service.updateProfile(userId, dto)).rejects.toThrow(
         'Não é possível atualizar o email de um usuário cadastrado por provedor externo',
