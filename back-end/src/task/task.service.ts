@@ -1,20 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Prisma, Status } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Status } from '@prisma/client';
 import { endOfDay } from 'date-fns';
 
 import { BoardGateway } from '@/events/board.gateway';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateTaskDto } from './dto/create-task.dto';
-import {
-  GetCompletedSummaryDto,
-  DailyCompletedCount,
-  CompletedSummaryResponse,
-} from './dto/get-completed-summary.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
@@ -318,66 +309,5 @@ export class TaskService {
     });
 
     return updatedTask;
-  }
-
-  /**
-   * Obtém o resumo de tarefas concluídas em um período, com contagem diária para gráficos.
-   */
-  async getCompletedTasksSummary(
-    userId: string,
-    query: GetCompletedSummaryDto,
-  ): Promise<CompletedSummaryResponse> {
-    const { userId: assignedToId, startDate, endDate, boardId, listId } = query;
-
-    if (!startDate || !endDate) {
-      throw new BadRequestException(
-        'Os parâmetros startDate e endDate são obrigatórios para o resumo.',
-      );
-    }
-
-    const finalEndDate = endOfDay(endDate);
-    console.log('Start Date:', startDate);
-    console.log('Final End Date:', finalEndDate);
-    const where: Prisma.TaskWhereInput = {
-      status: Status.DONE,
-      completedAt: {
-        gte: startDate,
-        lte: finalEndDate,
-      },
-
-      ...(assignedToId && {
-        OR: [{ assignedToId: assignedToId }, { creatorId: assignedToId }],
-      }),
-      ...(boardId && { list: { boardId } }),
-      ...(listId && { listId }),
-    };
-
-    const completedTasks = await this.prisma.task.findMany({
-      where: where,
-      select: {
-        completedAt: true,
-      },
-    });
-
-    const dailyCountsMap: { [key: string]: number } = {};
-
-    completedTasks.forEach((task) => {
-      if (task.completedAt) {
-        const dateKey = task.completedAt.toISOString().split('T')[0];
-        dailyCountsMap[dateKey] = (dailyCountsMap[dateKey] || 0) + 1;
-      }
-    });
-
-    const dailyCounts: DailyCompletedCount[] = Object.keys(dailyCountsMap).map(
-      (date) => ({
-        date,
-        count: dailyCountsMap[date],
-      }),
-    );
-
-    return {
-      total: completedTasks.length,
-      dailyCounts: dailyCounts.sort((a, b) => a.date.localeCompare(b.date)),
-    };
   }
 }

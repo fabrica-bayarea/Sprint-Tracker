@@ -51,17 +51,7 @@ export class GetCompletedSummaryDto {
   @IsUUID('4', { message: 'userId deve ser um UUID válido.' })
   userId?: string;
 
-  /**
-   * Filtro opcional pelo ID do Board.
-   */
   @IsOptional()
-  @IsUUID('4', { message: 'boardId deve ser um UUID válido.' })
+  @IsUUID()
   boardId?: string;
-
-  /**
-   * Filtro opcional pelo ID da Lista.
-   */
-  @IsOptional()
-  @IsUUID('4', { message: 'listId deve ser um UUID válido.' })
-  listId?: string;
 }
