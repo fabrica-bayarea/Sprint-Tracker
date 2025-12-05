@@ -16,6 +16,7 @@ import {
   PrismaClientValidationError,
 } from '@prisma/client/runtime/library';
 import * as argon2 from 'argon2';
+import type { SearchOptions } from 'ldapts';
 
 import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import 'dotenv/config';
@@ -36,7 +37,6 @@ interface LdapUserPayload {
 
 @Injectable()
 export class AuthService {
-  private adminClient: Client;
   private userBaseDn: string;
   constructor(
     private prisma: PrismaService,
@@ -46,10 +46,6 @@ export class AuthService {
   ) {
     this.userBaseDn =
       this.configService.getOrThrow<string>('LDAP_USER_BASE_DN');
-
-    this.adminClient = new Client({
-      url: this.configService.getOrThrow<string>('LDAP_URL'),
-    });
   }
 
   /**
@@ -349,21 +345,14 @@ export class AuthService {
 
   /**
    * Tenta autenticar o usuário contra o servidor LDAP (usando a Matrícula/Identificador).
-   * @param enrollment A matrícula ou identificador para busca no LDAP.
-   * @param password A senha do usuário.
-   * @returns Os atributos essenciais do usuário.
    */
   async authenticateLdap(
     enrollment: string,
     password: string,
   ): Promise<LdapUserPayload> {
-    if (!password) {
-      throw new UnauthorizedException('A senha não pode ser vazia.');
-    }
-
-    const userDN = await this.findUserDn(enrollment);
     const cleanPassword = password.trim();
 
+    const userDN = await this.findUserDn(enrollment);
     if (!userDN) {
       throw new UnauthorizedException(
         'Usuário não encontrado no diretório LDAP.',
@@ -399,26 +388,32 @@ export class AuthService {
         'Erro ao se comunicar com o servidor LDAP.',
       );
     } finally {
-      await userClient.unbind().catch(() => {});
+      await userClient.unbind().catch(() => { });
     }
   }
 
-  private async findUserDn(enrollment: string): Promise<string | null> {
-    const adminDn = this.configService.getOrThrow<string>('LDAP_ADMIN_DN');
+  private async getBoundAdminClient(): Promise<Client> {
+    const client = new Client({
+      url: this.configService.getOrThrow<string>('LDAP_URL'),
+    });
+    const adminDn = this.configService.getOrThrow<string>(
+      'LDAP_ADMIN_DN'
+    );
     const adminPassword = this.configService.getOrThrow<string>(
       'LDAP_ADMIN_PASSWORD',
     );
 
-    const adminClient = new Client({
-      url: this.configService.getOrThrow<string>('LDAP_URL'),
-    });
+    await client.bind(adminDn, adminPassword);
+    return client;
+  }
+
+  private async findUserDn(enrollment: string): Promise<string | null> {
+    const adminClient = await this.getBoundAdminClient();
 
     try {
-      await adminClient.bind(adminDn, adminPassword);
-
-      const searchOptions = {
+      const searchOptions: SearchOptions = {
         filter: `(uid=${enrollment})`,
-        scope: 'sub' as const,
+        scope: 'sub',
         attributes: ['dn'],
       };
 
@@ -429,50 +424,48 @@ export class AuthService {
 
       return searchEntries.length > 0 ? searchEntries[0].dn : null;
     } catch (error) {
-      console.error('LDAP Admin Bind or Search Error:', error);
       throw new InternalServerErrorException(
         'Erro de configuração LDAP: falha ao buscar DN do usuário.',
       );
     } finally {
-      await adminClient.unbind().catch(() => {});
+      await adminClient.unbind().catch(() => { });
     }
   }
 
   private async getUserAttributes(userDN: string): Promise<LdapUserPayload> {
-    await this.adminClient.bind(
-      this.configService.getOrThrow<string>('LDAP_ADMIN_DN'),
-      this.configService.getOrThrow<string>('LDAP_ADMIN_PASSWORD'),
-    );
+    const adminClient = await this.getBoundAdminClient();
 
-    const { searchEntries } = await this.adminClient.search(userDN, {
-      scope: 'base',
-      attributes: ['cn', 'mail', 'uid', 'memberOf'],
-    });
+    try {
+      const { searchEntries } = await adminClient.search(userDN, {
+        scope: 'base',
+        attributes: ['cn', 'mail', 'uid', 'memberOf'],
+      });
 
-    await this.adminClient.unbind();
-
-    if (searchEntries.length > 0) {
-      const entry = searchEntries[0];
-      return {
-        uid: Array.isArray(entry.uid)
-          ? String(entry.uid[0])
-          : Buffer.isBuffer(entry.uid)
-            ? entry.uid.toString()
-            : String(entry.uid),
-        displayName: Array.isArray(entry.cn)
-          ? String(entry.cn[0])
-          : Buffer.isBuffer(entry.cn)
-            ? entry.cn.toString()
-            : String(entry.cn),
-        mail: Array.isArray(entry.mail)
-          ? String(entry.mail[0])
-          : Buffer.isBuffer(entry.mail)
-            ? entry.mail.toString()
-            : String(entry.mail),
-      };
+      if (searchEntries.length > 0) {
+        const entry = searchEntries[0];
+        return {
+          uid: this.extractLdapAttribute(entry.uid),
+          displayName: this.extractLdapAttribute(entry.cn),
+          mail: this.extractLdapAttribute(entry.mail),
+        };
+      }
+      throw new InternalServerErrorException(
+        'Atributos de usuário LDAP não encontrados após o BIND bem-sucedido.',
+      );
+    } finally {
+      await adminClient.unbind().catch(() => { });
     }
-    throw new InternalServerErrorException(
-      'Atributos de usuário LDAP não encontrados após o BIND bem-sucedido.',
-    );
+  }
+
+  private extractLdapAttribute(
+    value: string | string[] | Buffer | Buffer[] | undefined,
+  ): string {
+    if (Array.isArray(value)) {
+      return this.extractLdapAttribute(value[0]);
+    }
+    if (Buffer.isBuffer(value)) {
+      return value.toString();
+    }
+    return String(value ?? '');
   }
 }

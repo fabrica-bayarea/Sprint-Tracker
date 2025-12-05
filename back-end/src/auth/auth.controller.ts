@@ -567,7 +567,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Credenciais LDAP inválidas' })
   @ApiInternalServerErrorResponse({ description: 'Erro de comunicação LDAP' })
   @HttpCode(HttpStatus.OK)
-  @Post('ldap/login')
+  @Post('signin-ldap')
   async ldapLogin(
     @Body() loginRequest: LdapLoginDto,
     @Res({ passthrough: true }) response: Response,
