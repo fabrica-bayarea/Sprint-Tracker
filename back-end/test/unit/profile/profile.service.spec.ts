@@ -48,6 +48,7 @@ describe('ProfileService', () => {
 
       const result = await service.getProfile('1');
       expect(result).toEqual({
+        id: mockUser.id,
         name: mockUser.name,
         userName: mockUser.userName,
         email: mockUser.email,

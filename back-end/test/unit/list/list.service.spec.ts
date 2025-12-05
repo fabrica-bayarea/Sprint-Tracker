@@ -62,7 +62,6 @@ describe('ListService', () => {
       expect(mockPrisma.list.findMany).toHaveBeenCalledWith({
         where: { boardId, isArchived: false },
         orderBy: { position: 'asc' },
-        include: { tasks: true },
       });
       expect(result).toEqual(lists);
     });
@@ -76,6 +75,7 @@ describe('ListService', () => {
       const result = await service.findOne('list-1');
       expect(mockPrisma.list.findUnique).toHaveBeenCalledWith({
         where: { id: 'list-1' },
+        include: { tasks: true },
       });
       expect(result).toEqual(list);
     });
@@ -175,6 +175,7 @@ describe('ListService', () => {
 
       expect(mockPrisma.list.findUnique).toHaveBeenCalledWith({
         where: { id },
+        include: { tasks: true },
       });
       expect(mockPrisma.list.delete).toHaveBeenCalledWith({ where: { id } });
       expect(result).toEqual(deleted);

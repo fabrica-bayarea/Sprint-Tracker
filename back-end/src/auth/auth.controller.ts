@@ -30,6 +30,7 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { Response } from 'express';
+
 import { AuthService } from '@/auth/auth.service';
 import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
@@ -40,6 +41,7 @@ import { IsEnabledAuthGuard } from '@/auth/guards/is-enable-oauth.guard';
 import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 import { ResetPasswordGuard } from '@/auth/guards/reset-password.guard';
 import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
+
 import { LdapLoginDto } from './dto/LdapLoginDto';
 
 @ApiTags('Autenticação e Autorização')

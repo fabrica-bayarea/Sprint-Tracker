@@ -16,7 +16,7 @@ import {
   PrismaClientValidationError,
 } from '@prisma/client/runtime/library';
 import * as argon2 from 'argon2';
-import type { SearchOptions } from 'ldapts';
+import { Client } from 'ldapts';
 
 import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import 'dotenv/config';
@@ -24,10 +24,12 @@ import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
 import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
 import { EmailService } from '@/email/email.service';
 import { PrismaService } from '@/prisma/prisma.service';
+
 import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { AccessTokenPayload } from './interface/jwt';
-import { Client } from 'ldapts';
+
+import type { SearchOptions } from 'ldapts';
 
 interface LdapUserPayload {
   uid: string;
@@ -365,12 +367,11 @@ export class AuthService {
       ) {
         throw new UnauthorizedException('Credenciais LDAP inválidas.');
       }
-      console.error('LDAP Connection or Binding Error:', error);
       throw new InternalServerErrorException(
         'Erro ao se comunicar com o servidor LDAP.',
       );
     } finally {
-      await userClient.unbind().catch(() => { });
+      await userClient.unbind().catch(() => {});
     }
   }
 
@@ -378,9 +379,7 @@ export class AuthService {
     const client = new Client({
       url: this.configService.getOrThrow<string>('LDAP_URL'),
     });
-    const adminDn = this.configService.getOrThrow<string>(
-      'LDAP_ADMIN_DN'
-    );
+    const adminDn = this.configService.getOrThrow<string>('LDAP_ADMIN_DN');
     const adminPassword = this.configService.getOrThrow<string>(
       'LDAP_ADMIN_PASSWORD',
     );
@@ -405,12 +404,12 @@ export class AuthService {
       );
 
       return searchEntries.length > 0 ? searchEntries[0].dn : null;
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Erro de configuração LDAP: falha ao buscar DN do usuário.',
       );
     } finally {
-      await adminClient.unbind().catch(() => { });
+      await adminClient.unbind().catch(() => {});
     }
   }
 
@@ -435,7 +434,7 @@ export class AuthService {
         'Atributos de usuário LDAP não encontrados após o BIND bem-sucedido.',
       );
     } finally {
-      await adminClient.unbind().catch(() => { });
+      await adminClient.unbind().catch(() => {});
     }
   }
 
