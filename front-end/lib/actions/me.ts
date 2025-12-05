@@ -7,6 +7,7 @@ export interface UserProfile {
   name: string;
   userName: string;
   email: string;
+  authProvider: string;
   photoUrl?: string;
 }
 
@@ -17,7 +18,12 @@ export async function getUserProfile() {
   });
 }
 
-export async function updateUserProfile(formData: { name: string; userName: string; email: string; }) {
+export async function updateUserProfile(
+  formData: { 
+    name: string; 
+    userName: string; 
+    email?: string; 
+  }) {
   return apiClient('/v1/me/profile', {
     method: "PUT",
     body: JSON.stringify(formData),

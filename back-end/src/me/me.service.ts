@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  NotFoundException,
+  HttpStatus,
+} from '@nestjs/common';
+import { AuthProvider } from '@prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
-import { ProfileDto } from './dto/update-profile.dto';
+import { updateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfileService {
@@ -22,12 +28,26 @@ export class ProfileService {
       name: profile.name,
       userName: profile.userName,
       email: profile.email,
+      authProvider: profile.authProvider,
     };
 
     return userData;
   }
 
-  async updateProfile(userId: string, data: ProfileDto) {
+  async updateProfile(userId: string, data: updateProfileDto) {
+    if (data.email) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (user?.authProvider !== AuthProvider.local) {
+        throw new HttpException(
+          'Não é possível atualizar o email de um usuário cadastrado por provedor externo',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+    }
+
     const updatedProfile = await this.prisma.user.update({
       where: { id: userId },
       data,
@@ -35,12 +55,6 @@ export class ProfileService {
 
     if (!updatedProfile) {
       throw new Error('Erro ao atualizar o perfil');
-    }
-
-    if (updatedProfile.providerId) {
-      throw new Error(
-        'Não é possível atualizar o email de um usuário cadastrado por provedor externo',
-      );
     }
 
     return updatedProfile;
