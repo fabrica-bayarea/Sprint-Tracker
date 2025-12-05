@@ -6,7 +6,7 @@ import { handleFetchError } from "@/lib/utils/handleFetchError";
 const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
 
 export async function getUserProfile() {
-  const response = await fetch(`${BASE_URL_API}/v1/profile`, {
+  const response = await fetch(`${BASE_URL_API}/v1/me/profile`, {
     headers: {
       "Cookie": await getCookie("sprinttacker-session"),
     }
@@ -25,7 +25,7 @@ export async function getUserProfile() {
 export async function updateUserProfile(formData: { name: string; userName: string; email: string; }) {
 
 
-  const response = await fetch(`${BASE_URL_API}/v1/profile`, {
+  const response = await fetch(`${BASE_URL_API}/v1/me/profile`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

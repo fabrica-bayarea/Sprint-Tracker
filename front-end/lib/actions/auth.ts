@@ -27,6 +27,28 @@ export async function login(email: string, password: string, rememberMe: boolean
   return { success: true, data: { message: 'success' } };
 }
 
+export async function loginLdap(enrollment: string, password: string) {
+  const response = await fetch(`${BASE_URL_API}/v1/auth/signin-ldap`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ enrollment, password }),
+  });
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: await handleFetchError(response, "Erro ao fazer login via LDAP"),
+    };
+  }
+
+  const rawSetCookie = response.headers.get("set-cookie");
+  await setSessioCookie(rawSetCookie!);
+
+  return { success: true, data: { message: 'success' } };
+}
+
 export async function register(fullName: string, userName: string, email: string, password: string) {
   const response = await fetch(`${BASE_URL_API}/v1/auth/signup`, {
     method: "POST",
