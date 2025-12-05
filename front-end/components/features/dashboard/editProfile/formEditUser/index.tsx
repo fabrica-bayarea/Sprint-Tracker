@@ -15,6 +15,7 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
     name: profile?.name || "",
     userName: profile?.userName || "",
     email: profile?.email || "",
+    authProvider: profile?.authProvider,
     photoUrl: profile?.photoUrl || "/images/iesb-icon.png",
   });
   // const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -34,11 +35,14 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
     e.preventDefault();
     setLoading(true);
 
-    const formData = {
+    const formData: { name: string; userName: string; email?: string } = {
       name: form.name || "",
       userName: form.userName || "",
-      email: form.email || "",
     };
+
+    if (form.authProvider === "local") {
+      formData.email = form.email || "";
+    }
 
     const response = await updateUserProfile(formData);
 
@@ -78,6 +82,8 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
             placeholder="Seu e-mail"
             value={form.email}
             onChange={handleChange}
+            disabled={form.authProvider !== "local"}
+            style={form.authProvider !== "local" ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
           />
           <button type="submit" className={styles.submitButton} disabled={loading}>
             {loading ? "Atualizando..." : "Atualizar"}
