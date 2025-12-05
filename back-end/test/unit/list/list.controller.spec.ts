@@ -16,6 +16,7 @@ describe('ListController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    updatePosition: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -95,12 +96,35 @@ describe('ListController', () => {
     });
   });
 
+  describe('updatePosition', () => {
+    it('should call listService.updatePosition with id and newPosition', async () => {
+      const id = 'list-123';
+      const newPosition = 5;
+      const dto = { newPosition };
+      const expectedResult = {
+        id,
+        position: newPosition,
+        title: 'Minha Lista',
+      };
+
+      mockListService.updatePosition.mockResolvedValue(expectedResult);
+
+      const result = await controller.updatePosition(id, dto);
+
+      expect(mockListService.updatePosition).toHaveBeenCalledWith(
+        id,
+        newPosition,
+      );
+      expect(result).toEqual(expectedResult);
+    });
+  });
+
   describe('remove', () => {
     it('deve chamar listService.remove com o id correto', async () => {
       const id = 'list-123';
-      const expectedResult = { id, deleted: true };
+      const expectedResult = { message: 'Lista removida com sucesso' };
 
-      mockListService.remove.mockResolvedValue(expectedResult);
+      mockListService.remove.mockResolvedValue(undefined);
 
       const result = await controller.remove(id);
 

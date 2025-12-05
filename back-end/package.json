@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "DATABASE_URL=postgresql://user_test:password_test@127.17.0.1:5433/postgres?schema=public jest --config ./jest-e2e.json"
+    "test:e2e": "jest --runInBand --config ./jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.16",
@@ -40,7 +40,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "ldapts": "^8.0.9",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^7.0.11",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
@@ -73,7 +73,6 @@
     "@types/passport-microsoft": "^2.1.0",
     "@types/supertest": "^6.0.3",
     "copyfiles": "^2.4.1",
-    "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",

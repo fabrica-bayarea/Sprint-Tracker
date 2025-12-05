@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"
 
-import { deleteUserProfile } from "@/lib/actions/profile";
+import { deleteUserProfile } from "@/lib/actions/me";
 import { useWarningStore } from '@/lib/stores/warning';
 
 import styles from "./style.module.css";

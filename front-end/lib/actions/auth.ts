@@ -1,133 +1,91 @@
 "use server"
 
-import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { setSessioCookie, getCookie } from "@/lib/utils/sessionCookie";
-
-const BASE_URL_API = process.env.BASE_URL_API || 'http://sprinttacker-api:3000';
+import { apiClient } from "@/lib/utils/apiClient";
+import { setSessioCookie } from "@/lib/utils/sessionCookie";
 
 export async function login(email: string, password: string, rememberMe: boolean) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/signin`, {
+  const result = await apiClient<{ message: string }>('/v1/auth/signin', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ email, password, rememberMe }),
+    errorMessage: "Erro ao fazer login",
+    requiresAuth: false,
+    returnResponse: true,
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Erro ao fazer login"),
-    };
-  }
+  if (!result.success) return result;
 
-  const rawSetCookie = response.headers.get("set-cookie");
+  const rawSetCookie = result.response!.headers.get("set-cookie");
   await setSessioCookie(rawSetCookie!);
 
-  return { success: true, data: { message: 'success' } };
+  return { success: true as const, data: { message: 'success' } };
 }
 
 export async function loginLdap(enrollment: string, password: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/signin-ldap`, {
+  const result = await apiClient<{ message: string }>('/v1/auth/signin-ldap', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ enrollment, password }),
+    errorMessage: "Erro ao fazer login",
+    requiresAuth: false,
+    returnResponse: true,
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Erro ao fazer login via LDAP"),
-    };
-  }
+  if (!result.success) return result;
 
-  const rawSetCookie = response.headers.get("set-cookie");
+  const rawSetCookie = result.response!.headers.get("set-cookie");
   await setSessioCookie(rawSetCookie!);
 
-  return { success: true, data: { message: 'success' } };
+  return { success: true as const, data: { message: 'success' } };
 }
 
 export async function register(fullName: string, userName: string, email: string, password: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/signup`, {
+  const result = await apiClient<{ message: string }>('/v1/auth/signup', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ name: fullName, userName, email, password }),
+    errorMessage: "Erro ao fazer registro",
+    requiresAuth: false,
+    returnResponse: true,
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Erro ao fazer registro"),
-    };
-  }
+  if (!result.success) return result;
 
-  const rawSetCookie = response.headers.get("set-cookie");
+  const rawSetCookie = result.response!.headers.get("set-cookie");
   await setSessioCookie(rawSetCookie!);
 
-  return { success: true, data: { message: 'success' } };
+  return { success: true as const, data: { message: 'success' } };
 }
 
 export async function forgotPassword(email: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/forgot-password`, {
+  return apiClient<{ message: string }>('/v1/auth/forgot-password', {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ email }),
+    errorMessage: "Erro ao solicitar redefinição de senha",
+    requiresAuth: false,
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Erro ao solicitar redefinição de senha"),
-    };
-  }
-
-  return { success: true, data: { message: 'success' } };
 }
 
 export async function verifyCodeResetPassword(code: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/verify-reset-code`, {
+  const result = await apiClient<{ message: string }>('/v1/auth/verify-reset-code', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ code }),
+    errorMessage: "Codigo de verificação inválido",
+    requiresAuth: false,
+    returnResponse: true,
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Codigo de verificação inválido"),
-    };
-  }
+  if (!result.success) return result;
 
-  const rawSetCookie = response.headers.get("set-cookie");
+  const rawSetCookie = result.response!.headers.get("set-cookie");
   await setSessioCookie(rawSetCookie!);
 
-  return { success: true, data: { message: 'success' } };
+  return { success: true as const, data: { message: 'success' } };
 }
 
 export async function resetPassword(newPassword: string, confirmNewPassword: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/reset-password`, {
+  return apiClient<{ message: string }>('/v1/auth/reset-password', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("reset-token"),
-    },
     body: JSON.stringify({ newPassword, confirmNewPassword }),
+    errorMessage: "Erro ao redefinir senha",
+    requiresAuth: true,
+    cookieName: "reset-token",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Erro ao redefinir senha"),
-    };
-  }
-
-  return { success: true, data: { message: 'success' } };
 }

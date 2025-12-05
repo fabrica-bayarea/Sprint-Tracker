@@ -1,165 +1,69 @@
 'use server';
 
-import { getCookie } from "@/lib/utils/sessionCookie";
-import { handleFetchError } from "@/lib/utils/handleFetchError";
+import { apiClient } from "@/lib/utils/apiClient";
+import { 
+  List, 
+  ListWithTasksResponse, 
+  CreateListData, 
+  EditListData 
+} from "@/lib/types/board";
 
-const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
-
-interface Task {
-  id: string;
-  content: string;
+export async function getListById(listId: string) {
+  return apiClient<ListWithTasksResponse>(`/v1/lists/${listId}`, {
+    method: "GET",
+    errorMessage: 'Falha ao buscar lista',
+  });
 }
-
-interface List {
-  id: string;
-  title: string;
-  tasks: Task[];
-  position?: number;
-  boardId?: string;
-}
-
-interface NewListData {
-  boardId: string;
-  title: string;
-  position: number;
-}
-
-interface PatchListData {
-  id: string;
-  title?: string;
-  position?: number;
-}
-
 
 export async function getAllList(boardId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/lists/board/${boardId}`, {
-    headers: {
-      'Accept': 'application/json',
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
+  const result = await apiClient<List[]>(`/v1/lists/board/${boardId}`, {
+    method: "GET",
+    errorMessage: 'Falha ao buscar listas',
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, 'Falha ao buscar listas'),
-    };
-  }
+  if (!result.success) return result;
 
-  const data = await response.json();
-  return { success: true, data: data.sort((a: List, b: List) => (a.position || 0) - (b.position || 0)) };
+  return {
+    success: true as const,
+    data: result.data.sort((a: List, b: List) => (a.position || 0) - (b.position || 0))
+  };
 }
 
-export async function createList(newListData: NewListData) {
-  const response = await fetch(`${BASE_URL_API}/v1/lists`, {
+export async function createList(newListData: CreateListData) {
+  return apiClient<List>('/v1/lists', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
     body: JSON.stringify(newListData),
+    errorMessage: 'Falha ao criar lista',
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, 'Falha ao criar lista'),
-    };
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return { success: true, data: await response.json() };
-  } else {
-    const responseText = await response.text();
-    return {
-      success: false,
-      error: responseText || 'Falha ao criar lista: formato de resposta inesperado do servidor.',
-    };
-  }
 }
 
-export async function editList(List: PatchListData) {
-  const updateData: Partial<Omit<PatchListData, 'id'>> = {};
-  if (List.title !== undefined) {
-    updateData.title = List.title;
+export async function editList(listData: EditListData) {
+  const updateData: Partial<Omit<EditListData, 'id'>> = {};
+  if (listData.title !== undefined) {
+    updateData.title = listData.title;
   }
-  if (List.position !== undefined) {
-    updateData.position = List.position;
+  if (listData.position !== undefined) {
+    updateData.position = listData.position;
   }
 
-  const response = await fetch(`${BASE_URL_API}/v1/lists/${List.id}`, {
+  return apiClient<List>(`/v1/lists/${listData.id}`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
     body: JSON.stringify(updateData),
+    errorMessage: 'Falha ao editar lista',
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, 'Falha ao editar lista'),
-    };
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return { success: true, data: await response.json() };
-  } else {
-    return { success: true, data: null };
-  }
 }
 
 export async function deleteList(listId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/lists/${listId}`, {
+  return apiClient(`/v1/lists/${listId}`, {
     method: 'DELETE',
-    headers: {
-      'Accept': 'application/json',
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
+    errorMessage: 'Falha ao deletar lista',
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, 'Falha ao deletar lista'),
-    };
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return { success: true, data: await response.json() };
-  } else {
-    return { success: true, data: null };
-  }
 }
 
 export async function moveList(listId: string, newPosition: number) {
-  const response = await fetch(`${BASE_URL_API}/v1/lists/${listId}/position`, {
+  return apiClient<List>(`/v1/lists/${listId}/position`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
     body: JSON.stringify({ newPosition }),
+    errorMessage: 'Falha ao mover lista',
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, 'Falha ao mover lista'),
-    };
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return { success: true, data: await response.json() };
-  } else {
-    return { success: true, data: null };
-  }
 }

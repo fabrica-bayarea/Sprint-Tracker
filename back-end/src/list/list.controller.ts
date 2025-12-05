@@ -33,7 +33,8 @@ export class ListController {
 
   @ApiOperation({
     summary: 'Cria uma nova lista',
-    description: 'Cria uma nova lista para o usuário autenticado',
+    description:
+      'Cria uma nova lista para o usuário autenticado. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 201, description: 'Lista criada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao criar a lista' })
@@ -49,7 +50,7 @@ export class ListController {
   @ApiOperation({
     summary: 'Busca todas as listas de um quadro',
     description:
-      'Busca todas as listas de um quadro específico do usuário autenticado',
+      'Busca todas as listas de um quadro específico do usuário autenticado. Autorizado para todos.',
   })
   @ApiResponse({ status: 200, description: 'Listas encontradas com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao buscar as listas' })
@@ -64,7 +65,8 @@ export class ListController {
 
   @ApiOperation({
     summary: 'Busca uma lista específica',
-    description: 'Busca uma lista específica pelo listId',
+    description:
+      'Busca uma lista específica pelo listId. Autorizado para todos.',
   })
   @ApiResponse({ status: 200, description: 'Lista encontrada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao buscar a lista' })
@@ -79,7 +81,8 @@ export class ListController {
 
   @ApiOperation({
     summary: 'Atualiza uma lista',
-    description: 'Atualiza uma lista específica pelo listId',
+    description:
+      'Atualiza uma lista específica pelo listId. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'Lista atualizada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao atualizar a lista' })
@@ -94,7 +97,8 @@ export class ListController {
 
   @ApiOperation({
     summary: 'Atualiza a posição de uma lista',
-    description: 'Atualiza a posição de uma lista específica pelo listId',
+    description:
+      'Atualiza a posição de uma lista específica pelo listId. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'Lista atualizada com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao atualizar a lista' })
@@ -112,7 +116,8 @@ export class ListController {
 
   @ApiOperation({
     summary: 'Remove uma lista',
-    description: 'Remove uma lista específica pelo listId',
+    description:
+      'Remove uma lista específica pelo listId. Autorizado para administradores e membros.',
   })
   @ApiResponse({ status: 200, description: 'Lista removida com sucesso' })
   @ApiResponse({ status: 400, description: 'Erro ao remover a lista' })
@@ -121,7 +126,8 @@ export class ListController {
   @Delete(':listId')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  remove(@Param('listId') listId: string) {
-    return this.listService.remove(listId);
+  async remove(@Param('listId') listId: string) {
+    await this.listService.remove(listId);
+    return { message: 'Lista removida com sucesso' };
   }
 }

@@ -1,28 +1,71 @@
-.teste{
-  min-height: 100vh;
-  background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
-  padding: 32px 0;
+.board {
+  display: flex;
+  flex-direction: column;
+  width: 95%;
+  max-width: 1750px;
+  min-width: 320px;
+  margin: 50px auto 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.226);
 }
 
-.container {
-    padding: 2rem;
-  }
-  
-  .title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-  }
-  
-  .description {
-    margin-bottom: 1rem;
-  }
-  
-  .visibility {
-    font-style: italic;
-    color: #555;
-  }
-  
-  .error {
-    color: red;
-  }
+.board__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  color: white;
+  width: 97%;
+  border-bottom: 1px solid #d3d5d8;
+  margin: 0 auto;
+  border-radius: 8px 8px 0 0;
+  background-color: white;
+}
+
+.board__title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.board__actions{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.button{
+  border-radius: 10px;
+  padding: 9px 16px 9px 11px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.button--neutral{
+  background: #ffffff;
+  color: #333333;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.button--neutral:hover {
+  background: #f0f0f0;
+}
+
+.button--primary {
+  background: #c51313;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: background 0.2s, color 0.2s;
+}
+
+.button--primary:hover {
+  background: #a40f0f;
+}

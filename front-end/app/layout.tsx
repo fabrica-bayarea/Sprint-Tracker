@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from 'next/headers';
 
 import Warning from "@/components/features/shared/warning";
+import Confirm from "@/components/features/shared/confirm";
 
 import "./globals.css";
 
@@ -33,6 +34,7 @@ export default async function RootLayout(
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
         <Warning />
+        <Confirm />
       </body>
     </html>
   );

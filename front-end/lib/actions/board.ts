@@ -1,100 +1,124 @@
 'use server';
 
-import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { getCookie } from "@/lib/utils/sessionCookie";
+import { apiClient } from "@/lib/utils/apiClient";
+import {
+  type CreateBoardData,
+  type BoardListItemResponse,
+  type BoardResponse,
+  type BoardMemberResponse,
+  BoardRole,
+  BoardVisibility,
+  boardListItemResponseToView,
+  boardResponseToBoard,
+  boardMemberResponseToView,
+} from "@/lib/types/board";
 
-interface BoardData {
-  title: string;
-  description: string;
-}
-
-interface BoardListItemAPI {
-  id: string;
-  title: string;
-}
-
-const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
-
-export async function createBoard(boardData: BoardData) {
-  const response = await fetch(`${BASE_URL_API}/v1/boards`, {
+export async function createBoard(boardData: CreateBoardData) {
+  return apiClient<{ message: string }>('/v1/boards', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
     body: JSON.stringify({
       ...boardData,
-      visibility: "PRIVATE",
+      visibility: BoardVisibility.PRIVATE,
     }),
+    errorMessage: "Falha ao criar o board",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao criar o board"),
-    };
-  }
-
-  return { success: true, data: { message: 'success' } };
 }
 
 export async function getBoards() {
-  const response = await fetch(`${BASE_URL_API}/v1/boards`, {
+  const result = await apiClient<BoardListItemResponse[]>('/v1/boards', {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
+    errorMessage: "Falha ao buscar os boards",
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar os boards"),
-    };
-  }
+  if (!result.success) return result;
 
-  const data: BoardListItemAPI[] = await response.json();
   return {
-    success: true,
-    data: data.map((board: BoardListItemAPI) => ({
-      id: board.id,
-      name: board.title,
-      members: [],
-      image: "",
-    })),
+    success: true as const,
+    data: result.data.map(boardListItemResponseToView),
   };
 }
 
 export async function getBoardById(boardId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
+  const result = await apiClient<BoardResponse>(`/v1/boards/${boardId}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("sprinttacker-session"),
-    },
+    errorMessage: "Falha ao buscar o board",
   });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar o board"),
-    };
-  }
+  if (!result.success) return result;
 
-  const data = await response.json();
+  const board = boardResponseToBoard(result.data);
+
   return {
-    success: true,
+    success: true as const,
     data: {
-      id: data.id,
-      name: data.title,
-      description: data.description,
-      visibility: data.visibility,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      ownerId: data.ownerId,
-      lists: data.lists,
+      id: board.id,
+      name: board.title,
+      description: board.description,
+      visibility: board.visibility,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt,
+      ownerId: board.ownerId,
+      lists: board.lists,
     },
   };
 }
 
+export async function getBoardMembers(boardId: string) {
+  const result = await apiClient<BoardMemberResponse[]>(`/v1/boards/${boardId}/members`, {
+    method: "GET",
+    errorMessage: "Falha ao buscar membros do board",
+  });
+
+  if (!result.success) return result;
+
+  return {
+    success: true as const,
+    data: result.data.map(boardMemberResponseToView),
+  };
+}
+
+export async function deleteBoard(boardId: string) {
+  return apiClient(`/v1/boards/${boardId}`, {
+    method: "DELETE",
+    errorMessage: "Falha ao deletar o board",
+  });
+}
+
+export async function deleteBoardMember(boardId: string, userId: string) {
+  return apiClient(`/v1/boards/${boardId}/members/${userId}`, {
+    method: "DELETE",
+    errorMessage: "Falha ao remover membro do board",
+  });
+}
+
+export async function updateBoardMemberRole(
+  boardId: string,
+  userId: string,
+  role: BoardRole,
+) {
+  return apiClient(`/v1/boards/${boardId}/members/${userId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+    errorMessage: "Falha ao atualizar papel do membro",
+  });
+}
+
+export async function inviteBoardMember(
+  boardId: string,
+  userName: string,
+  role: BoardRole = BoardRole.OBSERVER,
+) {
+  return apiClient(`/v1/boards/invite/${boardId}`, {
+    method: "POST",
+    body: JSON.stringify({ userName, role }),
+    errorMessage: "Falha ao enviar convite",
+  });
+}
+
+export async function respondInvite(boardId: string, idInvite: string, accept: boolean) {
+  return apiClient(`/v1/boards/invite/${boardId}/response`, {
+    method: "POST",
+    body: JSON.stringify({ idInvite, response: accept }),
+    errorMessage: accept ? "Falha ao aceitar convite" : "Falha ao recusar convite",
+  });
+}

@@ -66,7 +66,7 @@ describe('BoardController', () => {
   });
 
   describe('findOne', () => {
-    it('deve chamar service.findOne com o id', async () => {
+    it('deve chamar service.findOne com o id e userId', async () => {
       const board = { id: '1', title: 'Board 1' };
       mockBoardService.findOne.mockResolvedValue(board);
 

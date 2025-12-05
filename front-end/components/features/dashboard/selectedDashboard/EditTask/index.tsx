@@ -20,6 +20,8 @@ export default function EditTaskModal () {
   const [status, setStatus] = useState<Status>(Status.TODO);
   const [dueDate, setDueDate] = useState('');
 
+  const MAX_DESC_LENGTH = 500;
+
   useEffect(() => {
     if (isEditTaskModalOpen && selectedTask) {
       setTitle(selectedTask.title || '');
@@ -84,13 +86,19 @@ export default function EditTaskModal () {
           autoFocus
         />
         
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descrição (opcional)"
-          className={styles.modalTextarea}
-          rows={3}
-        />
+        <div className={styles.textareaWrapper}>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descrição (opcional)"
+              className={styles.modalTextarea}
+              rows={3}
+              maxLength={MAX_DESC_LENGTH}
+            />
+            <div className={styles.charCounter}>
+                {description.length} / {MAX_DESC_LENGTH}
+            </div>
+        </div>
         
         <select
           value={status}
