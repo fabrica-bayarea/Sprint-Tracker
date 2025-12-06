@@ -14,15 +14,14 @@ import {
 export class AnalysisService {
   constructor(private readonly prisma: PrismaService) {}
   async getCompletedTasksSummary(
-    userId: string,
     boardId: string,
     query: GetCompletedSummaryDto,
   ): Promise<CompletedSummaryResponse> {
     const { userId: assignedToId, startDate, endDate } = query;
 
-    if (!startDate || !endDate) {
+    if (startDate > endDate) {
       throw new BadRequestException(
-        'Os parâmetros startDate e endDate são obrigatórios para o resumo.',
+        'A data de início deve ser anterior à data de término.',
       );
     }
 
@@ -33,10 +32,10 @@ export class AnalysisService {
         gte: startDate,
         lte: finalEndDate,
       },
-      ...(assignedToId
-        ? { OR: [{ assignedToId }, { creatorId: userId }] }
-        : {}),
-      ...(boardId ? { list: { boardId } } : {}),
+      ...(assignedToId ? { assignedToId } : {}),
+      list: {
+        boardId: boardId,
+      },
     };
 
     const completedTasks = await this.prisma.task.findMany({
@@ -62,9 +61,11 @@ export class AnalysisService {
       }),
     );
 
-    return {
+    const result = {
       total: completedTasks.length,
       dailyCounts: dailyCounts.sort((a, b) => a.date.localeCompare(b.date)),
     };
+
+    return result;
   }
 }
