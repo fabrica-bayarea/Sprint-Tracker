@@ -9,6 +9,10 @@ import {
   DailyCompletedCount,
   GetCompletedSummaryDto,
 } from './dto/get-completed-summary.dto';
+import {
+  BasicSummaryResponse,
+  StatusCount,
+} from './dto/get-basic-summary.dto';
 
 @Injectable()
 export class AnalysisService {
@@ -67,5 +71,49 @@ export class AnalysisService {
     };
 
     return result;
+  }
+
+  async getBasicSummary(boardId: string): Promise<BasicSummaryResponse> {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        list: {
+          boardId: boardId,
+        },
+        isArchived: false,
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    const total = tasks.length;
+    const statusCountMap: { [key: string]: number } = {
+      TODO: 0,
+      IN_PROGRESS: 0,
+      DONE: 0,
+    };
+
+    tasks.forEach((task) => {
+      if (task.status !== Status.ARCHIVED) {
+        statusCountMap[task.status] = (statusCountMap[task.status] || 0) + 1;
+      }
+    });
+
+    const statusCounts: StatusCount[] = Object.keys(statusCountMap).map(
+      (status) => {
+        const count = statusCountMap[status];
+        const percentage = total > 0 ? Math.round((count / total) * 100 * 100) / 100 : 0;
+        return {
+          status,
+          count,
+          percentage,
+        };
+      },
+    );
+
+    return {
+      total,
+      statusCounts,
+    };
   }
 }

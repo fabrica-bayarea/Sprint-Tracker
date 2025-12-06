@@ -65,4 +65,22 @@ export class AnalysisController {
       query,
     );
   }
+
+  @ApiOperation({
+    summary: 'Resumo básico de tarefas',
+    description:
+      'Obtém estatísticas básicas das tarefas de um board: número e porcentagem por status',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumo básico obtido com sucesso',
+  })
+  @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado' })
+  @UseGuards(JwtAuthGuard, BoardRoleGuard)
+  @BoardRoles(Role.ADMIN, Role.MEMBER, Role.OBSERVER)
+  @Get(':boardId')
+  async getBasicSummary(@Param('boardId') boardId: string) {
+    return await this.AnalysisService.getBasicSummary(boardId);
+  }
 }
