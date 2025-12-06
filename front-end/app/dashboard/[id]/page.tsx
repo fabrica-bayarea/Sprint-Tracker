@@ -1,9 +1,10 @@
 "use client";
 
 import React, { use, useEffect, useState } from 'react';
-import { Plus, Users, ChartLine } from 'lucide-react';
+import { Plus, Users, ChartLine, List } from 'lucide-react';
 
 import BoardLists from '@/components/features/dashboard/selectedDashboard/boardLists';
+import Reports from '@/components/features/dashboard/selectedDashboard/reports';
 import CreateListModal from '@/components/features/dashboard/selectedDashboard/CreateList';
 import MembersModal from '@/components/features/dashboard/selectedDashboard/members';
 import CreateTaskModal from '@/components/features/dashboard/selectedDashboard/CreateTask';
@@ -17,7 +18,7 @@ import { useModalStore } from '@/lib/stores/modal';
 import styles from './style.module.css';
 import { BoardRoleProvider, useBoardRole } from '@/lib/contexts/BoardRoleContext';
 
-function CreateListButton() {
+function CreateListButton({ showReports }: { showReports: boolean }) {
   const { role, loading } = useBoardRole();
   const { openCreateListModal } = useModalStore();
 
@@ -25,7 +26,12 @@ function CreateListButton() {
   if (!canCreate) return null;
 
   return (
-    <button className={`${styles.button} ${styles['button--primary']}`} onClick={openCreateListModal}>
+    <button 
+      className={`${styles.button} ${styles['button--primary']}`} 
+      onClick={openCreateListModal}
+      disabled={showReports}
+      style={{ opacity: showReports ? 0.5 : 1, cursor: showReports ? 'not-allowed' : 'pointer' }}
+    >
       <Plus size={27} /> Criar coluna
     </button>
   );
@@ -34,6 +40,7 @@ function CreateListButton() {
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: boardId } = use(params);
   const [title, setTitle] = useState("");
+  const [showReports, setShowReports] = useState(false);
   const { showWarning } = useWarningStore()
 
   const { openMembersModal } = useModalStore();
@@ -59,16 +66,31 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           <header className={styles.board__header}>
             <h1 className={styles.board__title}>{title}</h1>
             <div className={styles.board__actions} role="group" aria-label="Ações do quadro">
-              <button className={`${styles.button} ${styles['button--neutral']}`}>
-                <ChartLine size={27} strokeWidth={1}/> Relatorios
+              <button 
+                className={`${styles.button} ${styles['button--neutral']}`} 
+                onClick={() => setShowReports(!showReports)}
+              >
+                {showReports ? (
+                  <>
+                    <List size={27} strokeWidth={1}/> Quadro
+                  </>
+                ) : (
+                  <>
+                    <ChartLine size={27} strokeWidth={1}/> Relatórios
+                  </>
+                )}
               </button>
               <button className={`${styles.button} ${styles['button--neutral']}`} onClick={openMembersModal}>
                 <Users size={27} strokeWidth={1.5}/> Membros
               </button>
-              <CreateListButton />
+              <CreateListButton showReports={showReports} />
             </div>
           </header>
-          <BoardLists boardId={ boardId }/>
+          {showReports ? (
+            <Reports boardId={boardId} />
+          ) : (
+            <BoardLists boardId={boardId} />
+          )}
         </section>
 
         <CreateListModal boardId={ boardId }/>
