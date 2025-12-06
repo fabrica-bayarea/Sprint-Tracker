@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { AnalysisModule } from '@/analysis/analysis.module';
 import { AuthModule } from '@/auth/auth.module';
 import { BoardModule } from '@/board/board.module';
 import { EventsModule } from '@/events/events.module';
@@ -25,6 +26,7 @@ import { TaskModule } from '@/task/task.module';
     ListModule,
     TaskModule,
     HealthModule,
+    AnalysisModule,
   ],
   providers: [],
 })

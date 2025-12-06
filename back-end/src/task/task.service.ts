@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Status } from '@prisma/client';
 import { endOfDay } from 'date-fns';
 
 import { BoardGateway } from '@/events/board.gateway';
@@ -38,6 +39,8 @@ export class TaskService {
         position: count,
         status: dto.status,
         dueDate: dto.dueDate,
+        completedAt:
+          String(dto.status) === String(Status.DONE) ? new Date() : null,
       },
     });
 
@@ -64,10 +67,34 @@ export class TaskService {
    * Atualiza os dados de uma tarefa e emite evento de atualização.
    */
   async update(id: string, dto: UpdateTaskDto) {
-    await this.findOne(id);
+    const task = await this.findOne(id);
+    let completedAt: Date | null | undefined = undefined;
+
+    const isStatusChanging =
+      dto.status != null && String(dto.status) !== String(task.status);
+
+    if (isStatusChanging) {
+      if (
+        String(dto.status) === String(Status.DONE) &&
+        task.status !== Status.DONE
+      ) {
+        completedAt = new Date();
+      } else if (
+        String(dto.status) !== String(Status.DONE) &&
+        task.status === Status.DONE
+      ) {
+        completedAt = null;
+      }
+    }
+
+    const dataToUpdate = {
+      ...dto,
+      ...(completedAt !== undefined && { completedAt }),
+    };
+
     const updated = await this.prisma.task.update({
       where: { id },
-      data: dto,
+      data: dataToUpdate,
       include: { list: { select: { boardId: true } } },
     });
 
