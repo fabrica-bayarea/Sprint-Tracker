@@ -5,6 +5,11 @@ import { useModalStore } from '@/lib/stores/modal';
 import { useWarningStore } from '@/lib/stores/warning';
 import type { CreateListData } from '@/lib/types/board';
 
+/**
+ * Hook para gerenciar operações CRUD de listas em um board
+ * Fornece funções para criar, renomear, deletar e reordenar listas
+ * com validações e sincronização automática com o backend
+ */
 export function useListOperations(boardId: string) {
   const { lists, addList, renameList, removeList, updateListPosition } = useBoardStore();
   const { closeCreateListModal } = useModalStore();
@@ -21,7 +26,6 @@ export function useListOperations(boardId: string) {
       boardId: boardId,
       title: title.trim(),
       position: newPosition,
-      tasks: [],
     };
 
     const result = await createList(newListData);
@@ -30,7 +34,7 @@ export function useListOperations(boardId: string) {
       closeCreateListModal();
       showWarning("Lista criada com sucesso!", "success");
     } else {
-      showWarning("Erro ao adicionar lista: " + result.error, "failed");
+      showWarning(result.error, "failed");
     }
   }, [boardId, lists, addList, closeCreateListModal, showWarning]);
 
@@ -46,7 +50,7 @@ export function useListOperations(boardId: string) {
       renameList(data.id, data.title.trim());
       showWarning("Lista renomeada com sucesso!", "success");
     } else {
-      showWarning("Erro ao renomear lista: " + result.error, "failed");
+      showWarning(result.error, "failed");
     }
   }, [renameList, showWarning]);
 
@@ -56,24 +60,18 @@ export function useListOperations(boardId: string) {
       removeList(listId);
       showWarning("Lista deletada com sucesso!", "success");
     } else {
-      showWarning(result.error || 'Erro ao deletar lista', "failed");
+      showWarning(result.error, "failed");
     }
   }, [removeList, showWarning]);
 
   const handleMoveList = useCallback(async (listId: string, newPosition: number) => {
-    try {
-      const result = await moveList(listId, newPosition);
-      if (result.success) {
-        // Atualizar a posição no store local
-        updateListPosition(listId, newPosition);
-        showWarning("Lista movida com sucesso!", "success");
-        return true;
-      } else {
-        showWarning("Erro ao mover lista: " + result.error, "failed");
-        return false;
-      }
-    } catch (error) {
-      showWarning("Erro inesperado ao mover lista: " + error, "failed");
+    const result = await moveList(listId, newPosition);
+    if (result.success) {
+      updateListPosition(listId, newPosition);
+      showWarning("Lista movida com sucesso!", "success");
+      return true;
+    } else {
+      showWarning(result.error, "failed");
       return false;
     }
   }, [updateListPosition, showWarning]);

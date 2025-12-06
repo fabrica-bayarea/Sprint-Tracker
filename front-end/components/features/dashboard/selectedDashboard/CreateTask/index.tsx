@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { useModalStore } from '@/lib/stores/modal';
 import { useBoardStore } from '@/lib/stores/board';
@@ -8,7 +8,7 @@ import { useTaskOperations } from '@/lib/hooks/useTaskOperations';
 
 import { Status } from '@/lib/types/board';
 
-import { Input, Textarea } from "@/components/ui";
+import { Textarea } from "@/components/ui";
 
 import styles from './style.module.css';
 
@@ -21,6 +21,11 @@ export default function CreateTaskModal () {
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<Status>(Status.TODO);
   const [dueDate, setDueDate] = useState('');
+  
+  const [error, setError] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_DESC_LENGTH = 500;
 
   const nextPosition = selectedListId ? getNextTaskPosition(selectedListId) : 0;
 
@@ -30,6 +35,11 @@ export default function CreateTaskModal () {
       setDescription('');
       setStatus(Status.TODO);
       setDueDate('');
+      setError(''); 
+      
+      setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 100);
     }
   }, [isCreateTaskModalOpen]);
 
@@ -49,15 +59,24 @@ export default function CreateTaskModal () {
   };
 
   const handleSubmit = () => {
-    if (title.trim()) {
-      handleCreateTask({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        position: nextPosition,
-        status: status,
-        dueDate: formatToISO(dueDate),
-      });
+    if (!title.trim()) {
+      setError("O título da tarefa é obrigatório.");
+      
+      if (titleInputRef.current) {
+        titleInputRef.current.focus();
+      }
+      return; 
     }
+
+    setError('');
+
+    handleCreateTask({
+      title: title.trim(),
+      description: description.trim() || undefined,
+      position: nextPosition,
+      status: status,
+      dueDate: formatToISO(dueDate),
+    });
   };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -71,23 +90,38 @@ export default function CreateTaskModal () {
       <div className={styles.modalContent}>
         <h2>Criar Nova Tarefa</h2>
         
-        <Input
+        <label className={styles.inputLabel}>
+          Título da Tarefa <span className={styles.requiredMark}>*</span>
+        </label>
+        
+        <input
+          ref={titleInputRef}
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título da tarefa"
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (error) setError(''); 
+          }}
+          placeholder="Ex: Finalizar relatório..."
           className={styles.modalInput}
-          autoFocus
         />
         
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descrição (opcional)"
-          className={styles.modalTextarea}
-          rows={3}
-        />
+        <label className={styles.inputLabel}>Descrição</label>
+        <div className={styles.textareaWrapper}>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Adicione detalhes..."
+            className={styles.modalTextarea}
+            rows={3}
+            maxLength={MAX_DESC_LENGTH} 
+          />
+          <div className={styles.charCounter}>
+            {description.length} / {MAX_DESC_LENGTH}
+          </div>
+        </div>
         
+        <label className={styles.inputLabel}>Status <span className={styles.requiredMark}>*</span></label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as Status)}
@@ -98,13 +132,19 @@ export default function CreateTaskModal () {
           <option value="DONE">Concluído</option>
         </select>
         
+        <label className={styles.inputLabel}>Data de Vencimento <span className={styles.requiredMark}>*</span></label>
         <input
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          placeholder="Data de vencimento (opcional)"
           className={styles.modalInput}
         />
+
+        {error && (
+          <div className={styles.errorMessage}>
+            {error}
+          </div>
+        )}
               
         <div className={styles.modalActions}>
           <button onClick={closeCreateTaskModal} className={styles.cancelButton}>Cancelar</button>

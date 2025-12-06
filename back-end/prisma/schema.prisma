@@ -160,6 +160,7 @@ enum AuthProvider {
   local
   google
   microsoft
+  ldap
 }
 
 enum BoardVisibility {

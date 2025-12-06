@@ -1,3 +1,9 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
 .links {
   display: flex;
   align-items: center;
@@ -112,4 +118,29 @@
   display: block;
   width: 32px;
   height: 32px;
+}
+
+.methodToggleContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.methodToggleButton {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.methodToggleButtonActive {
+  background: white;
+  color: #091E42;
 }

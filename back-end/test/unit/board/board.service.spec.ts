@@ -61,17 +61,20 @@ describe('BoardService', () => {
   describe('findAll', () => {
     it('deve retornar uma lista de quadros (boards)', async () => {
       const idUser = 'user-id';
-      const boards = [{ id: '1', title: 'Board 1', idUser }];
+      const boards = [
+        { id: '1', title: 'Board 1', idUser, _count: { members: 0 } },
+      ];
       mockPrisma.board.findMany.mockResolvedValue(boards);
 
-      expect(await service.findAll(idUser)).toEqual(boards);
+      const result = await service.findAll(idUser);
+      expect(result).toEqual([
+        { id: '1', title: 'Board 1', idUser, memberCount: 0 },
+      ]);
       expect(mockPrisma.board.findMany).toHaveBeenCalledWith({
         where: { members: { some: { userId: idUser } }, isArchived: false },
         include: {
-          lists: {
-            include: {
-              tasks: true,
-            },
+          _count: {
+            select: { members: true },
           },
         },
       });
@@ -109,10 +112,19 @@ describe('BoardService', () => {
     it('deve deletar um quadro (board)', async () => {
       const board = { id: '1', title: 'To Delete' };
       mockPrisma.board.findUnique.mockResolvedValue(board);
+      mockPrisma.$transaction.mockImplementation(
+        async (callback: (prisma: typeof mockPrisma) => Promise<void>) => {
+          return callback(mockPrisma);
+        },
+      );
+      mockPrisma.list.findMany.mockResolvedValue([]);
+      mockPrisma.label.findMany.mockResolvedValue([]);
+      mockPrisma.invite.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrisma.boardMember.deleteMany.mockResolvedValue({ count: 0 });
       mockPrisma.board.delete.mockResolvedValue(board);
 
       const result = await service.remove('1');
-      expect(result).toEqual(board);
+      expect(result).toEqual({ message: 'Quadro excluído com sucesso' });
     });
   });
 });

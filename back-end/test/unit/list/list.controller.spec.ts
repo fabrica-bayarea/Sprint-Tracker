@@ -16,6 +16,7 @@ describe('ListController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    updatePosition: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -91,6 +92,29 @@ describe('ListController', () => {
       const result = await controller.update(id, dto);
 
       expect(mockListService.update).toHaveBeenCalledWith(id, dto);
+      expect(result).toEqual(expectedResult);
+    });
+  });
+
+  describe('updatePosition', () => {
+    it('should call listService.updatePosition with id and newPosition', async () => {
+      const id = 'list-123';
+      const newPosition = 5;
+      const dto = { newPosition };
+      const expectedResult = {
+        id,
+        position: newPosition,
+        title: 'Minha Lista',
+      };
+
+      mockListService.updatePosition.mockResolvedValue(expectedResult);
+
+      const result = await controller.updatePosition(id, dto);
+
+      expect(mockListService.updatePosition).toHaveBeenCalledWith(
+        id,
+        newPosition,
+      );
       expect(result).toEqual(expectedResult);
     });
   });

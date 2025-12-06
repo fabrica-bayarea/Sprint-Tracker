@@ -5,6 +5,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -15,6 +16,7 @@ import {
   PrismaClientValidationError,
 } from '@prisma/client/runtime/library';
 import * as argon2 from 'argon2';
+import { Client } from 'ldapts';
 
 import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
 import 'dotenv/config';
@@ -27,18 +29,28 @@ import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { AccessTokenPayload } from './interface/jwt';
 
+import type { SearchOptions } from 'ldapts';
+
+interface LdapUserPayload {
+  uid: string;
+  displayName: string;
+  mail: string;
+}
+
 @Injectable()
 export class AuthService {
+  private userBaseDn: string;
   constructor(
     private prisma: PrismaService,
-    private readonly jwtService: JwtService,
     private configService: ConfigService,
+    private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-  ) {}
+  ) {
+    this.userBaseDn =
+      this.configService.getOrThrow<string>('LDAP_USER_BASE_DN');
+  }
 
-  /**
-   * Gera um token JWT com base no payload fornecido.
-   */
+  // Gera um token JWT com base no payload fornecido.
   private generateJwt(user: User, rememberMe = false): { accessToken: string } {
     const payload: AccessTokenPayload = {
       sub: user.id,
@@ -54,9 +66,7 @@ export class AuthService {
     };
   }
 
-  /**
-   * Gera um hash seguro para a senha usando Argon2.
-   */
+  //Gera um hash seguro para a senha usando Argon2.
   private async hashPassword(password: string): Promise<string> {
     return argon2.hash(password, {
       type: argon2.argon2id,
@@ -66,9 +76,9 @@ export class AuthService {
     });
   }
 
-  /**
-   * Busca um usuário pelo email ou cria um novo, dependendo do provedor de autentica-
-   * ção é guardado o providerId em vez da senha.
+  /*
+   * Busca um usuário pelo email ou cria um novo, dependendo do provedor de...
+   * autenticação é guardado o providerId em vez da senha.
    */
   private async findOrCreateUser(
     data: {
@@ -91,7 +101,7 @@ export class AuthService {
         passwordHash: provider === 'local' ? data.password! : data.providerId!,
         providerId: provider === 'local' ? null : data.providerId!,
         role: 'ADMIN' as const,
-        authProvider: provider as 'local' | 'google' | 'microsoft',
+        authProvider: provider as 'local' | 'google' | 'microsoft' | 'ldap',
       };
 
       const newUser = await this.prisma.user.create({
@@ -103,9 +113,7 @@ export class AuthService {
     return existingUser;
   }
 
-  /**
-   * Trata erros específicos ao criar um usuário.
-   */
+  //Trata erros específicos ao criar um usuário.
   private handleSignUpError(error: unknown): never {
     if (
       error instanceof PrismaClientKnownRequestError &&
@@ -120,9 +128,7 @@ export class AuthService {
     throw new BadRequestException('Erro ao criar usuário');
   }
 
-  /**
-   * Registra um novo usuário localmente.
-   */
+  //Registra um novo usuário localmente.
   async signUp(dto: SignUpDto): Promise<{ accessToken: string }> {
     const hashedPassword = await this.hashPassword(dto.password);
 
@@ -153,9 +159,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * Realiza login de um usuário local.
-   */
+  //Realiza login de um usuário local.
   async signIn(dto: SignInDto): Promise<{ accessToken: string }> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -174,9 +178,7 @@ export class AuthService {
     return this.generateJwt(user, dto.rememberMe);
   }
 
-  /**
-   * Realiza login com um provedor externo (Google, Microsoft, etc.).
-   */
+  //Realiza login com um provedor externo (Google, Microsoft, etc.).
   async signInWithProvider(
     provider: string,
     req: { providerId: string; email: string; name: string },
@@ -190,9 +192,7 @@ export class AuthService {
     return this.generateJwt(user);
   }
 
-  /**
-   * Gera um código aleatório e envia por email para recuperação de senha.
-   */
+  // Gera um código aleatório e envia por email para recuperação de senha.
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: forgotPasswordDto.email },
@@ -219,9 +219,7 @@ export class AuthService {
     );
   }
 
-  /**
-   * Verifica se o código de recuperação de senha é válido e gera um token JWT.
-   */
+  // Verifica se o código de recuperação de senha é válido e gera um token JWT.
   async verifyResetCode(
     verifyResetCodeDto: VerifyResetCodeDto,
   ): Promise<string> {
@@ -303,9 +301,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * Altera a senha de um usuário após validar a senha atual.
-   */
+  //Altera a senha de um usuário após validar a senha atual.
   async changePassword(id: string, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -329,5 +325,128 @@ export class AuthService {
       where: { id },
       data: { passwordHash: hashedNewPassword },
     });
+  }
+
+  /**
+   * Tenta autenticar o usuário contra o servidor LDAP (usando a Matrícula/Identificador).
+   */
+  async authenticateLdap(
+    enrollment: string,
+    password: string,
+  ): Promise<LdapUserPayload> {
+    const cleanPassword = password.trim();
+
+    const userDN = await this.findUserDn(enrollment);
+    if (!userDN) {
+      throw new UnauthorizedException(
+        'Usuário não encontrado no diretório LDAP.',
+      );
+    }
+
+    const userClient = new Client({
+      url: this.configService.getOrThrow<string>('LDAP_URL'),
+    });
+
+    try {
+      await userClient.bind(userDN, cleanPassword);
+
+      const userAttributes: LdapUserPayload =
+        await this.getUserAttributes(userDN);
+
+      return {
+        uid: userAttributes.uid,
+        displayName: userAttributes.displayName,
+        mail: userAttributes.mail,
+      };
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: unknown }).code === 49
+      ) {
+        throw new UnauthorizedException('Credenciais LDAP inválidas.');
+      }
+      throw new InternalServerErrorException(
+        'Erro ao se comunicar com o servidor LDAP.',
+      );
+    } finally {
+      await userClient.unbind().catch(() => {});
+    }
+  }
+
+  private async getBoundAdminClient(): Promise<Client> {
+    const client = new Client({
+      url: this.configService.getOrThrow<string>('LDAP_URL'),
+    });
+    const adminDn = this.configService.getOrThrow<string>('LDAP_ADMIN_DN');
+    const adminPassword = this.configService.getOrThrow<string>(
+      'LDAP_ADMIN_PASSWORD',
+    );
+
+    await client.bind(adminDn, adminPassword);
+    return client;
+  }
+
+  private async findUserDn(enrollment: string): Promise<string | null> {
+    const adminClient = await this.getBoundAdminClient();
+
+    try {
+      const searchOptions: SearchOptions = {
+        filter: `(uid=${enrollment})`,
+        scope: 'sub',
+        attributes: ['dn'],
+      };
+
+      const { searchEntries } = await adminClient.search(
+        this.userBaseDn,
+        searchOptions,
+      );
+
+      return searchEntries.length > 0 ? searchEntries[0].dn : null;
+    } catch {
+      throw new InternalServerErrorException(
+        'Erro de configuração LDAP: falha ao buscar DN do usuário.',
+      );
+    } finally {
+      await adminClient.unbind().catch(() => {});
+    }
+  }
+
+  private async getUserAttributes(userDN: string): Promise<LdapUserPayload> {
+    const adminClient = await this.getBoundAdminClient();
+
+    try {
+      const { searchEntries } = await adminClient.search(userDN, {
+        scope: 'base',
+        attributes: ['cn', 'mail', 'uid', 'memberOf'],
+      });
+
+      if (searchEntries.length > 0) {
+        const entry = searchEntries[0];
+        return {
+          uid: this.extractLdapAttribute(entry.uid),
+          displayName: this.extractLdapAttribute(entry.cn),
+          mail: this.extractLdapAttribute(entry.mail),
+        };
+      }
+      throw new InternalServerErrorException(
+        'Atributos de usuário LDAP não encontrados após o BIND bem-sucedido.',
+      );
+    } finally {
+      await adminClient.unbind().catch(() => {});
+    }
+  }
+
+  private extractLdapAttribute(
+    value: string | string[] | Buffer | Buffer[] | undefined,
+  ): string {
+    if (Array.isArray(value)) {
+      return this.extractLdapAttribute(value[0]);
+    }
+    if (Buffer.isBuffer(value)) {
+      return value.toString();
+    }
+    return String(value ?? '');
   }
 }

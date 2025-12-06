@@ -5,59 +5,54 @@ import { useModalStore } from '@/lib/stores/modal';
 import { useWarningStore } from '@/lib/stores/warning';
 import type { CreateTaskData, Status } from '@/lib/types/board';
 
+interface TaskData {
+  title: string;
+  description?: string;
+  position: number;
+  status: Status;
+  dueDate?: string;
+}
+
+/**
+ * Hook para gerenciar operações CRUD de tarefas
+ * Fornece funções para criar, editar, deletar e mover tarefas entre listas
+ * com validações e feedback visual ao usuário
+ */
 export function useTaskOperations() {
   const { addTask, editTask, removeTask, getNextTaskPosition } = useBoardStore();
   const { selectedListId, closeCreateTaskModal } = useModalStore();
   const { showWarning } = useWarningStore();
 
-  const handleCreateTask = useCallback(async (taskData: CreateTaskData) => {
-    if (!taskData.title || taskData.title.trim() === "") {
+  const handleCreateTask = useCallback(async (taskData: TaskData) => {
+    if (!taskData.title?.trim()) {
       showWarning("O título da tarefa não pode estar vazio.", "failed");
       return;
     }
 
-    const newTaskData = {
-      listId: selectedListId,
-      ...taskData
-    };
+    const result = await createTask({ listId: selectedListId, ...taskData });
+    if (result.success) {
+      addTask(selectedListId, result.data);
+      closeCreateTaskModal();
+      showWarning("Tarefa criada com sucesso!", "success");
+    } else {
+      showWarning(result.error, "failed");
+    }
+  }, [selectedListId, addTask, closeCreateTaskModal, showWarning]);
 
-    const result = await createTask(newTaskData);
-    if (result.success && result.data) {
-      const task = {
+  const handleEditTask = useCallback(async (taskId: string, updatedData: Partial<CreateTaskData>) => {
+    const result = await updateTask(taskId, updatedData);
+    if (result.success) {
+      editTask(taskId, {
         id: result.data.id,
         title: result.data.title,
         description: result.data.description,
         position: result.data.position,
         status: result.data.status as Status,
         dueDate: result.data.dueDate
-      };
-      
-      addTask(selectedListId, task);
-      closeCreateTaskModal();
-      showWarning("Tarefa criada com sucesso!", "success");
+      });
+      showWarning("Tarefa editada com sucesso!", "success");
     } else {
-      showWarning("Erro ao criar tarefa: " + result.error, "failed");
-    }
-  }, [selectedListId, addTask, closeCreateTaskModal, showWarning]);
-
-  const handleEditTask = useCallback(async (taskId: string, updatedData: Partial<CreateTaskData>) => {
-    try {
-      const result = await updateTask(taskId, updatedData);
-      if (result.success && result.data) {
-        editTask(taskId, {
-          id: result.data.id,
-          title: result.data.title,
-          description: result.data.description,
-          position: result.data.position,
-          status: result.data.status as Status,
-          dueDate: result.data.dueDate
-        });
-        showWarning("Tarefa editada com sucesso!", "success");
-      } else {
-        showWarning("Erro ao editar tarefa: " + result.error, "failed");
-      }
-    } catch (error) {
-      showWarning("Erro inesperado ao editar tarefa: " + error, "failed");
+      showWarning(result.error, "failed");
     }
   }, [editTask, showWarning]);
 
@@ -67,40 +62,20 @@ export function useTaskOperations() {
       removeTask(taskId);
       showWarning("Tarefa deletada com sucesso!", "success");
     } else {
-      showWarning(result.error || 'Erro ao deletar tarefa', "failed");
+      showWarning(result.error, "failed");
     }
   }, [removeTask, showWarning]);
 
   const handleMoveTask = useCallback(async (taskId: string, newPosition: number) => {
-    try {
-      const result = await moveTask(taskId, newPosition);
-      if (result.success) {
-        showWarning("Tarefa movida com sucesso!", "success");
-        return true;
-      } else {
-        showWarning("Erro ao mover tarefa: " + result.error, "failed");
-        return false;
-      }
-    } catch (error) {
-      showWarning("Erro inesperado ao mover tarefa: " + error, "failed");
-      return false;
-    }
+    const result = await moveTask(taskId, newPosition);
+    showWarning(result.success ? "Tarefa movida com sucesso!" : result.error, result.success ? "success" : "failed");
+    return result.success;
   }, [showWarning]);
 
   const handleMoveTaskToOtherList = useCallback(async (taskId: string, newPosition: number, newListId: string) => {
-    try {
-      const result = await moveTaskOtherList(taskId, newPosition, newListId);
-      if (result.success) {
-        showWarning("Tarefa movida com sucesso!", "success");
-        return true;
-      } else {
-        showWarning("Erro ao mover tarefa: " + result.error, "failed");
-        return false;
-      }
-    } catch (error) {
-      showWarning("Erro inesperado ao mover tarefa: " + error, "failed");
-      return false;
-    }
+    const result = await moveTaskOtherList(taskId, newPosition, newListId);
+    showWarning(result.success ? "Tarefa movida com sucesso!" : result.error, result.success ? "success" : "failed");
+    return result.success;
   }, [showWarning]);
 
   return {

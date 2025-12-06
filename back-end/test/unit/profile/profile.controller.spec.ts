@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ProfileDto } from '@/me/dto/update-profile.dto';
+import { updateProfileDto } from '@/me/dto/update-profile.dto';
 import { ProfileController } from '@/me/me.controller';
 import { ProfileService } from '@/me/me.service';
 import { AuthenticatedUser } from '@/types/user.interface';
@@ -60,7 +60,7 @@ describe('ProfileController', () => {
 
   describe('updateProfile', () => {
     it('deve atualizar o perfil do usuário e retornar uma mensagem de sucesso', async () => {
-      const dto: ProfileDto = {
+      const dto: updateProfileDto = {
         name: 'João Atualizado',
         userName: 'joaoupdated',
         email: 'joao@novo.com',

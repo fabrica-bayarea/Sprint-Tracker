@@ -16,7 +16,6 @@ describe('BoardController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
-    getBoardById: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   };
@@ -67,13 +66,13 @@ describe('BoardController', () => {
   });
 
   describe('findOne', () => {
-    it('deve chamar service.getBoardById com o id e userId', async () => {
+    it('deve chamar service.findOne com o id e userId', async () => {
       const board = { id: '1', title: 'Board 1' };
-      mockBoardService.getBoardById.mockResolvedValue(board);
+      mockBoardService.findOne.mockResolvedValue(board);
 
-      const result = await controller.findOne('1', mockUser);
+      const result = await controller.findOne('1');
       expect(result).toEqual(board);
-      expect(mockBoardService.getBoardById).toHaveBeenCalledWith('1', mockUser.id);
+      expect(mockBoardService.findOne).toHaveBeenCalledWith('1');
     });
   });
 

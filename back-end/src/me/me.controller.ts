@@ -11,7 +11,7 @@ import { CurrentUser } from '@/auth/strategy/decorators/current-user.decorator';
 import { ProfileService } from '@/me/me.service';
 import { AuthenticatedUser } from '@/types/user.interface';
 
-import { ProfileDto } from './dto/update-profile.dto';
+import { updateProfileDto } from './dto/update-profile.dto';
 
 @ApiCookieAuth()
 @ApiTags('Perfil de usuário')
@@ -42,7 +42,7 @@ export class ProfileController {
   @Put('profile')
   async updateProfile(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() data: ProfileDto,
+    @Body() data: updateProfileDto,
   ) {
     await this.profileService.updateProfile(user.id, data);
     return { message: 'Perfil atualizado com sucesso.', data: data };

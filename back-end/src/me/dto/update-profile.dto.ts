@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Matches } from 'class-validator';
 
-export class ProfileDto {
+export class updateProfileDto {
   @ApiProperty({ example: 'first name last name' })
-  @IsNotEmpty({ message: 'Preencha o campo com o seu nome completo' })
+  @IsOptional()
   @IsString({ message: 'O nome deve ser uma string' })
   @Matches(/^[A-Za-zÀ-ÿ\s]+$/, {
     message: 'O nome deve conter apenas letras e espaços',
@@ -11,7 +11,7 @@ export class ProfileDto {
   name: string;
 
   @ApiProperty({ example: 'username' })
-  @IsNotEmpty({ message: 'Preencha o campo de nome de usuario' })
+  @IsOptional()
   @IsString({ message: 'O nome deve ser uma string' })
   @Matches(/.*[a-zA-Z].*/, {
     message: 'O nome deve conter pelo menos uma letra',
@@ -20,6 +20,6 @@ export class ProfileDto {
 
   @ApiProperty({ example: 'example@gmail.com' })
   @IsEmail({}, { message: 'O email deve ser válido' })
-  @IsNotEmpty({ message: 'O email não pode estar vazio' })
+  @IsOptional()
   email: string;
 }

@@ -1,15 +1,16 @@
 "use client"
 
 import React, { useEffect, useState } from "react";
+import { Check, X, Info } from "lucide-react";
 
 import { useWarningStore } from '@/lib/stores/warning';
 
 import styles from "./style.module.css";
 
 const icons = {
-  success: "✔️",
-  failed: "❌",
-  info: "ℹ️"
+  success: Check,
+  failed: X,
+  info: Info
 };
 
 export default function Warning() {
@@ -44,6 +45,8 @@ export default function Warning() {
     return null;
   }
 
+  const Icon = icons[type];
+
   return (
     <div
       className={[
@@ -52,7 +55,9 @@ export default function Warning() {
         !isVisible && styles["warning--hidden"]
       ].filter(Boolean).join(" ")}
     >
-      <span className={styles.warning__icon}>{icons[type]}</span>
+      <span className={styles.warning__icon}>
+        <Icon size={24} />
+      </span>
       <span>
         {typeof message === "string" ? message : String(message)}
       </span>

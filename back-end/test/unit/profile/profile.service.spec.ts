@@ -1,12 +1,7 @@
-/* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ProfileDto } from '@/me/dto/update-profile.dto';
+import { updateProfileDto } from '@/me/dto/update-profile.dto';
 import { ProfileService } from '@/me/me.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -53,6 +48,7 @@ describe('ProfileService', () => {
 
       const result = await service.getProfile('1');
       expect(result).toEqual({
+        id: mockUser.id,
         name: mockUser.name,
         userName: mockUser.userName,
         email: mockUser.email,
@@ -70,14 +66,15 @@ describe('ProfileService', () => {
 
   describe('updateProfile', () => {
     it('deve atualizar e retornar o perfil do usuário', async () => {
-      const dto: ProfileDto = {
+      const dto: updateProfileDto = {
         name: 'Novo Nome',
         userName: 'novoUser',
         email: 'novo@email.com',
       };
 
-      const updatedUser = { id: '1', ...dto };
+      const updatedUser = { id: '1', authProvider: 'local', ...dto };
 
+      mockPrisma.user.findUnique.mockResolvedValue(updatedUser);
       mockPrisma.user.update.mockResolvedValue(updatedUser);
 
       const result = await service.updateProfile('1', dto);
@@ -95,25 +92,48 @@ describe('ProfileService', () => {
         }),
       ).rejects.toThrow('Erro ao atualizar o perfil');
     });
+
+    it('should throw an error if trying to update profile of external provider user', async () => {
+      const userId = 'provider-user-1';
+      const dto: updateProfileDto = {
+        name: 'Social User',
+        userName: 'socialuser',
+        email: 'social@email.com',
+      };
+
+      const userWithProvider = {
+        id: userId,
+        ...dto,
+        authProvider: 'google',
+      };
+
+      mockPrisma.user.findUnique.mockResolvedValue(userWithProvider);
+
+      await expect(service.updateProfile(userId, dto)).rejects.toThrow(
+        'Não é possível atualizar o email de um usuário cadastrado por provedor externo',
+      );
+    });
   });
 
   describe('deleteProfile', () => {
     it('deve deletar o usuário e todos os dados associados', async () => {
       const userId = 'user-123';
 
-      const mockTransaction = jest.fn(async (callback: any) => {
-        return callback({
-          task: { deleteMany: jest.fn() },
-          list: { deleteMany: jest.fn() },
-          boardMember: { deleteMany: jest.fn() },
-          board: { deleteMany: jest.fn() },
-          user: { delete: jest.fn() },
-        });
-      });
+      const mockTransactionClient = {
+        task: { deleteMany: jest.fn() },
+        list: { deleteMany: jest.fn() },
+        boardMember: { deleteMany: jest.fn() },
+        board: { deleteMany: jest.fn() },
+        user: { delete: jest.fn() },
+      };
 
-      mockPrisma.user.findUnique = jest
-        .fn()
-        .mockResolvedValue({ id: userId }) as any;
+      const mockTransaction = jest.fn(
+        (callback: (client: typeof mockTransactionClient) => unknown) => {
+          return callback(mockTransactionClient);
+        },
+      );
+
+      mockPrisma.user.findUnique = jest.fn().mockResolvedValue({ id: userId });
       mockPrisma.$transaction = mockTransaction;
 
       const result = await service.deleteAccount(userId);
