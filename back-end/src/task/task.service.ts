@@ -30,6 +30,9 @@ export class TaskService {
       where: { listId: dto.listId },
     });
 
+    const normalizedAssignee =
+      dto.assignedToId === undefined ? null : dto.assignedToId || null;
+
     const newTask = await this.prisma.task.create({
       data: {
         creatorId: userId,
@@ -39,6 +42,7 @@ export class TaskService {
         position: count,
         status: dto.status,
         dueDate: dto.dueDate,
+        assignedToId: normalizedAssignee,
         completedAt:
           String(dto.status) === String(Status.DONE) ? new Date() : null,
       },
