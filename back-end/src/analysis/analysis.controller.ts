@@ -1,15 +1,14 @@
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+  ApiCookieAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
-import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 import { BoardRoleGuard } from '@/auth/guards/board-role.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 import { BoardRoles } from '@/auth/strategy/decorators/board-rules.decorator';
 
 import { AnalysisService } from './analysis.service';
@@ -60,10 +59,7 @@ export class AnalysisController {
     @Param('boardId') boardId: string,
     @Query() query: GetCompletedSummaryDto,
   ) {
-    return await this.AnalysisService.getCompletedTasksSummary(
-      boardId,
-      query,
-    );
+    return await this.AnalysisService.getCompletedTasksSummary(boardId, query);
   }
 
   @ApiOperation({

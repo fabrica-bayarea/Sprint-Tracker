@@ -4,15 +4,12 @@ import { endOfDay } from 'date-fns';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
+import { BasicSummaryResponse, StatusCount } from './dto/get-basic-summary.dto';
 import {
   CompletedSummaryResponse,
   DailyCompletedCount,
   GetCompletedSummaryDto,
 } from './dto/get-completed-summary.dto';
-import {
-  BasicSummaryResponse,
-  StatusCount,
-} from './dto/get-basic-summary.dto';
 
 @Injectable()
 export class AnalysisService {
@@ -102,7 +99,8 @@ export class AnalysisService {
     const statusCounts: StatusCount[] = Object.keys(statusCountMap).map(
       (status) => {
         const count = statusCountMap[status];
-        const percentage = total > 0 ? Math.round((count / total) * 100 * 100) / 100 : 0;
+        const percentage =
+          total > 0 ? Math.round((count / total) * 100 * 100) / 100 : 0;
         return {
           status,
           count,
