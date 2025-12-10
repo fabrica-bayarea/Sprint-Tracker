@@ -91,6 +91,8 @@ describe('TaskService', () => {
           position: 0,
           status: dto.status,
           dueDate: undefined,
+          assignedToId: null,
+          completedAt: null,
         },
       });
       expect(result).toEqual(createdTask);

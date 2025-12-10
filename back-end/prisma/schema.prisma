@@ -26,6 +26,7 @@ model User {
   boards              Board[]        @relation("OwnerBoards")
   memberships         BoardMember[]
   tasksCreated        Task[]         @relation("TaskCreator")
+  assignedTasks       Task[]         @relation("TaskAssignedTo")
   notifications       Notification[]
   sentInvites         Invite[]       @relation("Sender")
 
@@ -84,20 +85,23 @@ model List {
 }
 
 model Task {
-  id          String      @id @default(uuid())
-  listId      String
-  creatorId   String
-  title       String
-  description String?
-  position    Int
-  status      Status      @default(TODO)
-  dueDate     DateTime?
-  isArchived  Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  creator     User        @relation("TaskCreator", fields: [creatorId], references: [id])
-  list        List        @relation(fields: [listId], references: [id])
-  labels      TaskLabel[]
+  id           String      @id @default(uuid())
+  listId       String
+  creatorId    String
+  assignedToId String?
+  title        String
+  description  String?
+  position     Int
+  status       Status      @default(TODO)
+  dueDate      DateTime?
+  isArchived   Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  completedAt  DateTime?
+  creator      User        @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignedTo   User?       @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  list         List        @relation(fields: [listId], references: [id])
+  labels       TaskLabel[]
 }
 
 model Label {
