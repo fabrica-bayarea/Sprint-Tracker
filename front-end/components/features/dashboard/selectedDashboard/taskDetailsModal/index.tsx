@@ -1,9 +1,11 @@
 "use client";
 
-import React from 'react';
-import { X, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { X, Calendar, User } from 'lucide-react';
 
 import { useModalStore } from '@/lib/stores/modal';
+import { getBoardMembers } from '@/lib/actions/board';
 
 import styles from './style.module.css';
 
@@ -13,6 +15,64 @@ export default function TaskDetailsModal() {
     selectedTask,
     closeTaskDetailsModal,
   } = useModalStore();
+  const params = useParams<{ id: string }>();
+  const boardId = params?.id ?? '';
+
+  const [assigneeName, setAssigneeName] = useState('');
+  const [isLoadingAssignee, setIsLoadingAssignee] = useState(false);
+
+  const hasTask = Boolean(selectedTask);
+  const assignedToId = selectedTask?.assignedToId;
+  const taskId = selectedTask?.id;
+
+  useEffect(() => {
+    if (!isTaskDetailsModalOpen || !hasTask) {
+      return;
+    }
+
+    if (!assignedToId) {
+      setAssigneeName('');
+      setIsLoadingAssignee(false);
+      return;
+    }
+
+    if (!boardId) {
+      setAssigneeName('Responsável indisponível');
+      setIsLoadingAssignee(false);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchAssignee = async () => {
+      setIsLoadingAssignee(true);
+      setAssigneeName('');
+      try {
+        const response = await getBoardMembers(boardId);
+        if (cancelled) return;
+
+        if (response.success) {
+          const member = response.data.find((item) => String(item.id) === String(assignedToId));
+          setAssigneeName(member?.name || 'Usuário não encontrado');
+        } else {
+          setAssigneeName('Não foi possível carregar');
+        }
+      } catch {
+        if (!cancelled) {
+          setAssigneeName('Não foi possível carregar');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingAssignee(false);
+        }
+      }
+    };
+
+    fetchAssignee();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isTaskDetailsModalOpen, hasTask, boardId, assignedToId, taskId]);
 
   if (!isTaskDetailsModalOpen || !selectedTask) return null;
 
@@ -54,6 +114,14 @@ export default function TaskDetailsModal() {
     return statusMap[key]?.label || status;
   };
 
+  const hasAssignee = Boolean(selectedTask.assignedToId);
+  const assigneeDisplay = isLoadingAssignee
+    ? 'Carregando...'
+    : hasAssignee
+      ? assigneeName || 'Usuário não encontrado'
+      : 'Sem responsável';
+  const isPlaceholder = !hasAssignee || isLoadingAssignee || assigneeDisplay === 'Usuário não encontrado' || assigneeDisplay === 'Não foi possível carregar' || assigneeDisplay === 'Responsável indisponível';
+
   return (
     <div className={styles.overlay} onClick={closeTaskDetailsModal}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -65,6 +133,14 @@ export default function TaskDetailsModal() {
         </div>
         
         <div className={styles.content}>
+          <div className={styles.field}>
+            <label className={styles.label}>Responsável:</label>
+            <div className={styles.assigneeContainer}>
+              <User size={16} />
+              <span className={isPlaceholder ? styles.placeholder : styles.textValue}>{assigneeDisplay}</span>
+            </div>
+          </div>
+
           <div className={styles.field}>
             <label className={styles.label}>Descrição:</label>
             <p className={styles.description}>
