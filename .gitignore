@@ -100,3 +100,4 @@ back-end/test-results
 # ----------------------
 /package.json
 /package-lock.json
+.claude
