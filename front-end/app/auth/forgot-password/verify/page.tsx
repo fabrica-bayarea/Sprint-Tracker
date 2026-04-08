@@ -23,14 +23,14 @@ export default function VerifyCodeResetPassword() {
 
   async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault()
-    
+
     if (!code.trim()) {
       showNotification("Por favor, insira o código de verificação", 'failed')
       return
     }
 
     setIsLoading(true)
-    
+
     try {
       const result = await verifyCodeResetPassword(code);
 
@@ -47,7 +47,7 @@ export default function VerifyCodeResetPassword() {
 
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault()
-    
+
     if (!newPassword.trim()) {
       showNotification("Por favor, insira a nova senha", 'failed')
       return
@@ -64,14 +64,13 @@ export default function VerifyCodeResetPassword() {
     }
 
     setIsLoading(true)
-    
+
     try {
       const result = await resetPassword(newPassword, confirmNewPassword);
 
       if (result.success) {
         showNotification("Senha redefinida com sucesso!", 'success')
         router.push("/auth/login");
-        router.refresh();
       } else {
         showNotification(result.error || "Erro ao redefinir senha", 'failed')
       }

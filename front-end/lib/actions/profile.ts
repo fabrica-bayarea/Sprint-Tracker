@@ -1,66 +1,40 @@
 "use server";
 
-import { getCookie } from "@/lib/utils/sessionCookie";
-import { handleFetchError } from "@/lib/utils/handleFetchError";
-
-const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
+import api from "@/lib/api/axios";
+import { handleAxiosError } from "@/lib/utils/handleAxiosError";
 
 export async function getUserProfile() {
-  const response = await fetch(`${BASE_URL_API}/v1/profile`, {
-    headers: {
-      "Cookie": await getCookie("trello-session"),
-    }
-  });
-
-  if (!response.ok) {
-    return { 
+  try {
+    const response = await api.get("/v1/profile");
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
       success: false,
-      error: await handleFetchError(response, "Erro ao obter perfil do usuário"),
+      error: handleAxiosError(error, "Erro ao obter perfil do usuário"),
     };
   }
-  
-  return { success: true, data: await response.json() }
 }
 
 export async function updateUserProfile(formData: { name: string; userName: string; email: string; }) {
-
-
-  const response = await fetch(`${BASE_URL_API}/v1/profile`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
-    body: JSON.stringify(formData),
-  });
-
-  if (!response.ok) {
-    return { 
+  try {
+    const response = await api.put("/v1/profile", formData);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
       success: false,
-      error: await handleFetchError(response, "Erro ao atualizar perfil"),
+      error: handleAxiosError(error, "Erro ao atualizar perfil"),
     };
   }
-
-  return { success: true, data: await response.json() }
 }
 
 export async function deleteUserProfile() {
-
-
-  const response = await fetch(`${BASE_URL_API}/v1/profile`, {
-    method: "DELETE",
-    headers: {
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
-
-  if (!response.ok) {
-    return { 
-      success: false, 
-      error: await handleFetchError(response, "Erro ao deletar perfil"),
+  try {
+    const response = await api.delete("/v1/profile");
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, "Erro ao deletar perfil"),
     };
   }
-  
-  return { success: true, data: await response.json() }
 }
-

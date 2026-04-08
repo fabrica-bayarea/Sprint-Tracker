@@ -35,7 +35,6 @@ export default function NewBoardPage() {
       setImage(null);
 
       router.push("/dashboard");
-      router.refresh();
     } else {
       showNotification(result.error || "Erro desconhecido", 'failed')
     }

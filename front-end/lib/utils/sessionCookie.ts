@@ -3,11 +3,21 @@
 import { cookies } from "next/headers";
 import setCookie from "set-cookie-parser";
 
-export async function setSessioCookie(rawSetCookie: string) {
-    const [parsed] = setCookie.parse(rawSetCookie);
-    const cookieStore = cookies();
+export async function setSessioCookie(rawSetCookie: string | string[] | null | undefined, forceName?: string) {
+  if (!rawSetCookie) return;
+
+  let parsedCookies;
+  if (typeof rawSetCookie === "string") {
+    parsedCookies = setCookie.parse(setCookie.splitCookiesString(rawSetCookie));
+  } else {
+    parsedCookies = setCookie.parse(rawSetCookie);
+  }
+
+  const cookieStore = cookies();
+  for (const parsed of parsedCookies) {
+    if (!parsed.name) continue;
     (await cookieStore).set({
-      name: parsed.name,
+      name: forceName || parsed.name,
       value: parsed.value,
       path: parsed.path || "/",
       httpOnly: parsed.httpOnly,
@@ -16,6 +26,7 @@ export async function setSessioCookie(rawSetCookie: string) {
       maxAge: parsed.maxAge,
       domain: parsed.domain,
     });
+  }
 }
 
 export async function removeCookie(cookieName: string) {

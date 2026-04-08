@@ -28,7 +28,6 @@ export default function Home() {
 
     if (result.success) {
       router.push("/dashboard");
-      router.refresh();
     } else {
       showNotification(result.error || "Erro desconhecido", 'failed')
     }
@@ -39,22 +38,24 @@ export default function Home() {
       <AuthFormContainer title="ACESSE SUA CONTA">
         <form className={parentStyles.form} onSubmit={handleSubmit}>
           <AuthInput
+            name="email"
             onChange={(e) => setEmail(e.target.value)}
             type="text"
             placeholder="Nome de usuário ou e-mail"
             value={email}
           />
           <AuthInput
+            name="password"
             onChange={(e) => setPassword(e.target.value)}
             type="password"
             placeholder="Senha"
             value={password}
           />
           <AuthInput
-              type="checkbox"
-              checked={rememberMe}
-              onChange={() => setRememberMe(!rememberMe)}
-              label="Lembrar de mim"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={() => setRememberMe(!rememberMe)}
+            label="Lembrar de mim"
           />
           <AuthButton type="submit">Entrar</AuthButton>
           <div className={styles.links}>
