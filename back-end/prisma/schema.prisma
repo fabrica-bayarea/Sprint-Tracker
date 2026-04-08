@@ -43,6 +43,47 @@ model Board {
   members     BoardMember[]
   labels      Label[]
   lists       List[]
+  backlogs    Backlog[]
+  sprints     Sprint[]
+}
+
+model Backlog {
+  id          String              @id @default(uuid())
+  boardId     String
+  title       String
+  description String?
+  priority    Priority            @default(MEDIUM)
+  status      BacklogStatus       @default(OPEN)
+  board       Board               @relation(fields: [boardId], references: [id])
+  sprints     SprintBacklogItem[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model Sprint {
+  id        String              @id @default(uuid())
+  boardId   String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    SprintStatus        @default(PLANNED)
+  board     Board               @relation(fields: [boardId], references: [id])
+  items     SprintBacklogItem[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+}
+
+model SprintBacklogItem {
+  id          String    @id @default(uuid())
+  sprintId    String
+  backlogId   String
+  sprint      Sprint    @relation(fields: [sprintId], references: [id])
+  backlog     Backlog   @relation(fields: [backlogId], references: [id])
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([sprintId, backlogId])
 }
 
 model BoardMember {
@@ -128,4 +169,23 @@ enum Status {
   IN_PROGRESS
   DONE
   ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BacklogStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
 }
