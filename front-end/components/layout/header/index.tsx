@@ -3,7 +3,7 @@
 import { Bell, CircleHelp, User, LogOut } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { removeCookie } from "@/lib/utils/sessionCookie";
+import { removeCookie } from "@/lib/utils/session-cookie";
 import styles from "./style.module.css";
 
 export default function Header() {

@@ -1,5 +1,5 @@
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
+import Sidebar from "@/components/layout/sidebar/sidebar";
 
 import styles from "./style.module.css";
 
@@ -9,7 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex flex-col w-full">
         <Header />
-        <main className="overflow-y-auto">
+        <main className="overflow-y-auto h-full">
           {children}
         </main>
       </div>

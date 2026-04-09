@@ -4,9 +4,9 @@ import React from 'react';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 
-import { useBoardStore } from '@/lib/stores/board';
-import { useDragAndDrop } from '@/lib/hooks/useDragAndDrop';
-import { useBoardData } from '@/lib/hooks/useBoardData';
+import { useBoardStore } from '@/stores/board';
+import { useDragAndDrop } from '@/hooks/use-drag-and-drop';
+import { useBoardData } from '@/hooks/use-board-data';
 
 import SortableItem from '@/components/features/dashboard/selectedDashboard/sortableItem';
 import ListCard from '@/components/features/dashboard/selectedDashboard/listCard';

@@ -1,8 +1,8 @@
 'use server';
 
 import api from "@/lib/api/axios";
-import { handleAxiosError } from "@/lib/utils/handleAxiosError";
-import { BoardData, BoardListItemAPI } from "../types/board";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { BoardData, BoardListItemAPI } from "../../types/board";
 
 export async function createBoard(boardData: BoardData) {
   try {

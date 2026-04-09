@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createBoard } from "@/lib/actions/board";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useNotificationStore } from '@/stores/notification';
 
 import { Input, Textarea, Image } from "@/components/ui";
 
 import styles from "./style.module.css";
+import { ChevronLeft } from "lucide-react";
 
 export default function NewBoardPage() {
   const router = useRouter();
@@ -44,9 +45,7 @@ export default function NewBoardPage() {
 
   return (
     <div className={styles.container}>
-      <p>
-        Dashboard &gt; new-board
-      </p>
+      <ChevronLeft onClick={() => router.back()} className="cursor-pointer my-2"/>
       <h2 className={styles.title}>Criar um espaço de trabalho</h2>
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.rowGroups}>

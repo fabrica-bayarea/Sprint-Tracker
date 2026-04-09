@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, HelpCircle, Briefcase, Gauge, Logs } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BoardSelect } from "./board-select";
 
 const navItems = [
   { label: "Quadros", href: "/dashboard", icon: Briefcase },
@@ -17,14 +18,17 @@ export default function Sidebar() {
 
   return (
     <aside className="flex flex-col gap-8 min-w-64 h-auto bg-[#F8FAFC] border-r-[#E2E8F0] border px-4 py-6">
-      <Link href={"/dashboard"}>
-        <Image
-          src="/images/iesb-icon.png"
-          alt="Logo IESB"
-          width={43}
-          height={43}
-        />
-      </Link>
+      <div className="flex gap-2">
+        <Link href={"/dashboard"}>
+          <Image
+            src="/images/iesb-icon.png"
+            alt="Logo IESB"
+            width={43}
+            height={43}
+          />
+        </Link>
+        <BoardSelect />
+      </div>
       <nav className="flex flex-col gap-2">
         {navItems.map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href;
@@ -32,7 +36,7 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
-              className={cn("px-6 py-3 flex items-center gap-3 rounded-lg text-[#64748B_!important] hover:bg-[#FEF2F2] hover:text-[#B91C1C_!important] font-semibold", 
+              className={cn("px-6 py-3 flex items-center gap-3 rounded-lg text-[#64748B_!important] hover:bg-[#FEF2F2] hover:text-[#B91C1C_!important] font-semibold",
                 isActive ? "bg-[#FEF2F2] text-[#B91C1C_!important]" : ""
               )}
             >

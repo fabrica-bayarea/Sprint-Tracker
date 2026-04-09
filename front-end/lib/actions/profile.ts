@@ -1,7 +1,7 @@
 "use server";
 
 import api from "@/lib/api/axios";
-import { handleAxiosError } from "@/lib/utils/handleAxiosError";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
 
 export async function getUserProfile() {
   try {

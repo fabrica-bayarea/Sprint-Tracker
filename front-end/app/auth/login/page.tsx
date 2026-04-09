@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link";
 
 import { login } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useNotificationStore } from '@/stores/notification';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 

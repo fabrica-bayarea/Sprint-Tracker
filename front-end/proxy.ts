@@ -5,19 +5,19 @@ const isDev = process.env.NODE_ENV === 'development'
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
-  // const cspHeader = `
-  //   default-src 'self';
-  //   script-src 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''};
-  //   style-src 'self' https://fonts.googleapis.com ${isDev ? "'unsafe-inline'" : ''};
-  //   img-src 'self' data:;
-  //   font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-  //   connect-src 'self';
-  //   frame-ancestors 'self';
-  //   form-action 'self';
-  //   base-uri 'self';
-  //   object-src 'none';
-  // `;
-  // const sanitizedCspHeader = cspHeader.replace(/\s{2,}/g, ' ').trim();
+  const cspHeader = `
+    default-src 'self';
+    script-src 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''};
+    style-src 'self' https://fonts.googleapis.com ${isDev ? "'unsafe-inline'" : ''};
+    img-src 'self' data:;
+    font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
+    connect-src 'self';
+    frame-ancestors 'self';
+    form-action 'self';
+    base-uri 'self';
+    object-src 'none';
+  `;
+  const sanitizedCspHeader = cspHeader.replace(/\s{2,}/g, ' ').trim();
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
@@ -28,7 +28,7 @@ export function proxy(request: NextRequest) {
     if (!tokenCookie?.value) {
       const loginURL = new URL('/auth/login', request.url);
       const redirectResponse = NextResponse.redirect(loginURL);
-      // redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
+      redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
       return redirectResponse;
     }
   }
@@ -37,7 +37,7 @@ export function proxy(request: NextRequest) {
   if (homeToDashboard) {
     const dashboardURL = new URL('/dashboard', request.url);
     const redirectResponse = NextResponse.redirect(dashboardURL);
-    // redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
+    redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
     return redirectResponse;
   }
 
@@ -47,10 +47,10 @@ export function proxy(request: NextRequest) {
     },
   });
 
-  // response.headers.set(
-  //   'Content-Security-Policy',
-  //   sanitizedCspHeader
-  // );
+  response.headers.set(
+    'Content-Security-Policy',
+    sanitizedCspHeader
+  );
 
   return response
 }

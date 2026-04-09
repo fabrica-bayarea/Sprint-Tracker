@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Calendar } from 'lucide-react';
 
-import { useModalStore } from '@/lib/stores/modal';
+import { useModalStore } from '@/stores/modal';
 
 import styles from './style.module.css';
 

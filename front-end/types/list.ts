@@ -1,6 +1,12 @@
+import { Status } from "./board";
+
 export interface Task {
   id: string;
-  content: string;
+  title: string;
+  description?: string;
+  position: number;
+  status: Status;
+  dueDate?: string;
 }
 
 export interface List {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import type { List, Task } from '@/lib/types/board';
+import { List, Task } from '../types/list';
 
 interface BoardState {
   // Estado das listas
