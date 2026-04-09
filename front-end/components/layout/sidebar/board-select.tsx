@@ -19,7 +19,7 @@ export const BoardSelect = () => {
 
   return (
     <>
-      <Select value={selectedBoardId || undefined} onValueChange={setSelectedBoardId}>
+      <Select value={selectedBoardId || ""} onValueChange={setSelectedBoardId}>
         <SelectTrigger className="w-full h-full">
           <SelectValue placeholder="Choose your Board" />
         </SelectTrigger>

@@ -27,3 +27,8 @@ export interface TaskResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ColumnType {
+  id: string;
+  title: string;
+}
