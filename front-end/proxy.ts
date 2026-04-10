@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const isDev = process.env.NODE_ENV === 'development'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
   const cspHeader = `
     default-src 'self';
@@ -41,9 +42,13 @@ export function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
-  const response = NextResponse.next();
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
- response.headers.set(
+  response.headers.set(
     'Content-Security-Policy',
     sanitizedCspHeader
   );

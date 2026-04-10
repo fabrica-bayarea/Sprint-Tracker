@@ -1,13 +1,16 @@
 
 .header{
   position: relative;
-  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.233);
+  background: white;
+  border-bottom: 1px solid #E2E8F0;
   width: 100%;
   z-index: 10;
+  height: 80px;
 }
+
 .wrapper_header{
   display: flex;
-  justify-content: space-between;
+  justify-content: end;
   align-items: center;
   margin: auto;
   width: 90%;

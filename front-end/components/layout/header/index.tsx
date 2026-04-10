@@ -1,7 +1,6 @@
 "use client";
 
 import { Bell, CircleHelp, User, LogOut } from "lucide-react";
-import { Image } from "@/components/ui";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { removeCookie } from "@/lib/utils/sessionCookie";
@@ -18,16 +17,8 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.wrapper_header}>
-        <Image
-          className={styles.logoContainer}
-          src="/images/iesb-icon.png"
-          alt="Logo IESB"
-          width={100}
-          height={100}
-        />
         <div className={styles.wrapper_header_helps}>
           <Bell size={32} color="#949494" strokeWidth={2} aria-label="Notificações" />
-          <CircleHelp size={32} color="#949494" strokeWidth={2} aria-label="Ajuda" />
           <div className={styles.profileContainer}>
             <Link href="/dashboard/edit-profile/" className={styles.profileImage} aria-label="Editar perfil">
               <div className={styles.profileImageInner}></div>

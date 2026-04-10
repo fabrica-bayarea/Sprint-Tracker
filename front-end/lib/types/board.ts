@@ -1,4 +1,5 @@
-// Interfaces compartilhadas para o sistema de boards
+import { Task } from "./list";
+
 export enum Status {
   TODO = 'TODO',
   IN_PROGRESS = 'IN_PROGRESS',
@@ -6,22 +7,15 @@ export enum Status {
   ARCHIVED = 'ARCHIVED'
 }
 
-export interface Task {
-  id: string;
+export interface BoardData {
   title: string;
-  description?: string;
-  position: number;
-  status: Status;
-  dueDate?: string;
+  description: string;
 }
 
-export interface List {
+export interface BoardListItemAPI {
   id: string;
   title: string;
-  tasks: Task[];
-  position?: number;
 }
-
 export interface CreateTaskData {
   title: string;
   description?: string;

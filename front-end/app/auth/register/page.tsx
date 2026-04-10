@@ -45,11 +45,11 @@ export default function Register() {
       return;
     }
 
-    if(confirmEmail != email){
+    if (confirmEmail != email) {
       showNotification("E-mails não coincidem", 'failed');
       return;
     }
-    if(confirmPassword != password){
+    if (confirmPassword != password) {
       showNotification("Senhas não coincidem", 'failed')
       return;
     }
@@ -60,7 +60,6 @@ export default function Register() {
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       router.push("/dashboard");
-      router.refresh();
     } else {
       showNotification(result.error || "Erro desconhecido", 'failed')
     }
@@ -70,7 +69,7 @@ export default function Register() {
     return (
       <AuthFormContainer title="">
         <div className={styles.successDiv}>
-          <CheckCircle size={64} color="#fff"/>
+          <CheckCircle size={64} color="#fff" />
           <div className={styles.title}>
             CONTA CRIADA COM SUCESSO!
           </div>

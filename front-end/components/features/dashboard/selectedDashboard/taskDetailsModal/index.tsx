@@ -48,7 +48,6 @@ export default function TaskDetailsModal() {
   };
 
   const getStatusLabel = (status: string) => {
-    console.log(status);
     const key = status?.toUpperCase() as keyof typeof statusMap;
     return statusMap[key]?.label || status;
   };
