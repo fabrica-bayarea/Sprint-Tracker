@@ -1,31 +1,103 @@
+// front-end/app/dashboard/backlog/page.tsx
 "use client";
 
-import { useState } from "react";
-import { mockTasks } from "@/lib/types/task";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { mockTasks } from "@/lib/types/task"; 
 import { BacklogItem } from "@/components/backlog/backlog-item";
-import { Search, LayoutGrid, List, Plus, ArchiveX } from "lucide-react"; 
+import { BacklogTable } from "@/components/backlog/backlog-table"; // Mantenha se você tiver este componente
+import { TaskModal } from "@/components/backlog/task-modal";
+import { Search, LayoutGrid, List, Plus, ArchiveX, Filter, Loader2 } from "lucide-react"; 
 
 export default function BacklogPage() {
-  const [isEmpty, setIsEmpty] = useState(false); 
+  const router = useRouter();
+  
+  const [tasks, setTasks] = useState<any[]>([]); 
+  const [isLoading, setIsLoading] = useState(true); 
+  
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<any>(null); // Guardará a tarefa que está sendo editada
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
+  const [sortByPriority, setSortByPriority] = useState(false);
+
+  // GUARDIÃO DA ROTA
+  useEffect(() => {
+    const selectedBoardId = localStorage.getItem("selectedBoardId");
+    if (!selectedBoardId) {
+      console.warn("Nenhum board selecionado! Redirecionando para workspaces...");
+      // router.push("/workspaces"); 
+    }
+  }, [router]);
+
+  // FUNÇÃO GET
+  const fetchTasks = useCallback(async () => {
+    try {
+      setIsLoading(true); 
+      const boardId = localStorage.getItem("selectedBoardId") || "123";
+      const response = await fetch(`http://localhost:8080/api/boards/${boardId}/backlog`); 
+      
+      if (!response.ok) throw new Error("Erro na API.");
+      
+      const data = await response.json();
+      setTasks(data); 
+
+    } catch (error) {
+      console.warn("⚠️ API indisponível. Ativando Plano B (mockTasks).");
+      setTasks(mockTasks); 
+    } finally {
+      setIsLoading(false); 
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+  
+  // FILTROS
+  let processedTasks = tasks.filter((task: any) => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "ALL" || task.status === statusFilter;
+    const matchesPriority = priorityFilter === "ALL" || task.priority === priorityFilter;
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
+  if (sortByPriority) {
+    const priorityWeight: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+    processedTasks.sort((a: any, b: any) => priorityWeight[b.priority] - priorityWeight[a.priority]);
+  }
+
+  const isEmpty = tasks.length === 0 && !isLoading;
 
   return (
     <div className="flex flex-col w-full h-full p-8 bg-gray-50/50 min-h-screen">
       
-      {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Backlog do Produto</h1>
           <p className="text-gray-500">Gerencie as tarefas do backlog</p>
         </div>
-        <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+        <button 
+          onClick={() => {
+            setTaskToEdit(null); // Garante que o modal abre vazio para criar
+            setIsModalOpen(true);
+          }}
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors shadow-sm"
+        >
           <Plus size={20} />
           Criar Tarefa
         </button>
       </div>
 
-      {isEmpty ? (
-        /* Empty State */
+      {isLoading ? (
+         <div className="flex flex-col items-center justify-center mt-20 p-12">
+            <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
+            <p className="text-gray-500 font-medium text-lg">Buscando tarefas no servidor...</p>
+         </div>
+      ) : isEmpty ? (
         <div className="flex flex-col items-center justify-center mt-12 p-12 bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
           <div className="w-full h-2 bg-red-600 absolute top-0 left-0" />
           <div className="relative mb-6 mt-4">
@@ -37,56 +109,116 @@ export default function BacklogPage() {
           <p className="text-gray-500 mb-6 text-center max-w-sm">
             Comece a organizar seu projeto adicionando sua primeira tarefa!
           </p>
-          <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md font-medium transition-colors shadow-lg shadow-red-600/20">
+          <button 
+            onClick={() => {
+              setTaskToEdit(null);
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md font-medium transition-colors shadow-lg shadow-red-600/20"
+          >
             <Plus size={20} />
             Criar Tarefa
           </button>
         </div>
       ) : (
-        /* Área de Conteúdo (Grid/Table) */
         <div className="flex flex-col w-full">
-          <div className="flex justify-between items-center mb-6">
-            <div className="relative w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search backlog..." 
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
-              />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex flex-1 items-center gap-3 w-full">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input 
+                  type="text" 
+                  value={searchQuery}                                
+                  onChange={(e) => setSearchQuery(e.target.value)}   
+                  placeholder="Pesquisar tarefas..." 
+                  className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
+                />
+              </div>
+
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600/20 cursor-pointer"
+              >
+                <option value="ALL">Todos os Status</option>
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="DONE">Done</option>
+              </select>
+
+              <select 
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-600/20 cursor-pointer"
+              >
+                <option value="ALL">Todas Prioridades</option>
+                <option value="HIGH">Alta</option>
+                <option value="MEDIUM">Média</option>
+                <option value="LOW">Baixa</option>
+              </select>
+
+              <button
+                onClick={() => setSortByPriority(!sortByPriority)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm border rounded-md transition-colors ${
+                  sortByPriority ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Filter size={16} />
+                {sortByPriority ? 'Ordenado por Prioridade' : 'Ordenar Prioridade'}
+              </button>
             </div>
-            <div className="flex gap-2 bg-white border border-gray-200 p-1 rounded-md">
+
+            <div className="flex gap-2 bg-white border border-gray-200 p-1 rounded-md shrink-0">
               <button 
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
               >
                 <LayoutGrid size={18} />
               </button>
               <button 
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                className={`p-1.5 rounded transition-colors ${viewMode === 'table' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
               >
                 <List size={18} />
               </button>
             </div>
           </div>
           
-          {/* Grid de Cards */}
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {mockTasks.map((task) => (
-                <BacklogItem key={task.id} task={task} />
-              ))}
+              {processedTasks.length > 0 ? (
+                processedTasks.map((task: any) => (          
+                  <BacklogItem 
+                    key={task.id} 
+                    task={task} 
+                    onRefresh={fetchTasks}
+                    onEdit={(taskData) => {
+                      setTaskToEdit(taskData);
+                      setIsModalOpen(true);
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full py-12 text-center text-gray-500">
+                  Nenhuma tarefa encontrada com estes filtros.
+                </div>
+              )}
             </div>
           )}
 
-          {/* Placeholder da Tabela */}
           {viewMode === 'table' && (
-             <div className="bg-white p-8 text-center text-gray-500 border border-gray-200 rounded-lg">
-               Visão de tabela em construção...
-             </div>
+             <BacklogTable tasks={processedTasks} />    
           )}
         </div>
       )}
+
+      {/* MODAL INTELIGENTE (Cria e Edita) */}
+      <TaskModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onTaskSaved={fetchTasks} 
+        taskToEdit={taskToEdit} 
+      />
     </div>
   );
 }

@@ -1,68 +1,82 @@
 // front-end/components/backlog/backlog-item.tsx
-
-import { BacklogTask } from "@/lib/types/task";
-import { MoreHorizontal, MessageSquare, GripVertical } from "lucide-react";
-
+import { Trash2, Pencil } from "lucide-react";
+import { useState } from "react";
 
 interface BacklogItemProps {
-  task: BacklogTask;
+  task: any;
+  onRefresh?: () => void;
+  onEdit?: (task: any) => void;
 }
 
-export function BacklogItem({ task }: BacklogItemProps) {
-  const priorityColors = {
-    HIGH: "border-t-red-500",
-    MEDIUM: "border-t-orange-400",
-    LOW: "border-t-blue-400",
+export function BacklogItem({ task, onRefresh, onEdit }: BacklogItemProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Tem certeza que deseja excluir a tarefa "${task.title}"?`)) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const boardId = localStorage.getItem("selectedBoardId") || "123";
+      const response = await fetch(`http://localhost:8080/api/boards/${boardId}/backlog/${task.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Falha ao deletar.");
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.warn("⚠️ API indisponível. O botão faria o DELETE aqui!");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const priorityLabels = {
-    HIGH: "ALTA PRIORIDADE",
-    MEDIUM: "MÉDIA PRIORIDADE",
-    LOW: "BAIXA PRIORIDADE",
+  const priorityColors: Record<string, string> = {
+    HIGH: "border-l-4 border-l-red-500",
+    MEDIUM: "border-l-4 border-l-yellow-400",
+    LOW: "border-l-4 border-l-green-500"
   };
 
-  const priorityTextColors = {
-    HIGH: "text-red-600",
-    MEDIUM: "text-orange-600",
-    LOW: "text-blue-600",
-  };
+  const taskCode = task.code || `TSK-${String(task.id || Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 border-t-4 ${priorityColors[task.priority]} p-5 flex flex-col gap-3 hover:shadow-md transition-shadow`}>
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <GripVertical className="text-gray-300 cursor-grab" size={16} />
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded bg-gray-50 ${priorityTextColors[task.priority]}`}>
-            {priorityLabels[task.priority]}
-          </span>
-        </div>
-        <span className="text-xs text-gray-400 font-medium">{task.code}</span>
-      </div>
-
-      <div>
-        <h3 className="font-bold text-gray-900 leading-tight mb-1">{task.title}</h3>
-        <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">
-          {task.description}
-        </p>
-      </div>
-
-      <div className="flex justify-between items-center mt-2 pt-3 border-t border-gray-50">
-        <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white" />
-            <div className="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white" />
-          </div>
-          {task.commentsCount && (
-            <div className="flex items-center gap-1 text-gray-400 text-xs">
-              <MessageSquare size={14} />
-              <span>{task.commentsCount}</span>
-            </div>
-          )}
-        </div>
-        
-        <button className="text-gray-400 hover:text-gray-600 p-1">
-          <MoreHorizontal size={20} />
+    <div className={`bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col h-full relative group ${priorityColors[task.priority] || ''} ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
+      
+      {/* Botões de Ação (Hover) */}
+      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 p-1 rounded-md backdrop-blur-sm">
+        <button 
+          onClick={() => onEdit && onEdit(task)} 
+          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+          title="Editar"
+        >
+          <Pencil size={14} />
         </button>
+        <button 
+          onClick={handleDelete} 
+          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+          title="Excluir"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-4 mb-2 pr-10">
+        <h3 className="text-lg font-bold text-gray-950 truncate flex-1">{task.title}</h3>
+        <span className="text-xs font-mono font-medium text-gray-400 shrink-0">
+          {taskCode}
+        </span>
+      </div>
+      
+      <p className="text-sm text-gray-600 mb-5 line-clamp-3 flex-grow">
+        {task.description || "Nenhuma descrição fornecida."}
+      </p>
+      
+      <div className="flex justify-end gap-2 mt-auto pt-3 border-t border-gray-50">
+        <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-600 capitalize">
+          {task.status ? task.status.toLowerCase().replace("_", " ") : "todo"}
+        </span>
+        <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-700 capitalize">
+          {task.priority ? task.priority.toLowerCase() : 'medium'}
+        </span>
       </div>
     </div>
   );
