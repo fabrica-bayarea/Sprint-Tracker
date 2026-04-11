@@ -1,3 +1,4 @@
+import { Sprint } from "@/types/sprint";
 import { TaskResponse } from "@/types/task";
 
 export const initialTasks: TaskResponse[] = [
@@ -31,4 +32,70 @@ export const initialTasks: TaskResponse[] = [
     createdAt: "2026-04-03T00:00:00Z",
     updatedAt: "2026-04-03T00:00:00Z",
   }
+];
+
+export const mockTasks: TaskResponse[] = [
+  {
+    id: "DEV-1024",
+    listId: "list-1",
+    title: "Refactor authentication microservice layer",
+    description: "Sprint 12",
+    position: 1,
+    status: "In Progress",
+    priority: "HIGH",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "DS-449",
+    listId: "list-1",
+    title: "Global style token synchronization",
+    description: "Unassigned",
+    position: 2,
+    status: "Review",
+    priority: "MEDIUM",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "DOCS-02",
+    listId: "list-1",
+    title: "Update documentation for API v3 webhooks",
+    description: "Next Sprint",
+    position: 3,
+    status: "Backlog",
+    priority: "LOW",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "OPS-881",
+    listId: "list-1",
+    title: "Critical patch for payment gateway timeout",
+    description: "Urgent",
+    position: 4,
+    status: "Critical",
+    priority: "HIGH",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+export const mockSprints: Sprint[] = [
+  {
+    id: "sprint-2",
+    name: "SPRINT 2",
+    startDate: "12 ABRIL",
+    endDate: "19 ABRIL",
+    status: "PLANNED",
+    items: mockTasks,
+  },
+  {
+    id: "sprint-1",
+    name: "SPRINT 1",
+    startDate: "24 MARÇO",
+    endDate: "12 ABRIL",
+    status: "COMPLETED",
+    items: mockTasks,
+  },
 ];

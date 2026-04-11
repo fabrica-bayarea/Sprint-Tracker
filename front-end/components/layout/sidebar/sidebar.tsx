@@ -25,6 +25,7 @@ export default function Sidebar() {
             alt="Logo IESB"
             width={43}
             height={43}
+            loading="eager"
           />
         </Link>
         <BoardSelect />

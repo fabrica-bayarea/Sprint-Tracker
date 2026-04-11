@@ -22,7 +22,9 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
-      <div className={styles.wrapper_header}>
+      <div className={cn("flex py-4 px-6 w-full h-20", 
+        isSprintsPage ? "justify-between" : "justify-end"
+      )}>
         {isSprintsPage && (
           <div className="flex gap-8">
             {(['Atual', 'Histórico', 'Burndown'] as const).map((tab) => (

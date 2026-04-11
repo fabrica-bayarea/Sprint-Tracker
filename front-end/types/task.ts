@@ -26,6 +26,7 @@ export interface TaskResponse {
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
+  priority?: "HIGH" | "MEDIUM" | "LOW";
 }
 
 export interface ColumnType {
