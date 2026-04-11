@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getUserProfile } from "@/lib/actions/profile";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useNotificationStore } from '@/stores/notification';
 
 import EditProfileForm from "@/components/features/dashboard/editProfile/formEditUser";
 import DeleteAccountButton from "@/components/features/dashboard/editProfile/deleteProfile";

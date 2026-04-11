@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { useModalStore } from '@/lib/stores/modal';
-import { useTaskOperations } from '@/lib/hooks/useTaskOperations';
+import { useModalStore } from '@/stores/modal';
+import { useTaskOperations } from '@/hooks/use-task-operations';
 
 import { Input, Textarea } from "@/components/ui";
 
-import { Status } from '@/lib/types/board';
+import { Status } from '@/types/board';
 
 import styles from './style.module.css';
 

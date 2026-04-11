@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useNotificationStore } from '@/stores/notification';
 
 import styles from "./style.module.css";
 

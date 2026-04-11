@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { createList, editList, deleteList, moveList } from '@/lib/actions/list';
-import { useBoardStore } from '@/lib/stores/board';
-import { useModalStore } from '@/lib/stores/modal';
-import { useNotificationStore } from '@/lib/stores/notification';
-import type { CreateListData } from '@/lib/types/board';
+import { useBoardStore } from '@/stores/board';
+import { useModalStore } from '@/stores/modal';
+import { useNotificationStore } from '@/stores/notification';
+import type { CreateListData } from '@/types/board';
 
 export function useListOperations(boardId: string) {
   const { lists, addList, renameList, removeList, updateListPosition } = useBoardStore();

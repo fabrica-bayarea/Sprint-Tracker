@@ -10,7 +10,7 @@ import TaskDetailsModal from '@/components/features/dashboard/selectedDashboard/
 import RenameListModal from '@/components/features/dashboard/selectedDashboard/RenameList';
 import EditTaskModal from '@/components/features/dashboard/selectedDashboard/EditTask';
 
-import { useModalStore } from '@/lib/stores/modal';;
+import { useModalStore } from '@/stores/modal';;
 
 import styles from './style.module.css';
 

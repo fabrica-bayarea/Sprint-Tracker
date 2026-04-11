@@ -8,10 +8,10 @@ import TaskCard from '@/components/features/dashboard/selectedDashboard/taskCard
 
 import { Trash2, Pencil, Grip } from 'lucide-react';
 
-import { useListOperations } from '@/lib/hooks/useListOperations';
-import { useModalStore } from '@/lib/stores/modal';
+import { useListOperations } from '@/hooks/use-list-operations';
+import { useModalStore } from '@/stores/modal';
 
-import type { Task } from '@/lib/types/board';
+import type { Task } from '@/types/board';
 
 import styles from './style.module.css';
 

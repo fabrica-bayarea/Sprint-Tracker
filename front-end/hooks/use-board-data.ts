@@ -2,10 +2,11 @@ import { useEffect } from 'react';
 
 import { getAllList } from '@/lib/actions/list';
 import { getTasksByList } from '@/lib/actions/task';
-import { useBoardStore } from '@/lib/stores/board';
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useBoardStore } from '@/stores/board';
+import { useNotificationStore } from '@/stores/notification';
 
-import { List, Status } from '@/lib/types/board'
+import { Status } from '@/types/board'
+import { List } from '@/types/list';
 
 export function useBoardData(boardId: string) {
   const { setLists, setLoading } = useBoardStore();

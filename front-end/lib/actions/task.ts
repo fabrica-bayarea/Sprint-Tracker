@@ -1,8 +1,8 @@
 'use server';
 
 import api from "@/lib/api/axios";
-import { handleAxiosError } from "@/lib/utils/handleAxiosError";
-import { TaskData, TaskResponse, UpdateTaskData } from "../types/task";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { TaskData, TaskResponse, UpdateTaskData } from "../../types/task";
 
 export async function createTask(taskData: TaskData) {
   try {

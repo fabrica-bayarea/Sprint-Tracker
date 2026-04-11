@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import Notification from "@/components/features/shared/notification";
 
 import "./globals.css";
+import Providers from "@/providers";
 
 
 const inter = Inter({
@@ -26,7 +27,7 @@ export default async function RootLayout(
   return (
     <html lang="pt-br">
       <body className={`${inter.className}`}>
-        {children}
+        <Providers>{children}</Providers>
         <Notification />
       </body>
     </html>

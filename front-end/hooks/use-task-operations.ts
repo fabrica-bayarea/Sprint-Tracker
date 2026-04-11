@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { createTask, updateTask, deleteTask, moveTask, moveTaskOtherList } from '@/lib/actions/task';
-import { useBoardStore } from '@/lib/stores/board';
-import { useModalStore } from '@/lib/stores/modal';
-import { useNotificationStore } from '@/lib/stores/notification';
-import type { CreateTaskData, Status } from '@/lib/types/board';
+import { useBoardStore } from '@/stores/board';
+import { useModalStore } from '@/stores/modal';
+import { useNotificationStore } from '@/stores/notification';
+import type { CreateTaskData, Status } from '@/types/board';
 
 export function useTaskOperations() {
   const { addTask, editTask, removeTask, getNextTaskPosition } = useBoardStore();

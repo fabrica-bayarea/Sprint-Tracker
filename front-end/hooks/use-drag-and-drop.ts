@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { useBoardStore } from '@/lib/stores/board';
-import { useListOperations } from './useListOperations';
-import { useTaskOperations } from './useTaskOperations';
+import { useBoardStore } from '@/stores/board';
+import { useListOperations } from './use-list-operations';
+import { useTaskOperations } from './use-task-operations';
 
 export function useDragAndDrop(boardId: string) {
   const { lists, setLists, getListIndex, getTaskPosition, moveTask } = useBoardStore();

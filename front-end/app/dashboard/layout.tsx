@@ -1,15 +1,13 @@
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
-
-import styles from "./style.module.css";
+import Sidebar from "@/components/layout/sidebar/sidebar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={styles.dashboardLayout}>
+    <div className="flex flex-row min-h-svh bg-[#f7f7f8]">
       <Sidebar />
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full min-w-0">
         <Header />
-        <main className="overflow-y-auto">
+        <main className="overflow-y-auto h-full min-w-0">
           {children}
         </main>
       </div>

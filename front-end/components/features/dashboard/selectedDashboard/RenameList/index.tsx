@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useModalStore } from '@/lib/stores/modal';
-import { useListOperations } from '@/lib/hooks/useListOperations';
+import { useModalStore } from '@/stores/modal';
+import { useListOperations } from '@/hooks/use-list-operations';
 import { Input } from '@/components/ui';
 
 import styles from './style.module.css';

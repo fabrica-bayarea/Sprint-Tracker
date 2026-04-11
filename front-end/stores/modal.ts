@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Task } from '@/lib/types/board';
+import type { Task } from '@/types/board';
 
 interface ModalState {
   // Estados dos modais

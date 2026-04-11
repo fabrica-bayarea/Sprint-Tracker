@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { updateUserProfile } from "@/lib/actions/profile";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useNotificationStore } from '@/stores/notification';
 
 import { Input, Image } from "@/components/ui";
 

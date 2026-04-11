@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { mockTasks } from "@/lib/types/task"; 
 import { BacklogItem } from "@/components/backlog/backlog-item";
 import { TaskModal } from "@/components/backlog/task-modal";
 import { backlogActions } from "@/lib/actions/backlog";
 import { Search, LayoutGrid, List, Plus, ArchiveX, Filter, Loader2 } from "lucide-react"; 
+import { mockTasks } from "@/lib/mocks/tasks";
 
 export default function BacklogPage() {
   const router = useRouter();

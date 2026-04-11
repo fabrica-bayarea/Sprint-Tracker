@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 
 import { register } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useNotificationStore } from '@/stores/notification';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 import AuthInput from "@/components/ui/authInput";

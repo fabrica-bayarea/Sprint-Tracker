@@ -1,8 +1,8 @@
 'use server';
 
 import api from "@/lib/api/axios";
-import { handleAxiosError } from "@/lib/utils/handleAxiosError";
-import { List, NewListData, PatchListData } from "../types/list";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { List, NewListData, PatchListData } from "../../types/list";
 
 export async function getAllList(boardId: string) {
   try {

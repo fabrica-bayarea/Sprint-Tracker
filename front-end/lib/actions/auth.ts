@@ -1,8 +1,8 @@
 "use server"
 
 import api from "@/lib/api/axios";
-import { handleAxiosError } from "@/lib/utils/handleAxiosError";
-import { setSessioCookie, getCookie } from "@/lib/utils/sessionCookie";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { setSessioCookie, getCookie } from "@/lib/utils/session-cookie";
 
 export async function login(email: string, password: string, rememberMe: boolean) {
   try {

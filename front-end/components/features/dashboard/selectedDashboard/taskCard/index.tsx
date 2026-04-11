@@ -4,10 +4,10 @@ import { useDragListeners } from '@/components/features/dashboard/selectedDashbo
 
 import { Trash2, Pencil, Grip } from 'lucide-react';
 
-import { useTaskOperations } from '@/lib/hooks/useTaskOperations';
-import { useModalStore } from '@/lib/stores/modal';
+import { useTaskOperations } from '@/hooks/use-task-operations';
+import { useModalStore } from '@/stores/modal';
 
-import type { Task } from '@/lib/types/board';
+import type { Task } from '@/types/board';
 
 import styles from './style.module.css';
 

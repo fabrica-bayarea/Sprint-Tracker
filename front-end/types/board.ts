@@ -7,6 +7,13 @@ export enum Status {
   ARCHIVED = 'ARCHIVED'
 }
 
+export interface Board {
+  id: string;
+  name: string;
+  members: { id: string; name: string; avatar: string }[];
+  image: string;
+}
+
 export interface BoardData {
   title: string;
   description: string;
@@ -37,4 +44,32 @@ export interface CreateListData {
   title: string;
   position: number;
   tasks: Task[];
+}
+
+export interface ExpiredTask {
+  id: string;
+  listId: string;
+  title: string;
+  description?: string;
+  dueDate: string;
+  status: string;
+  list: {
+    id: string;
+    title: string;
+    board: {
+      id: string;
+      title: string;
+    };
+  };
+}
+
+export interface PendenciaItem {
+  id: string;
+  titulo: string;
+  grupo: string;
+  status: string;
+  statusColor: string;
+  andamento: string;
+  data: string;
+  atrasado: boolean;
 }

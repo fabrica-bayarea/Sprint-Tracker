@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCookie } from '@/lib/utils/sessionCookie';
+import { getCookie } from '@/lib/utils/session-cookie';
 
 const BASE_URL_API = process.env.BASE_URL_API || 'http://trello-api:3000';
 
