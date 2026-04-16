@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 
 export class CreateBacklogDto {
   @ApiProperty({
-    example: 'boardId123',
+    example: 'cbd3c685-b194-4b3d-b071-a1825058c435',
     description: 'ID do quadro ao qual este backlog pertence',
     required: true,
   })
@@ -57,13 +57,7 @@ export class CreateBacklogDto {
   status!: BacklogStatus;
 
   @ApiProperty({
-    example: [
-      {
-        sprintid: 'sprintId123',
-        backlogid: 'backlogId123',
-        completedAt: '2026-03-03T00:00:00.000Z',
-      },
-    ],
+    example: [],
     description: 'Lista de sprints associadas a este backlog',
     required: false,
   })
