@@ -6,6 +6,8 @@ import { ApiResponse } from '@nestjs/swagger/dist/decorators/api-response.decora
 import { ApiOperation } from '@nestjs/swagger/dist/decorators/api-operation.decorator';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { CurrentUser } from 'src/auth/strategy/decorators/current-user.decorator';
+import { AuthenticatedUser } from 'src/types/user.interface';
 
 @ApiCookieAuth()
 @ApiTags('Backlogs')
@@ -27,7 +29,10 @@ export class BacklogController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Post()
-  create(@Body() dto: CreateBacklogDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateBacklogDto,
+  ) {
     return this.backlogService.create(dto);
   }
 
@@ -68,7 +73,11 @@ export class BacklogController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: CreateBacklogDto) {
+  update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CreateBacklogDto,
+  ) {
     return this.backlogService.update(id, dto);
   }
 
@@ -96,7 +105,7 @@ export class BacklogController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.backlogService.remove(id);
   }
 
