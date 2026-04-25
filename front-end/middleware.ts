@@ -4,7 +4,7 @@ const isDev = process.env.NODE_ENV === 'development'
 const apiUrl = process.env.BASE_URL_API || ''
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const nonce = btoa(crypto.randomUUID())
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
   const cspHeader = `
     default-src 'self';
