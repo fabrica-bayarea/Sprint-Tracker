@@ -4,12 +4,9 @@ import {
   IsEnum,
   IsOptional,
   IsNotEmpty,
-  ValidateNested,
 } from 'class-validator';
-import { SpringBacklogItemDto } from '../../sprintbacklogitem/dto/sprintbacklogitem.dto';
 import { BacklogPriority } from '../../common/enums/backlog-priority.enum';
 import { BacklogStatus } from '../../common/enums/backlog-status.enum';
-import { Type } from 'class-transformer';
 
 export class CreateBacklogDto {
   @ApiProperty({
@@ -55,20 +52,4 @@ export class CreateBacklogDto {
   @IsEnum(BacklogStatus)
   @IsNotEmpty()
   status!: BacklogStatus;
-
-  @ApiProperty({
-    example: [
-      {
-        sprintid: 'sprintId123',
-        backlogid: 'backlogId123',
-        completedAt: '2026-03-03T00:00:00.000Z',
-      },
-    ],
-    description: 'Lista de sprints associadas a este backlog',
-    required: false,
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => SpringBacklogItemDto)
-  sprints!: SpringBacklogItemDto[];
 }

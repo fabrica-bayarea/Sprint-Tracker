@@ -23,12 +23,6 @@ export class BacklogService {
           description: BacklogDto.description,
           priority: BacklogDto.priority,
           status: BacklogDto.status,
-          sprints: {
-            create: BacklogDto.sprints.map((item) => ({
-              sprintId: item.sprintId,
-              completedAt: item.completedAt,
-            })),
-          },
         },
       });
     } catch (error) {
