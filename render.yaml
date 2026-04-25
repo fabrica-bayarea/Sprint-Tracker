@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./back-end/Dockerfile
     dockerContext: ./back-end
     plan: free
-    healthCheckPath: /v1/health
+    healthCheckPath: /health-check
     envVars:
       - key: NODE_ENV
         value: production
