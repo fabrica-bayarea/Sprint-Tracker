@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   const cspHeader = `
     default-src 'self';
     script-src 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''};
-    style-src 'self' https://fonts.googleapis.com ${isDev ? "'unsafe-inline'" : ''};
+    style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
     img-src 'self' data:;
     font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
     connect-src 'self' ${apiUrl};

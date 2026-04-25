@@ -10,7 +10,8 @@ import TaskDetailsModal from '@/components/features/dashboard/selectedDashboard/
 import RenameListModal from '@/components/features/dashboard/selectedDashboard/RenameList';
 import EditTaskModal from '@/components/features/dashboard/selectedDashboard/EditTask';
 
-import { useModalStore } from '@/lib/stores/modal';;
+import { useModalStore } from '@/lib/stores/modal';
+import { useBoardStore } from '@/lib/stores/board';
 
 import styles from './style.module.css';
 
@@ -18,17 +19,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const { id: boardId } = use(params);
 
   const { openCreateListModal } = useModalStore();
+  const { boardTitle } = useBoardStore();
 
   return (
     <main className={styles.dashboardMainCustom}>
       <Section
-        title="Bay-Area"
+        title={boardTitle || '...'}
         actionButton={openCreateListModal}
       >
-        <BoardLists boardId={ boardId }/>
+        <BoardLists boardId={boardId}/>
       </Section>
       <EditTaskModal/>
-      <CreateListModal boardId={ boardId }/>
+      <CreateListModal boardId={boardId}/>
       <CreateTaskModal/>
       <TaskDetailsModal/>
       <RenameListModal/>

@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 
 import { getAllList } from '@/lib/actions/list';
 import { getTasksByList } from '@/lib/actions/task';
-import { getUserBoardRole } from '@/lib/actions/board';
+import { getUserBoardRole, getBoardById } from '@/lib/actions/board';
 import { useBoardStore } from '@/lib/stores/board';
 import { useNotificationStore } from '@/lib/stores/notification';
 
 import { List, Status } from '@/lib/types/board'
 
 export function useBoardData(boardId: string) {
-  const { setLists, setLoading, setIsCurrentUserAdmin } = useBoardStore();
+  const { setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle } = useBoardStore();
   const { showNotification } = useNotificationStore();
 
   useEffect(() => {
@@ -19,14 +19,19 @@ export function useBoardData(boardId: string) {
       setLoading(true);
 
       try {
-        const [listsResult, roleResult] = await Promise.all([
+        const [listsResult, roleResult, boardResult] = await Promise.all([
           getAllList(boardId),
           getUserBoardRole(boardId),
+          getBoardById(boardId),
         ]);
 
         if (roleResult.success && roleResult.data) {
           const role = roleResult.data;
           setIsCurrentUserAdmin(role === 'OWNER' || role === 'ADMIN');
+        }
+
+        if (boardResult.success && boardResult.data) {
+          setBoardTitle(boardResult.data.name);
         }
 
         if (listsResult.success) {
@@ -56,5 +61,5 @@ export function useBoardData(boardId: string) {
     };
 
     fetchBoardData();
-  }, [boardId, setLists, setLoading, setIsCurrentUserAdmin, showNotification]);
+  }, [boardId, setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle, showNotification]);
 }
