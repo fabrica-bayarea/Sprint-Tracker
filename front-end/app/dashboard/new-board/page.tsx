@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createBoard } from "@/lib/actions/board";
 import { useNotificationStore } from '@/lib/stores/notification';
 
-import { Input, Textarea, Image } from "@/components/ui";
+import { Input, Textarea } from "@/components/ui";
 
 import styles from "./style.module.css";
 
@@ -15,14 +15,7 @@ export default function NewBoardPage() {
   const { showNotification } = useNotificationStore()
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0]);
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +25,6 @@ export default function NewBoardPage() {
     if (result.success) {
       setName("");
       setDescription("");
-      setImage(null);
 
       router.push("/dashboard");
       router.refresh();
@@ -68,17 +60,7 @@ export default function NewBoardPage() {
             />
           </div>
           <div className={styles.rightGroup}>
-            <label className={styles.label}>
-              Foto
-              <div className={styles.squarePhotoPreview}>
-                {image ? (
-                  <Image src={URL.createObjectURL(image)} alt="Preview" width={100} height={100} className={styles.squarePhotoImg} />
-                ) : (
-                  <div className={styles.squarePhotoPlaceholder}>Prévia</div>
-                )}
-              </div>
-              <input type="file" className={styles.fileInput} accept="image/*" onChange={handleImageChange} />
-            </label>
+            {/* Photo upload hidden — no storage solution configured */}
             <button type="submit" className={styles.button} disabled={loading}>
               {loading ? "Criando..." : "Criar"}
             </button>

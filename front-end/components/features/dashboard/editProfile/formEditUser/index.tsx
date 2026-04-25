@@ -100,7 +100,7 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
               width={100}
               height={100}
             />
-            <input type="file" id="foto" name="foto" accept="image/*" onChange={handleChange} />
+            {/* Photo upload hidden — no storage solution configured */}
           </div>
         </div>
       </form>

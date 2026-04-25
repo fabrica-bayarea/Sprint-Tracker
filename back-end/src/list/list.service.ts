@@ -34,15 +34,22 @@ export class ListService {
     });
   }
 
-  async findAll(ownerId: string, boardId: string) {
+  async findAll(userId: string, boardId: string) {
     const board = await this.prisma.board.findFirst({
-      where: {
-        id: boardId,
-        ownerId,
+      where: { id: boardId },
+      include: {
+        members: { where: { userId } },
       },
     });
 
     if (!board) {
+      throw new ForbiddenException('Você não tem acesso a este board.');
+    }
+
+    const isOwner = board.ownerId === userId;
+    const isMember = board.members.length > 0;
+
+    if (!isOwner && !isMember) {
       throw new ForbiddenException('Você não tem acesso a este board.');
     }
 
