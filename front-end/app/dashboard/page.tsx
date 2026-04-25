@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Trash2, CheckCircle2 } from "lucide-react";
 
-import { getBoards } from "@/lib/actions/board";
+import { getBoards, deleteBoard } from "@/lib/actions/board";
 import { getExpiredTasks, deleteTask, updateTask } from "@/lib/actions/task";
 import { useNotificationStore } from '@/lib/stores/notification';
 
@@ -51,6 +51,21 @@ export default function Dashboard() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [pendencias, setPendencias] = useState<PendenciaItem[]>([]);
   const { showNotification } = useNotificationStore()
+
+  const handleDeleteBoard = async (boardId: string) => {
+    if (!confirm("Tem certeza que deseja deletar este board? Todas as listas e tarefas serão removidas permanentemente.")) return;
+    try {
+      const result = await deleteBoard(boardId);
+      if (result.success) {
+        setBoards(prev => prev.filter(b => b.id !== boardId));
+        showNotification("Board deletado com sucesso!", 'success');
+      } else {
+        showNotification(result.error || "Erro ao deletar board", 'failed');
+      }
+    } catch {
+      showNotification("Erro ao deletar board", 'failed');
+    }
+  };
 
   const handleDeleteTask = async (taskId: string) => {
     try {
@@ -189,10 +204,17 @@ export default function Dashboard() {
                 key={b.id}
                 onClick={() => window.location.href = `/dashboard/${b.id}`}
               >
+                <button
+                  className={styles.boardDeleteBtn}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id); }}
+                  title="Deletar board"
+                >
+                  <Trash2 size={15} />
+                </button>
                 <div className={styles.boardImgCustom}></div>
                 <div className={styles.boardInfoCustom}>
-                  <span className={styles.boardNameCustom}>{b.name}</span> 
-                  <span className={styles.boardMembrosCustom}>1 Membros</span> 
+                  <span className={styles.boardNameCustom}>{b.name}</span>
+                  <span className={styles.boardMembrosCustom}>1 Membros</span>
                 </div>
               </div>
             ))

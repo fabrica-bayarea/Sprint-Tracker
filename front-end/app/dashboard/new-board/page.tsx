@@ -42,30 +42,23 @@ export default function NewBoardPage() {
       </p>
       <h2 className={styles.title}>Criar um espaço de trabalho</h2>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.rowGroups}>
-          <div className={styles.leftGroup}>
-            <Input 
-              label="Nome" 
-              type="text"
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              required 
-            />
-            <Textarea
-              label="Descrição"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              required
-            />
-          </div>
-          <div className={styles.rightGroup}>
-            {/* Photo upload hidden — no storage solution configured */}
-            <button type="submit" className={styles.button} disabled={loading}>
-              {loading ? "Criando..." : "Criar"}
-            </button>
-          </div>
-        </div>
+        <Input
+          label="Nome"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <Textarea
+          label="Descrição"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          required
+        />
+        <button type="submit" className={styles.button} disabled={loading}>
+          {loading ? "Criando..." : "Criar"}
+        </button>
       </form>
     </div>
   );

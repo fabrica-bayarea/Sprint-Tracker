@@ -66,6 +66,29 @@ export async function getBoards() {
   };
 }
 
+export async function deleteBoard(boardId: string) {
+  try {
+    const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": await getCookie("trello-session"),
+      },
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: await handleFetchError(response, "Falha ao deletar o board"),
+      };
+    }
+
+    return { success: true };
+  } catch {
+    return { success: false, error: "Falha ao deletar o board" };
+  }
+}
+
 export async function getUserBoardRole(boardId: string) {
   try {
     const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}/my-role`, {

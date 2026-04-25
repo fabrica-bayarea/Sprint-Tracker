@@ -66,6 +66,54 @@ export class BoardService {
 
   async remove(id: string) {
     await this.findOne(id);
+
+    // Cascade-delete all child records manually (no onDelete: Cascade in schema)
+
+    // 1. Collect all task IDs belonging to this board's lists
+    const lists = await this.prisma.list.findMany({
+      where: { boardId: id },
+      select: { id: true },
+    });
+    const listIds = lists.map((l) => l.id);
+
+    if (listIds.length > 0) {
+      const tasks = await this.prisma.task.findMany({
+        where: { listId: { in: listIds } },
+        select: { id: true },
+      });
+      const taskIds = tasks.map((t) => t.id);
+
+      if (taskIds.length > 0) {
+        await this.prisma.taskLabel.deleteMany({ where: { taskId: { in: taskIds } } });
+        await this.prisma.task.deleteMany({ where: { listId: { in: listIds } } });
+      }
+
+      await this.prisma.list.deleteMany({ where: { boardId: id } });
+    }
+
+    // 2. Delete TaskLogs referencing this board (created/moved logs)
+    await this.prisma.taskLog.deleteMany({ where: { boardId: id } });
+
+    // 3. Delete Sprint-related records
+    const sprints = await this.prisma.sprint.findMany({
+      where: { boardId: id },
+      select: { id: true },
+    });
+    const sprintIds = sprints.map((s) => s.id);
+    if (sprintIds.length > 0) {
+      await this.prisma.sprintBacklogItem.deleteMany({ where: { sprintId: { in: sprintIds } } });
+    }
+    await this.prisma.sprint.deleteMany({ where: { boardId: id } });
+
+    // 4. Delete Backlogs (SprintBacklogItems referencing backlogs already deleted above)
+    await this.prisma.backlog.deleteMany({ where: { boardId: id } });
+
+    // 5. Delete Labels (TaskLabels already deleted above)
+    await this.prisma.label.deleteMany({ where: { boardId: id } });
+
+    // 6. Delete BoardMembers
+    await this.prisma.boardMember.deleteMany({ where: { boardId: id } });
+
     return this.prisma.board.delete({ where: { id } });
   }
 }

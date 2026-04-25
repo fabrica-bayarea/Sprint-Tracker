@@ -108,6 +108,20 @@ export class ListService {
 
   async remove(id: string) {
     await this.findOne(id);
+
+    // Cascade-delete child records manually (no onDelete: Cascade in schema)
+    const tasks = await this.prisma.task.findMany({
+      where: { listId: id },
+      select: { id: true },
+    });
+    const taskIds = tasks.map((t) => t.id);
+
+    if (taskIds.length > 0) {
+      await this.prisma.taskLabel.deleteMany({ where: { taskId: { in: taskIds } } });
+      await this.prisma.taskLog.deleteMany({ where: { taskId: { in: taskIds } } });
+      await this.prisma.task.deleteMany({ where: { listId: id } });
+    }
+
     return this.prisma.list.delete({ where: { id } });
   }
 }
