@@ -3,13 +3,14 @@ import { useEffect } from 'react';
 import { getAllList } from '@/lib/actions/list';
 import { getTasksByList } from '@/lib/actions/task';
 import { getUserBoardRole, getBoardById } from '@/lib/actions/board';
+import { getBoardMembers } from '@/lib/actions/boardMember';
 import { useBoardStore } from '@/lib/stores/board';
 import { useNotificationStore } from '@/lib/stores/notification';
 
 import { List, Status } from '@/lib/types/board'
 
 export function useBoardData(boardId: string) {
-  const { setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle } = useBoardStore();
+  const { setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle, setMembers } = useBoardStore();
   const { showNotification } = useNotificationStore();
 
   useEffect(() => {
@@ -19,10 +20,11 @@ export function useBoardData(boardId: string) {
       setLoading(true);
 
       try {
-        const [listsResult, roleResult, boardResult] = await Promise.all([
+        const [listsResult, roleResult, boardResult, membersResult] = await Promise.all([
           getAllList(boardId),
           getUserBoardRole(boardId),
           getBoardById(boardId),
+          getBoardMembers(boardId),
         ]);
 
         if (roleResult.success && roleResult.data) {
@@ -32,6 +34,10 @@ export function useBoardData(boardId: string) {
 
         if (boardResult.success && boardResult.data) {
           setBoardTitle(boardResult.data.name);
+        }
+
+        if (membersResult.success && membersResult.data) {
+          setMembers(membersResult.data);
         }
 
         if (listsResult.success) {
@@ -46,7 +52,8 @@ export function useBoardData(boardId: string) {
                   description: taskResponse.description,
                   position: taskResponse.position,
                   status: taskResponse.status as Status,
-                  dueDate: taskResponse.dueDate
+                  dueDate: taskResponse.dueDate,
+                  assigneeId: taskResponse.assigneeId ?? null,
                 })) : []
               };
             })
@@ -61,5 +68,5 @@ export function useBoardData(boardId: string) {
     };
 
     fetchBoardData();
-  }, [boardId, setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle, showNotification]);
+  }, [boardId, setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle, setMembers, showNotification]);
 }

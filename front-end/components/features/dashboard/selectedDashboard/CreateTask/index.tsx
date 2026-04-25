@@ -14,13 +14,14 @@ import styles from './style.module.css';
 
 export default function CreateTaskModal () {
   const { handleCreateTask } = useTaskOperations();
-  const { getNextTaskPosition } = useBoardStore();
+  const { getNextTaskPosition, members, isCurrentUserAdmin } = useBoardStore();
   const { selectedListId, isCreateTaskModalOpen, closeCreateTaskModal } = useModalStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<Status>(Status.TODO);
   const [dueDate, setDueDate] = useState('');
+  const [assigneeId, setAssigneeId] = useState<string>('');
 
   const nextPosition = selectedListId ? getNextTaskPosition(selectedListId) : 0;
 
@@ -30,6 +31,7 @@ export default function CreateTaskModal () {
       setDescription('');
       setStatus(Status.TODO);
       setDueDate('');
+      setAssigneeId('');
     }
   }, [isCreateTaskModalOpen]);
 
@@ -56,6 +58,7 @@ export default function CreateTaskModal () {
         position: nextPosition,
         status: status,
         dueDate: formatToISO(dueDate),
+        assigneeId: assigneeId || null,
       });
     }
   };
@@ -105,7 +108,22 @@ export default function CreateTaskModal () {
           placeholder="Data de vencimento (opcional)"
           className={styles.modalInput}
         />
-              
+
+        {isCurrentUserAdmin && (
+          <select
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+            className={styles.modalSelect}
+          >
+            <option value="">Sem responsável</option>
+            {members.map((m) => (
+              <option key={m.userId} value={m.userId}>
+                {m.name} ({m.role === 'OWNER' ? 'Dono' : m.role})
+              </option>
+            ))}
+          </select>
+        )}
+
         <div className={styles.modalActions}>
           <button onClick={closeCreateTaskModal} className={styles.cancelButton}>Cancelar</button>
           <button onClick={handleSubmit} className={styles.submitButton}>Criar Tarefa</button>

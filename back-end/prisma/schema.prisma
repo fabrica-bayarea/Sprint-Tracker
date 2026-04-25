@@ -26,6 +26,7 @@ model User {
   boards              Board[]       @relation("OwnerBoards")
   memberships         BoardMember[]
   tasksCreated        Task[]        @relation("TaskCreator")
+  tasksAssigned       Task[]        @relation("TaskAssignee")
   taskLogs            TaskLog[]     @relation("TaskLogUser")
 
   @@unique([authProvider, providerId], name: "AuthProviderAndIdUnique")
@@ -115,6 +116,7 @@ model Task {
   id          String      @id @default(uuid())
   listId      String
   creatorId   String
+  assigneeId  String?
   title       String
   description String?
   position    Int
@@ -125,6 +127,7 @@ model Task {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   creator     User        @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee    User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
   list        List        @relation(fields: [listId], references: [id])
   labels      TaskLabel[]
   logs        TaskLog[]

@@ -41,4 +41,13 @@ export class CreateTaskDto {
   @IsOptional()
   @IsDateString()
   dueDate?: Date;
+
+  @ApiProperty({
+    description: 'ID do membro do board responsável pela tarefa (apenas admin/owner pode atribuir)',
+    example: '1234567890abcdef12345678',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  assigneeId?: string | null;
 }

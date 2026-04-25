@@ -1,7 +1,8 @@
 import React from 'react';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, User } from 'lucide-react';
 
 import { useModalStore } from '@/lib/stores/modal';
+import { useBoardStore } from '@/lib/stores/board';
 
 import styles from './style.module.css';
 
@@ -11,6 +12,7 @@ export default function TaskDetailsModal() {
     selectedTask,
     closeTaskDetailsModal,
   } = useModalStore();
+  const { members } = useBoardStore();
 
   if (!isTaskDetailsModalOpen || !selectedTask) return null;
 
@@ -85,6 +87,18 @@ export default function TaskDetailsModal() {
                 <Calendar size={16} />
                 <span>{formatDate(selectedTask.dueDate || '')}</span>
               </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Responsável:</label>
+            <div className={styles.dateContainer}>
+              <User size={16} />
+              <span>
+                {selectedTask.assigneeId
+                  ? (members.find((m) => m.userId === selectedTask.assigneeId)?.name ?? 'Membro removido')
+                  : 'Sem responsável'}
+              </span>
             </div>
           </div>
         </div>

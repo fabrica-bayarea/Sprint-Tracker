@@ -6,18 +6,22 @@ interface SectionProps {
   title: string;
   children: React.ReactNode;
   actionButton?: React.MouseEventHandler<HTMLButtonElement>;
+  extraActions?: React.ReactNode;
 }
 
-export default function Section({ title, children, actionButton }: SectionProps) {
+export default function Section({ title, children, actionButton, extraActions }: SectionProps) {
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <span className={styles.title}>{title}</span>
-        {actionButton && (
-          <button className={styles.criarButton} onClick={actionButton}>
-            Criar <PlusCircle size={20} />
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          {extraActions}
+          {actionButton && (
+            <button className={styles.criarButton} onClick={actionButton}>
+              Criar <PlusCircle size={20} />
+            </button>
+          )}
+        </div>
       </div>
       {children}
     </section>

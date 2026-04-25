@@ -18,6 +18,8 @@ interface ExpiredTask {
   description?: string;
   dueDate: string;
   status: string;
+  assigneeId?: string | null;
+  assignee?: { id: string; name: string; email: string } | null;
   list: {
     id: string;
     title: string;
@@ -37,6 +39,7 @@ interface PendenciaItem {
   andamento: string;
   data: string;
   atrasado: boolean;
+  responsavel?: string;
 }
 
 
@@ -128,7 +131,8 @@ export default function Dashboard() {
                 statusColor: isOverdue ? "#e02b2b" : "#15bd2e",
                 andamento: task.list.title,
                 data: dueDate.toLocaleDateString('pt-BR'),
-                atrasado: isOverdue
+                atrasado: isOverdue,
+                responsavel: task.assignee?.name,
               };
             });
             setPendencias(formattedTasks);
@@ -163,7 +167,10 @@ export default function Dashboard() {
                 <span className={styles.pendenciaAtrasadoWrapper}>
                   {p.atrasado && <span className={styles.pendenciaAtrasado}>Atrasado!</span>}
                 </span>
-                <span className={styles.pendenciaGrupo}>{p.grupo}/<span>{p.andamento}</span></span>
+                <span className={styles.pendenciaGrupo}>
+                  {p.grupo}/<span>{p.andamento}</span>
+                  {p.responsavel && <span style={{ marginLeft: 8, fontStyle: 'italic' }}>· {p.responsavel}</span>}
+                </span>
                 <button 
                   className={styles.pendenciaAction}
                   onClick={() => handleDeleteTask(p.id)}

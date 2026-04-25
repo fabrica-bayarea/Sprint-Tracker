@@ -9,6 +9,7 @@ import { ListModule } from 'src/list/list.module';
 import { TaskModule } from 'src/task/task.module';
 import { HealthModule } from 'src/health/health.module';
 import { TaskLogModule } from 'src/task-log/task-log.module';
+import { BoardMemberModule } from 'src/board-member/board-member.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TaskLogModule } from 'src/task-log/task-log.module';
     ListModule,
     TaskModule,
     TaskLogModule,
+    BoardMemberModule,
     HealthModule,
   ],
 })

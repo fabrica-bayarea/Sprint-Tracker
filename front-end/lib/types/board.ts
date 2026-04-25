@@ -13,6 +13,15 @@ export interface Task {
   position: number;
   status: Status;
   dueDate?: string;
+  assigneeId?: string | null;
+}
+
+export interface BoardMember {
+  userId: string;
+  name: string;
+  email: string;
+  userName: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'OBSERVER';
 }
 
 export interface List {
@@ -28,6 +37,7 @@ export interface CreateTaskData {
   position: number;
   status: Status;
   dueDate?: string;
+  assigneeId?: string | null;
 }
 
 export interface EditTaskData {
@@ -36,6 +46,7 @@ export interface EditTaskData {
   position?: number;
   status?: Status;
   dueDate?: string;
+  assigneeId?: string | null;
 }
 
 export interface CreateListData {

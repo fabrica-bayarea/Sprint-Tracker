@@ -29,9 +29,10 @@ export function useTaskOperations() {
         description: result.data.description,
         position: result.data.position,
         status: result.data.status as Status,
-        dueDate: result.data.dueDate
+        dueDate: result.data.dueDate,
+        assigneeId: result.data.assigneeId ?? null,
       };
-      
+
       addTask(selectedListId, task);
       closeCreateTaskModal();
       showNotification("Tarefa criada com sucesso!", "success");
@@ -50,7 +51,8 @@ export function useTaskOperations() {
           description: result.data.description,
           position: result.data.position,
           status: result.data.status as Status,
-          dueDate: result.data.dueDate
+          dueDate: result.data.dueDate,
+          assigneeId: result.data.assigneeId ?? null,
         });
         showNotification("Tarefa editada com sucesso!", "success");
       } else {

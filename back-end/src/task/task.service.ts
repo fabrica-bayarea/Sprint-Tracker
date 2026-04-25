@@ -1,10 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskLogService } from 'src/task-log/task-log.service';
 import { LogAction } from '@prisma/client';
-import { endOfDay } from 'date-fns';
 
 @Injectable()
 export class TaskService {
@@ -22,10 +21,60 @@ export class TaskService {
     return list.boardId;
   }
 
+  /**
+   * Verifica se o usuário pode atribuir tarefas no board (owner ou admin).
+   * Lança ForbiddenException caso contrário.
+   */
+  private async assertCanAssign(userId: string, boardId: string): Promise<void> {
+    const board = await this.prisma.board.findUnique({
+      where: { id: boardId },
+      include: { members: { where: { userId } } },
+    });
+    if (!board) throw new NotFoundException('Board não encontrado');
+
+    const isOwner = board.ownerId === userId;
+    const isAdmin = board.members[0]?.role === 'ADMIN';
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException(
+        'Apenas administradores podem atribuir tarefas neste board.',
+      );
+    }
+  }
+
+  /**
+   * Verifica se o assignee é membro (ou owner) do board.
+   * Lança ForbiddenException caso contrário.
+   */
+  private async assertAssigneeIsMember(assigneeId: string, boardId: string): Promise<void> {
+    const board = await this.prisma.board.findUnique({
+      where: { id: boardId },
+      include: { members: { where: { userId: assigneeId } } },
+    });
+    if (!board) throw new NotFoundException('Board não encontrado');
+
+    const isOwner = board.ownerId === assigneeId;
+    const isMember = board.members.length > 0;
+
+    if (!isOwner && !isMember) {
+      throw new ForbiddenException(
+        'O usuário atribuído precisa ser membro do board.',
+      );
+    }
+  }
+
   async create(userId: string, dto: CreateTaskDto) {
     const count = await this.prisma.task.count({
       where: { listId: dto.listId },
     });
+
+    const boardId = await this.getBoardIdFromList(dto.listId);
+
+    // Se está atribuindo a alguém, valida permissão e membership
+    if (dto.assigneeId) {
+      await this.assertCanAssign(userId, boardId);
+      await this.assertAssigneeIsMember(dto.assigneeId, boardId);
+    }
 
     const newTask = await this.prisma.task.create({
       data: {
@@ -36,16 +85,16 @@ export class TaskService {
         position: count,
         status: dto.status,
         dueDate: dto.dueDate,
+        assigneeId: dto.assigneeId ?? null,
       },
     });
 
-    const boardId = await this.getBoardIdFromList(dto.listId);
     await this.taskLogService.createLog({
       taskId: newTask.id,
       userId,
       boardId,
       action: LogAction.TASK_CREATED,
-      metadata: { title: newTask.title },
+      metadata: { title: newTask.title, assigneeId: dto.assigneeId ?? null },
     });
 
     return newTask;
@@ -69,6 +118,16 @@ export class TaskService {
   async update(id: string, userId: string, dto: UpdateTaskDto) {
     const task = await this.findOne(id);
     const boardId = await this.getBoardIdFromList(task.listId);
+
+    // Se está mudando assignee, valida permissão e membership
+    const isChangingAssignee =
+      dto.assigneeId !== undefined && dto.assigneeId !== task.assigneeId;
+    if (isChangingAssignee) {
+      await this.assertCanAssign(userId, boardId);
+      if (dto.assigneeId) {
+        await this.assertAssigneeIsMember(dto.assigneeId, boardId);
+      }
+    }
 
     const hasStatusChange = dto.status !== undefined && dto.status !== task.status;
 
@@ -163,18 +222,43 @@ export class TaskService {
     });
   }
 
+  /**
+   * Retorna tarefas atrasadas ou perto de vencer (≤12h) que sejam relevantes para o usuário:
+   *  - Tarefas atribuídas a ele OU criadas por ele (escopo "minhas pendências"), OU
+   *  - Em boards onde o usuário é OWNER ou ADMIN (escopo "tarefas do meu time atrasadas")
+   */
   async findTasksOverdueDate(userId: string) {
-    const today = new Date();
+    const now = new Date();
+    const horizon = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+
+    // Boards onde o user é owner ou admin → vê tudo do board
+    const adminBoards = await this.prisma.board.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          { members: { some: { userId, role: 'ADMIN' } } },
+        ],
+      },
+      select: { id: true },
+    });
+    const adminBoardIds = adminBoards.map((b) => b.id);
 
     return this.prisma.task.findMany({
       where: {
-        creatorId: userId,
         status: { in: ['TODO', 'IN_PROGRESS'] },
-        dueDate: { lte: endOfDay(today) },
         deletedAt: null,
+        dueDate: { not: null, lte: horizon },
+        OR: [
+          { creatorId: userId },
+          { assigneeId: userId },
+          adminBoardIds.length > 0
+            ? { list: { boardId: { in: adminBoardIds } } }
+            : { id: '__never__' },
+        ],
       },
       include: {
         list: { include: { board: true } },
+        assignee: { select: { id: true, name: true, email: true } },
       },
       orderBy: { dueDate: 'asc' },
     });

@@ -12,6 +12,7 @@ interface TaskData {
   position: number;
   status: string;
   dueDate?: string;
+  assigneeId?: string | null;
 }
 
 interface UpdateTaskData {
@@ -21,6 +22,7 @@ interface UpdateTaskData {
   position?: number;
   status?: string;
   dueDate?: string;
+  assigneeId?: string | null;
 }
 
 interface TaskResponse {
@@ -31,6 +33,7 @@ interface TaskResponse {
   position: number;
   status: string;
   dueDate?: string;
+  assigneeId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

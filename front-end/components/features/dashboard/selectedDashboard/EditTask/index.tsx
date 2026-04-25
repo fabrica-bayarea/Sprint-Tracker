@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { useModalStore } from '@/lib/stores/modal';
+import { useBoardStore } from '@/lib/stores/board';
 import { useTaskOperations } from '@/lib/hooks/useTaskOperations';
 
 import { Input, Textarea } from "@/components/ui";
@@ -14,11 +15,13 @@ import styles from './style.module.css';
 export default function EditTaskModal () {
   const { handleEditTask } = useTaskOperations();
   const { selectedTask, isEditTaskModalOpen, closeEditTaskModal } = useModalStore();
+  const { members, isCurrentUserAdmin } = useBoardStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<Status>(Status.TODO);
   const [dueDate, setDueDate] = useState('');
+  const [assigneeId, setAssigneeId] = useState<string>('');
 
   useEffect(() => {
     if (isEditTaskModalOpen && selectedTask) {
@@ -26,6 +29,7 @@ export default function EditTaskModal () {
       setDescription(selectedTask.description || '');
       setStatus(selectedTask.status || Status.TODO);
       setDueDate(selectedTask.dueDate ? toLocalDateTime(selectedTask.dueDate) : '');
+      setAssigneeId(selectedTask.assigneeId || '');
     }
   }, [isEditTaskModalOpen, selectedTask]);
 
@@ -57,7 +61,8 @@ export default function EditTaskModal () {
           description: description.trim() || undefined,
           status,
           dueDate: formatToISO(dueDate),
-          position: selectedTask.position
+          position: selectedTask.position,
+          ...(isCurrentUserAdmin ? { assigneeId: assigneeId || null } : {}),
         }
       );
       closeEditTaskModal();
@@ -109,7 +114,28 @@ export default function EditTaskModal () {
           placeholder="Data de vencimento (opcional)"
           className={styles.modalInput}
         />
-              
+
+        {isCurrentUserAdmin ? (
+          <select
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+            className={styles.modalSelect}
+          >
+            <option value="">Sem responsável</option>
+            {members.map((m) => (
+              <option key={m.userId} value={m.userId}>
+                {m.name} ({m.role === 'OWNER' ? 'Dono' : m.role})
+              </option>
+            ))}
+          </select>
+        ) : (
+          assigneeId && (
+            <div className={styles.modalSelect} style={{ background: '#f5f5f5', cursor: 'not-allowed' }}>
+              Responsável: {members.find((m) => m.userId === assigneeId)?.name ?? '—'}
+            </div>
+          )
+        )}
+
         <div className={styles.modalActions}>
           <button onClick={closeEditTaskModal} className={styles.cancelButton}>Cancelar</button>
           <button onClick={handleSubmit} className={styles.submitButton}>Salvar Alterações</button>
