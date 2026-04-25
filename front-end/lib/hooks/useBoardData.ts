@@ -2,13 +2,14 @@ import { useEffect } from 'react';
 
 import { getAllList } from '@/lib/actions/list';
 import { getTasksByList } from '@/lib/actions/task';
+import { getUserBoardRole } from '@/lib/actions/board';
 import { useBoardStore } from '@/lib/stores/board';
 import { useNotificationStore } from '@/lib/stores/notification';
 
 import { List, Status } from '@/lib/types/board'
 
 export function useBoardData(boardId: string) {
-  const { setLists, setLoading } = useBoardStore();
+  const { setLists, setLoading, setIsCurrentUserAdmin } = useBoardStore();
   const { showNotification } = useNotificationStore();
 
   useEffect(() => {
@@ -16,12 +17,21 @@ export function useBoardData(boardId: string) {
 
     const fetchBoardData = async () => {
       setLoading(true);
-      
+
       try {
-        const result = await getAllList(boardId);
-        if (result.success) {
+        const [listsResult, roleResult] = await Promise.all([
+          getAllList(boardId),
+          getUserBoardRole(boardId),
+        ]);
+
+        if (roleResult.success && roleResult.data) {
+          const role = roleResult.data;
+          setIsCurrentUserAdmin(role === 'OWNER' || role === 'ADMIN');
+        }
+
+        if (listsResult.success) {
           const listsWithTasks = await Promise.all(
-            (result.data || []).map(async (list: List) => {
+            (listsResult.data || []).map(async (list: List) => {
               const tasksResult = await getTasksByList(list.id);
               return {
                 ...list,
@@ -38,7 +48,7 @@ export function useBoardData(boardId: string) {
           );
           setLists(listsWithTasks);
         } else {
-          showNotification("Erro ao buscar dados do quadro: " + result.error, "failed");
+          showNotification("Erro ao buscar dados do quadro: " + listsResult.error, "failed");
         }
       } finally {
         setLoading(false);
@@ -46,5 +56,5 @@ export function useBoardData(boardId: string) {
     };
 
     fetchBoardData();
-  }, [boardId, setLists, setLoading, showNotification]);
+  }, [boardId, setLists, setLoading, setIsCurrentUserAdmin, showNotification]);
 }

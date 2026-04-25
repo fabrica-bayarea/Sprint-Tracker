@@ -6,9 +6,11 @@ interface BoardState {
   // Estado das listas
   lists: List[];
   isLoading: boolean;
-  
+  isCurrentUserAdmin: boolean;
+
   // Actions para listas
   setLists: (lists: List[]) => void;
+  setIsCurrentUserAdmin: (isAdmin: boolean) => void;
   addList: (list: List) => void;
   renameList: (listId: string, title: string) => void;
   removeList: (listId: string) => void;
@@ -32,9 +34,11 @@ export const useBoardStore = create<BoardState>()(
     // Estado inicial
     lists: [],
     isLoading: false,
+    isCurrentUserAdmin: false,
 
     // Actions para listas
     setLists: (lists) => set({ lists }),
+    setIsCurrentUserAdmin: (isAdmin) => set({ isCurrentUserAdmin: isAdmin }),
     
     addList: (list) => set((state) => ({
       lists: [...state.lists, list]

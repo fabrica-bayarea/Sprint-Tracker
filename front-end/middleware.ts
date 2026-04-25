@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const isDev = process.env.NODE_ENV === 'development'
+const apiUrl = process.env.BASE_URL_API || ''
 
 export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
@@ -11,7 +12,7 @@ export function middleware(request: NextRequest) {
     style-src 'self' https://fonts.googleapis.com ${isDev ? "'unsafe-inline'" : ''};
     img-src 'self' data:;
     font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-    connect-src 'self';
+    connect-src 'self' ${apiUrl};
     frame-ancestors 'self';
     form-action 'self';
     base-uri 'self';

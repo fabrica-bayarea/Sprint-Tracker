@@ -8,6 +8,7 @@ import { BoardModule } from 'src/board/board.module';
 import { ListModule } from 'src/list/list.module';
 import { TaskModule } from 'src/task/task.module';
 import { HealthModule } from 'src/health/health.module';
+import { TaskLogModule } from 'src/task-log/task-log.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HealthModule } from 'src/health/health.module';
     BoardModule,
     ListModule,
     TaskModule,
+    TaskLogModule,
     HealthModule,
   ],
 })

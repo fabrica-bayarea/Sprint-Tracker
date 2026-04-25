@@ -186,6 +186,44 @@ export async function moveTaskOtherList(taskId: string, newPosition: number, new
   }
 }
 
+export async function getTaskLogs(taskId: string) {
+  const response = await fetch(`${BASE_URL_API}/v1/task-logs/${taskId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": await getCookie("trello-session"),
+    },
+  });
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: await handleFetchError(response, "Falha ao buscar logs da tarefa"),
+    };
+  }
+
+  return { success: true, data: await response.json() };
+}
+
+export async function exportTaskLogsCsv(taskId: string): Promise<{ success: boolean; csvUrl?: string; error?: string }> {
+  const response = await fetch(`${BASE_URL_API}/v1/task-logs/${taskId}/export/csv`, {
+    method: "GET",
+    headers: {
+      "Cookie": await getCookie("trello-session"),
+    },
+  });
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: await handleFetchError(response, "Falha ao exportar logs"),
+    };
+  }
+
+  const csvText = await response.text();
+  return { success: true, csvUrl: csvText };
+}
+
 export async function getExpiredTasks() {
   const response = await fetch(`${BASE_URL_API}/v1/tasks/due/today`, {
     method: "GET",

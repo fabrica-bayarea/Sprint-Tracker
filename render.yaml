@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: sprint-tracker-api
+    runtime: docker
+    dockerfilePath: ./back-end/Dockerfile
+    dockerContext: ./back-end
+    plan: free
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sprint-tracker-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_RESET_SECRET
+        generateValue: true
+      - key: BASE_URL
+        sync: false
+      - key: BASE_URL_UI
+        sync: false
+      - key: ENABLE_GOOGLE_OAUTH
+        value: false
+      - key: ENABLE_MICROSOFT_OAUTH
+        value: false
+      - key: EMAIL
+        sync: false
+      - key: PASS
+        sync: false
+
+databases:
+  - name: sprint-tracker-db
+    plan: free
+    databaseName: sprint_tracker
+    user: sprint_user

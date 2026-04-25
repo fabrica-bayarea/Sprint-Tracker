@@ -26,6 +26,7 @@ model User {
   boards              Board[]       @relation("OwnerBoards")
   memberships         BoardMember[]
   tasksCreated        Task[]        @relation("TaskCreator")
+  taskLogs            TaskLog[]     @relation("TaskLogUser")
 
   @@unique([authProvider, providerId], name: "AuthProviderAndIdUnique")
 }
@@ -45,6 +46,7 @@ model Board {
   lists       List[]
   backlogs    Backlog[]
   sprints     Sprint[]
+  taskLogs    TaskLog[]
 }
 
 model Backlog {
@@ -119,11 +121,26 @@ model Task {
   status      Status      @default(TODO)
   dueDate     DateTime?
   isArchived  Boolean     @default(false)
+  deletedAt   DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   creator     User        @relation("TaskCreator", fields: [creatorId], references: [id])
   list        List        @relation(fields: [listId], references: [id])
   labels      TaskLabel[]
+  logs        TaskLog[]
+}
+
+model TaskLog {
+  id        String    @id @default(uuid())
+  taskId    String
+  userId    String
+  boardId   String
+  action    LogAction
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  task      Task      @relation(fields: [taskId], references: [id])
+  user      User      @relation("TaskLogUser", fields: [userId], references: [id])
+  board     Board     @relation(fields: [boardId], references: [id])
 }
 
 model Label {
@@ -188,4 +205,13 @@ enum SprintStatus {
   PLANNED
   ACTIVE
   COMPLETED
+}
+
+enum LogAction {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_MOVED
+  TASK_STATUS_CHANGED
+  TASK_ARCHIVED
+  TASK_DELETED
 }

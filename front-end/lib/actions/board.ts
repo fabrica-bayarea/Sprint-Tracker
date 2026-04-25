@@ -66,6 +66,23 @@ export async function getBoards() {
   };
 }
 
+export async function getUserBoardRole(boardId: string) {
+  const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}/my-role`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": await getCookie("trello-session"),
+    },
+  });
+
+  if (!response.ok) {
+    return { success: false, error: "Falha ao buscar papel no board" };
+  }
+
+  const role: string = await response.json();
+  return { success: true, data: role };
+}
+
 export async function getBoardById(boardId: string) {
   const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
     method: "GET",

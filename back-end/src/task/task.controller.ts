@@ -79,8 +79,12 @@ export class TaskController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
-    return this.taskService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    return this.taskService.update(id, user.id, dto);
   }
 
   @ApiOperation({
@@ -108,8 +112,8 @@ export class TaskController {
   @ApiResponse({ status: 401, description: 'Usuário não autenticado' })
   @ApiResponse({ status: 403, description: 'Acesso negado' })
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.taskService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.taskService.remove(id, user.id);
   }
 
   @ApiOperation({
@@ -137,7 +141,11 @@ export class TaskController {
   @ApiResponse({ status: 404, description: 'Lista não encontrada' })
   @ApiResponse({ status: 404, description: 'Tarefa não encontrada' })
   @Patch(':id/move')
-  moveTask(@Param('id') taskId: string, @Body() dto: MoveTaskOtherListDto) {
-    return this.taskService.moveTaskToList(taskId, dto.newListId, dto.newPosition);
+  moveTask(
+    @Param('id') taskId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: MoveTaskOtherListDto,
+  ) {
+    return this.taskService.moveTaskToList(taskId, user.id, dto.newListId, dto.newPosition);
   }
 }
