@@ -67,51 +67,61 @@ export async function getBoards() {
 }
 
 export async function getUserBoardRole(boardId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}/my-role`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
+  try {
+    const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}/my-role`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": await getCookie("trello-session"),
+      },
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return { success: false, error: "Falha ao buscar papel no board" };
+    }
+
+    const role: string = await response.json();
+    return { success: true, data: role };
+  } catch {
     return { success: false, error: "Falha ao buscar papel no board" };
   }
-
-  const role: string = await response.json();
-  return { success: true, data: role };
 }
 
 export async function getBoardById(boardId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
+  try {
+    const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": await getCookie("trello-session"),
+      },
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return {
+        success: false,
+        error: await handleFetchError(response, "Falha ao buscar o board"),
+      };
+    }
+
+    const data = await response.json();
     return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar o board"),
+      success: true,
+      data: {
+        id: data.id,
+        name: data.title,
+        description: data.description,
+        visibility: data.visibility,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        ownerId: data.ownerId,
+        lists: data.lists,
+      },
     };
+  } catch {
+    return { success: false, error: "Falha ao buscar o board" };
   }
-
-  const data = await response.json();
-  return {
-    success: true,
-    data: {
-      id: data.id,
-      name: data.title,
-      description: data.description,
-      visibility: data.visibility,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      ownerId: data.ownerId,
-      lists: data.lists,
-    },
-  };
 }
+
+
 

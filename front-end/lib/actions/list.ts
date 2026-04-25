@@ -32,22 +32,26 @@ interface PatchListData {
 
 
 export async function getAllList(boardId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/lists/board/${boardId}`, {
-    headers: {
-      'Accept': 'application/json',
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
+  try {
+    const response = await fetch(`${BASE_URL_API}/v1/lists/board/${boardId}`, {
+      headers: {
+        'Accept': 'application/json',
+        "Cookie": await getCookie("trello-session"),
+      },
+    });
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, 'Falha ao buscar listas'),
-    };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: await handleFetchError(response, 'Falha ao buscar listas'),
+      };
+    }
+
+    const data = await response.json();
+    return { success: true, data: data.sort((a: List, b: List) => (a.position || 0) - (b.position || 0)) };
+  } catch {
+    return { success: false, error: 'Falha ao buscar listas' };
   }
-
-  const data = await response.json();
-  return { success: true, data: data.sort((a: List, b: List) => (a.position || 0) - (b.position || 0)) };
 }
 
 export async function createList(newListData: NewListData) {
