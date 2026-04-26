@@ -18,7 +18,7 @@ interface MembersModalProps {
 }
 
 export default function MembersModal({ boardId, isOpen, onClose }: MembersModalProps) {
-  const { members, setMembers, isCurrentUserAdmin } = useBoardStore();
+  const { members, setMembers } = useBoardStore();
   const { showNotification } = useNotificationStore();
 
   const [email, setEmail] = useState('');
@@ -79,11 +79,11 @@ export default function MembersModal({ boardId, isOpen, onClose }: MembersModalP
               <span className={`${styles.badge} ${styles[`badge_${m.role}`] || ''}`}>
                 {m.role === 'OWNER' ? 'Dono' : m.role}
               </span>
-              {isCurrentUserAdmin && m.role !== 'OWNER' && (
+              {m.role !== 'OWNER' && (
                 <button
                   className={styles.removeBtn}
                   onClick={() => handleRemove(m.userId, m.name)}
-                  title="Remover membro"
+                  title="Remover membro (apenas admin/dono)"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -92,30 +92,28 @@ export default function MembersModal({ boardId, isOpen, onClose }: MembersModalP
           ))}
         </ul>
 
-        {isCurrentUserAdmin && (
-          <form className={styles.addForm} onSubmit={handleAdd}>
-            <h3>Adicionar membro</h3>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@exemplo.com"
-              required
-            />
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as 'MEMBER' | 'ADMIN' | 'OBSERVER')}
-              className={styles.select}
-            >
-              <option value="MEMBER">Membro</option>
-              <option value="ADMIN">Administrador</option>
-              <option value="OBSERVER">Observador</option>
-            </select>
-            <button type="submit" className={styles.submitBtn} disabled={loading}>
-              <UserPlus size={16} /> {loading ? 'Adicionando...' : 'Adicionar'}
-            </button>
-          </form>
-        )}
+        <form className={styles.addForm} onSubmit={handleAdd}>
+          <h3>Adicionar membro</h3>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@exemplo.com"
+            required
+          />
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'MEMBER' | 'ADMIN' | 'OBSERVER')}
+            className={styles.select}
+          >
+            <option value="MEMBER">Membro</option>
+            <option value="ADMIN">Administrador</option>
+            <option value="OBSERVER">Observador</option>
+          </select>
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            <UserPlus size={16} /> {loading ? 'Adicionando...' : 'Adicionar'}
+          </button>
+        </form>
 
         <div className={styles.modalActions}>
           <button onClick={onClose} className={styles.closeBtn}>Fechar</button>
