@@ -1,15 +1,4 @@
-import { IsOptional, IsString, IsInt, IsBoolean } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreateListDto } from './create-list.dto';
 
-export class UpdateListDto {
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @IsOptional()
-  @IsInt()
-  position?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  isArchived?: boolean;
-}
+export class UpdateListDto extends PartialType(CreateListDto) {}

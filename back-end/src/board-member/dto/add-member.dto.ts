@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsEnum } from 'class-validator';
 import { Role } from '@prisma/client';
 
 export class AddMemberDto {
@@ -8,15 +8,14 @@ export class AddMemberDto {
     example: 'usuario@exemplo.com',
   })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({
     description: 'Papel do membro no board',
     enum: Role,
     default: Role.MEMBER,
-    required: false,
+    required: true,
   })
-  @IsOptional()
   @IsEnum(Role)
-  role?: Role;
+  role!: Role;
 }

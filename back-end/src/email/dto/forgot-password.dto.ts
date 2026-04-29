@@ -6,5 +6,5 @@ export class ForgotPasswordDto {
   @IsEmail({}, { message: 'Deve ser um email válido' })
   @IsNotEmpty({ message: 'O email não pode estar vazio' })
   @IsString({ message: 'O email deve ser uma string' })
-  email: string;
+  email!: string;
 }

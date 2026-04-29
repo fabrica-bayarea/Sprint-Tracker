@@ -9,7 +9,7 @@ export class CreateBoardDto {
   })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty({
     example: 'Isso é um board de exemplo',
