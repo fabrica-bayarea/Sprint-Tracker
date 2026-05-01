@@ -1,13 +1,21 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskLogService } from 'src/task-log/task-log.service';
+import { PrismaQueries } from 'src/prisma/queries';
 import { LogAction } from '@prisma/client';
 
 @Injectable()
 export class TaskService {
   constructor(
+    private readonly prismaQueries: PrismaQueries,
     private readonly prisma: PrismaService,
     private readonly taskLogService: TaskLogService,
   ) {}
@@ -25,10 +33,16 @@ export class TaskService {
    * Verifica se o usuário pode atribuir tarefas no board (owner ou admin).
    * Lança ForbiddenException caso contrário.
    */
-  private async assertCanAssign(userId: string, boardId: string): Promise<void> {
+  private async assertCanAssign(
+    userId: string,
+    boardId: string,
+  ): Promise<void> {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId },
-      include: { members: { where: { userId } } },
+      include: {
+        ...this.prismaQueries.boardInclude,
+        members: true,
+      },
     });
     if (!board) throw new NotFoundException('Board não encontrado');
 
@@ -46,10 +60,16 @@ export class TaskService {
    * Verifica se o assignee é membro (ou owner) do board.
    * Lança ForbiddenException caso contrário.
    */
-  private async assertAssigneeIsMember(assigneeId: string, boardId: string): Promise<void> {
+  private async assertAssigneeIsMember(
+    assigneeId: string,
+    boardId: string,
+  ): Promise<void> {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId },
-      include: { members: { where: { userId: assigneeId } } },
+      include: {
+        ...this.prismaQueries.boardInclude,
+        members: true,
+      },
     });
     if (!board) throw new NotFoundException('Board não encontrado');
 
@@ -129,7 +149,8 @@ export class TaskService {
       }
     }
 
-    const hasStatusChange = dto.status !== undefined && dto.status !== task.status;
+    const hasStatusChange =
+      dto.status !== undefined && dto.status !== task.status;
 
     const updatedTask = await this.prisma.task.update({
       where: { id },
@@ -280,7 +301,8 @@ export class TaskService {
       where: { id: newListId },
     });
 
-    if (!targetList) throw new NotFoundException('Lista de destino não encontrada');
+    if (!targetList)
+      throw new NotFoundException('Lista de destino não encontrada');
 
     const boardId = await this.getBoardIdFromList(task.listId);
 

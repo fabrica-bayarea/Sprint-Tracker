@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   ForbiddenException,
   Injectable,
@@ -6,10 +8,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import { PrismaQueries } from 'src/prisma/queries';
 
 @Injectable()
 export class ListService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly prismaQueries: PrismaQueries,
+  ) {}
 
   async create(ownerId: string, dto: CreateListDto) {
     const board = await this.prisma.board.findFirst({
@@ -38,7 +44,8 @@ export class ListService {
     const board = await this.prisma.board.findFirst({
       where: { id: boardId },
       include: {
-        members: { where: { userId } },
+        ...this.prismaQueries.boardInclude,
+        members: true,
       },
     });
 
@@ -56,9 +63,7 @@ export class ListService {
     return this.prisma.list.findMany({
       where: { boardId, isArchived: false },
       orderBy: { position: 'asc' },
-      include: {
-        tasks: true,
-      },
+      include: this.prismaQueries.listInclude,
     });
   }
 
@@ -117,8 +122,12 @@ export class ListService {
     const taskIds = tasks.map((t) => t.id);
 
     if (taskIds.length > 0) {
-      await this.prisma.taskLabel.deleteMany({ where: { taskId: { in: taskIds } } });
-      await this.prisma.taskLog.deleteMany({ where: { taskId: { in: taskIds } } });
+      await this.prisma.taskLabel.deleteMany({
+        where: { taskId: { in: taskIds } },
+      });
+      await this.prisma.taskLog.deleteMany({
+        where: { taskId: { in: taskIds } },
+      });
       await this.prisma.task.deleteMany({ where: { listId: id } });
     }
 

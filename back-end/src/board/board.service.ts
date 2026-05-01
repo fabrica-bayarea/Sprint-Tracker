@@ -3,10 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Role } from '@prisma/client';
+import { PrismaQueries } from 'src/prisma/queries';
 
 @Injectable()
 export class BoardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly prismaQueries: PrismaQueries,
+  ) {}
 
   create(ownerId: string, dto: CreateBoardDto) {
     return this.prisma.board.create({
@@ -20,32 +24,23 @@ export class BoardService {
   findAll(ownerId: string) {
     return this.prisma.board.findMany({
       where: { ownerId, isArchived: false },
-      include: {
-        lists: {
-          include: {
-            tasks: true,
-          },
-        },
-      },
+      include: this.prismaQueries.boardInclude,
     });
   }
 
   async findOne(id: string) {
     const board = await this.prisma.board.findUnique({
       where: { id },
-      include: {
-        members: { select: { userId: true, role: true } },
-        lists: {
-          orderBy: { position: 'asc' },
-          include: { tasks: { where: { deletedAt: null }, orderBy: { position: 'asc' } } },
-        },
-      },
+      include: this.prismaQueries.boardInclude,
     });
     if (!board) throw new NotFoundException('Board not found');
     return board;
   }
 
-  async getUserRole(boardId: string, userId: string): Promise<Role | 'OWNER' | null> {
+  async getUserRole(
+    boardId: string,
+    userId: string,
+  ): Promise<Role | 'OWNER' | null> {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId },
       include: { members: { where: { userId } } },
@@ -84,14 +79,19 @@ export class BoardService {
       const taskIds = tasks.map((t) => t.id);
 
       if (taskIds.length > 0) {
-        await this.prisma.taskLabel.deleteMany({ where: { taskId: { in: taskIds } } });
-        await this.prisma.task.deleteMany({ where: { listId: { in: listIds } } });
+        await this.prisma.taskLabel.deleteMany({
+          where: { taskId: { in: taskIds } },
+        });
+        await this.prisma.task.deleteMany({
+          where: { listId: { in: listIds } },
+        });
       }
 
       await this.prisma.list.deleteMany({ where: { boardId: id } });
     }
 
     // 2. Delete TaskLogs referencing this board (created/moved logs)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await this.prisma.taskLog.deleteMany({ where: { boardId: id } });
 
     // 3. Delete Sprint-related records
@@ -101,7 +101,9 @@ export class BoardService {
     });
     const sprintIds = sprints.map((s) => s.id);
     if (sprintIds.length > 0) {
-      await this.prisma.sprintBacklogItem.deleteMany({ where: { sprintId: { in: sprintIds } } });
+      await this.prisma.sprintBacklogItem.deleteMany({
+        where: { sprintId: { in: sprintIds } },
+      });
     }
     await this.prisma.sprint.deleteMany({ where: { boardId: id } });
 
