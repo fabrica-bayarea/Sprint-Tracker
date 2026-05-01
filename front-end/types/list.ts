@@ -1,13 +1,4 @@
-import { Status } from "./board";
-
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  position: number;
-  status: Status;
-  dueDate?: string;
-}
+import { Task } from "./task";
 
 export interface List {
   id: string;

@@ -10,17 +10,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTable } from "./data-table";
+import { useTaskStore } from "@/stores/use-task-store";
 import { useSprintCard } from "@/hooks/sprints/use-sprint-card";
-import { SprintCardProps } from "@/types/sprint";
 
-export function SprintCard({
-  sprint,
-  allSprints,
-  onRename,
-  onDelete,
-  onMove,
-  onAddTask,
-}: SprintCardProps) {
+interface SprintCardProps {
+  sprint: any;
+}
+
+export function SprintCard({ sprint }: SprintCardProps) {
+  const sprints = useTaskStore((state) => state.sprints);
+  const onAddTask = useTaskStore((state) => state.onAddTask);
+
   const {
     rowSelection,
     setRowSelection,
@@ -30,7 +30,7 @@ export function SprintCard({
     someSelected,
     handleSelectAll,
     handleBulkMove,
-  } = useSprintCard(sprint, allSprints, onRename, onDelete, onMove);
+  } = useSprintCard(sprint);
 
   return (
     <div className="rounded-lg border bg-card">
@@ -52,7 +52,7 @@ export function SprintCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {allSprints
+                {sprints
                   .filter((s) => s.id !== sprint.id)
                   .map((targetSprint) => (
                     <DropdownMenuItem

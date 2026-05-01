@@ -3,8 +3,8 @@ import React from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 
-import SortableItem, { useDragListeners } from '@/components/features/dashboard/selectedDashboard/sortableItem';
-import TaskCard from '@/components/features/dashboard/selectedDashboard/taskCard';
+import SortableItem, { useDragListeners } from '@/features/dashboard/selectedDashboard/sortableItem';
+import TaskCard from '@/features/dashboard/selectedDashboard/taskCard';
 
 import { Trash2, Pencil, Grip } from 'lucide-react';
 

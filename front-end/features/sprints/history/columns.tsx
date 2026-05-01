@@ -5,13 +5,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical } from "lucide-react";
 import { TaskActions } from "./task-actions";
+import { priorityConfig } from "@/shared/priority-config";
 
-export const getColumns = (
-  sprints: any[],
-  onRename: (id: string, title: string) => void,
-  onDelete: (id: string) => void,
-  onMove: (taskIds: string[], sprintId: string) => void
-): ColumnDef<any>[] => [
+const getStatusConfig = (status: string) => {
+  const s = status?.toUpperCase() || "";
+  if (s === "IN_PROGRESS" || s === "IN PROGRESS") return { color: "bg-blue-500", text: "Em Andamento" };
+  if (s === "REVIEW") return { color: "bg-orange-500", text: "Em Revisão" };
+  if (s === "CRITICAL") return { color: "bg-red-500", text: "Crítico" };
+  if (s === "DONE") return { color: "bg-green-500", text: "Concluído" };
+  return { color: "bg-gray-300", text: status };
+};
+
+export const getColumns = (): ColumnDef<any>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -21,7 +26,7 @@ export const getColumns = (
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
+        aria-label="Selecionar tudo"
       />
     ),
     cell: ({ row }) => (
@@ -29,7 +34,7 @@ export const getColumns = (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label="Selecionar linha"
         />
         <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab" />
       </div>
@@ -41,19 +46,12 @@ export const getColumns = (
     accessorKey: "priority",
     header: "Prioridade",
     cell: ({ row }) => {
-      const priority = row.getValue("priority") as string;
+      const priorityKey = (row.getValue("priority") as string) || "LOW";
+      const priority = priorityConfig[priorityKey] || priorityConfig.LOW;
+
       return (
-        <Badge
-          variant={
-            priority === "HIGH"
-              ? "destructive"
-              : priority === "MEDIUM"
-              ? "default"
-              : "secondary"
-          }
-          className="text-[10px]"
-        >
-          {priority}
+        <Badge className={`uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-sm ${priority.badgeClass}`}>
+          {priority.label}
         </Badge>
       );
     },
@@ -74,21 +72,11 @@ export const getColumns = (
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("status") as string;
+      const { color, text } = getStatusConfig(row.getValue("status") as string);
       return (
         <div className="flex items-center gap-2 text-sm">
-          <div
-            className={`h-2 w-2 rounded-full ${
-              status === "In Progress"
-                ? "bg-blue-500"
-                : status === "Review"
-                ? "bg-orange-500"
-                : status === "Critical"
-                ? "bg-red-500"
-                : "bg-gray-300"
-            }`}
-          />
-          {status}
+          <div className={`h-2 w-2 rounded-full ${color}`} />
+          {text}
         </div>
       );
     },
@@ -97,13 +85,7 @@ export const getColumns = (
     id: "actions",
     cell: ({ row }) => (
       <div className="text-right">
-        <TaskActions
-          task={row.original}
-          sprints={sprints}
-          onRename={onRename}
-          onDelete={onDelete}
-          onMove={onMove}
-        />
+        <TaskActions task={row.original} />
       </div>
     ),
   },

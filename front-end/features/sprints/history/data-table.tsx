@@ -50,7 +50,6 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: setRowSelection,
-    // ADICIONADO: Força a tabela a usar o ID real da tarefa em vez do índice
     getRowId: (row: any) => row.id, 
     state: {
       rowSelection,
@@ -104,7 +103,7 @@ export function DataTable<TData, TValue>({
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Press enter to add a new task..."
+                placeholder="Pressione enter para adicionar uma nova tarefa..."
                 className="border-dashed bg-transparent border-muted-foreground/30 focus-visible:ring-0 focus-visible:border-primary"
               />
             </TableCell>

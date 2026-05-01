@@ -2,15 +2,11 @@
 
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -23,33 +19,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useState } from "react";
+import { TaskEditData, TaskEditSheet } from "../../sprints/task-edit-sheet";
+import { useTaskStore } from "@/stores/use-task-store";
 
-interface TaskActionsProps {
+interface BacklogItemActionsProps {
   task: any;
-  sprints: any[];
-  onRename: (taskId: string, newTitle: string) => void;
-  onDelete: (taskId: string) => void;
-  onMove: (taskIds: string[], targetSprintId: string) => void;
 }
 
-export function TaskActions({ task, sprints, onRename, onDelete, onMove }: TaskActionsProps) {
+export function BacklogItemActions({ task }: BacklogItemActionsProps) {
+  const { sprints, onEdit, onDelete } = useTaskStore();
   const [showDelete, setShowDelete] = useState(false);
-  const [showRename, setShowRename] = useState(false);
-  const [newTitle, setNewTitle] = useState(task.title);
+  const [showEditSheet, setShowEditSheet] = useState(false);
 
-    const handleRename = () => {
-    if (newTitle.trim() && newTitle !== task.title) {
-      onRename(task.id, newTitle);
-    }
-    setShowRename(false);
+  const handleSubmitSheet = (updatedData: TaskEditData) => {
+    onEdit(task.id, updatedData);
   };
 
   return (
@@ -61,8 +45,8 @@ export function TaskActions({ task, sprints, onRename, onDelete, onMove }: TaskA
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setShowRename(true)}>
-            Renomear
+          <DropdownMenuItem onClick={() => setShowEditSheet(true)}>
+            Editar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -74,34 +58,20 @@ export function TaskActions({ task, sprints, onRename, onDelete, onMove }: TaskA
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showRename} onOpenChange={setShowRename}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Renomear Tarefa</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleRename()}
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRename(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleRename}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TaskEditSheet
+        open={showEditSheet}
+        onOpenChange={setShowEditSheet}
+        task={{ ...task, sprintId: task.sprintId ?? task.listId }}
+        sprintOptions={sprints.map((sprint) => ({ id: sprint.id, name: sprint.name }))}
+        onSubmit={handleSubmitSheet}
+      />
 
       <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A tarefa será permanentemente removida da sprint.
+              Esta ação não pode ser desfeita. A tarefa será permanentemente removida do backlog.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

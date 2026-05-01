@@ -2,9 +2,9 @@
 
 import { Check, Trash2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Section from '@/components/features/dashboard/selectedDashboard/section';
+import Section from '@/features/dashboard/selectedDashboard/section';
 import styles from './style.module.css';
-import { useDashboard } from "@/components/features/dashboard/hooks/use-dashboard";
+import { useDashboard } from "@/features/dashboard/hooks/use-dashboard";
 import { Loader } from "@/components/ui/loader";
 
 export default function Dashboard() {

@@ -17,7 +17,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col gap-8 min-w-64 h-auto bg-[#F8FAFC] border-r-[#E2E8F0] border px-4 py-6">
+    <aside className="hidden md:flex flex-col gap-8 min-w-64 h-auto bg-[#F8FAFC] border-r-[#E2E8F0] border px-4 py-6">
       <div className="flex gap-2">
         <Link href={"/dashboard"}>
           <Image

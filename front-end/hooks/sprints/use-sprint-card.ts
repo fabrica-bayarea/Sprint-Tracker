@@ -1,20 +1,16 @@
-import { getColumns } from "@/components/features/sprints/history/columns";
+import { getColumns } from "@/features/sprints/history/columns";
+import { useTaskStore } from "@/stores/use-task-store";
 import { useState, useEffect } from "react";
 
-export function useSprintCard(
-  sprint: any,
-  allSprints: any[],
-  onRename: (taskId: string, newTitle: string) => void,
-  onDelete: (taskId: string) => void,
-  onMove: (taskIds: string[], targetSprintId: string) => void
-) {
+export function useSprintCard(sprint: any) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const onMove = useTaskStore((state) => state.onMove);
 
   useEffect(() => {
     setRowSelection({});
   }, [sprint.items]);
 
-  const columns = getColumns(allSprints, onRename, onDelete, onMove);
+  const columns = getColumns();
 
   const taskCount = sprint.items.length;
   const selectedCount = Object.keys(rowSelection).length;

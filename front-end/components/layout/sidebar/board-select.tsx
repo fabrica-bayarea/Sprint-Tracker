@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getBoards } from "@/lib/actions/board";
-import { CreateBoardDialog } from "../../features/board/create-board-dialog";
+import { CreateBoardDialog } from "../../../features/board/create-board-dialog";
 import { useBoardStore } from "@/stores/use-board-store";
 
 export const BoardSelect = () => {

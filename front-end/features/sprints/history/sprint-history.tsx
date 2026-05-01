@@ -5,94 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Search, History, FolderOpen } from "lucide-react";
 import { SprintCard } from "./sprint-card";
 import { mockSprints as initialMockSprints } from "@/lib/mocks/tasks";
+import { useTaskStore } from "@/stores/use-task-store";
+import { Task } from "@/types/task";
 
 export function SprintHistory() {
   const [search, setSearch] = useState("");
-  const [sprints, setSprints] = useState(() => 
-    initialMockSprints.map(s => ({
-      ...s,
-      items: s.items.map(t => ({ ...t, id: `${s.id}-${t.id}`, sprintId: s.id }))
-    }))
-  );
-
-  const handleRename = (taskId: string, newTitle: string) => {
-    setSprints((prev) =>
-      prev.map((sprint) => ({
-        ...sprint,
-        items: sprint.items.map((task) =>
-          task.id === taskId ? { ...task, title: newTitle } : task
-        ),
-      }))
-    );
-  };
-
-  const handleDelete = (taskId: string) => {
-    setSprints((prev) =>
-      prev.map((sprint) => ({
-        ...sprint,
-        items: sprint.items.filter((task) => task.id !== taskId),
-      }))
-    );
-  };
-
-  const handleMove = (taskIds: string[], targetSprintId: string) => {
-    setSprints((prev) => {
-      const tasksToMove: any[] = [];
-      
-      const withoutTasks = prev.map((sprint) => {
-        const matchingTasks = sprint.items.filter((t) => taskIds.includes(t.id));
-        if (matchingTasks.length > 0) {
-          tasksToMove.push(...matchingTasks.map(t => ({ ...t, sprintId: targetSprintId })));
-        }
-        return {
-          ...sprint,
-          items: sprint.items.filter((t) => !taskIds.includes(t.id)),
-        };
-      });
-
-      if (tasksToMove.length === 0) return prev;
-
-      return withoutTasks.map((sprint) =>
-        sprint.id === targetSprintId
-          ? { ...sprint, items: [...sprint.items, ...tasksToMove] }
-          : sprint
-      );
-    });
-  };
-
-  const handleAddTask = (sprintId: string, title: string) => {
-    const newTask = {
-      id: `NEW-${Math.floor(Math.random() * 10000)}`,
-      listId: "list-1",
-      sprintId: sprintId,
-      title: title,
-      position: 999,
-      status: "Backlog",
-      priority: "LOW" as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setSprints((prev) =>
-      prev.map((sprint) =>
-        sprint.id === sprintId
-          ? { ...sprint, items: [...sprint.items, newTask] }
-          : sprint
-      )
-    );
-  };
+  const sprints = useTaskStore((state) => state.sprints);
 
   const filteredSprints = sprints
     .map((sprint) => ({
       ...sprint,
-      items: sprint.items.filter((task) =>
+      items: sprint.items.filter((task: Task) =>
         task.title.toLowerCase().includes(search.toLowerCase())
       ),
     }))
     .filter((sprint) => sprint.items.length > 0);
 
   return (
-    <div className="w-full space-y-8 px-10 py-4">
+    <div className="w-full space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Histórico de Sprints
@@ -104,7 +34,7 @@ export function SprintHistory() {
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Procurar tarefa..."
-          className="border-0 px-10 py-3 bg-transparent"
+          className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -135,11 +65,6 @@ export function SprintHistory() {
           <SprintCard
             key={sprint.id}
             sprint={sprint}
-            allSprints={sprints}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onMove={handleMove}
-            onAddTask={handleAddTask}
           />
         ))}
       </div>

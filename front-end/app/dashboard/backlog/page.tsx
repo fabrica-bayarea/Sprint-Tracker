@@ -1,161 +1,148 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { BacklogItem } from "@/components/backlog/backlog-item";
-import { TaskModal } from "@/components/backlog/task-modal";
-import { backlogActions } from "@/lib/actions/backlog";
-import { Search, LayoutGrid, List, Plus, ArchiveX, Filter, Loader2 } from "lucide-react"; 
-import { mockTasks } from "@/lib/mocks/tasks";
+import { useState, useEffect } from "react";
+import { RowSelectionState } from "@tanstack/react-table";
+import { Input } from "@/components/ui/input";
+import { Search, FolderOpen, ArchiveX, Plus, Loader2, LayoutGrid, List } from "lucide-react";
+import { DataTable } from "@/features/backlog/components/data-table";
+import { getBacklogColumns } from "@/features/backlog/components/columns";
+import { KanbanCard } from "@/features/sprints/current/kanban-card";
+import { DragDropContext, Droppable } from "@hello-pangea/dnd";
+import { useTaskStore } from "@/stores/use-task-store";
+import { CreateTaskDialog } from "@/features/backlog/components/create-task-dialog";
 
 export default function BacklogPage() {
-  const router = useRouter();
-  
-  const [tasks, setTasks] = useState<any[]>([]); 
-  const [isLoading, setIsLoading] = useState(true); 
-  
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<any>(null);
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [priorityFilter, setPriorityFilter] = useState("ALL");
-  const [sortByPriority, setSortByPriority] = useState(false);
+  const { sprints } = useTaskStore();
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const columns = getBacklogColumns();
 
   useEffect(() => {
-    const selectedBoardId = localStorage.getItem("selectedBoardId");
-    if (!selectedBoardId) {
-      console.warn("Nenhum board selecionado!");
-    }
-  }, [router]);
+    const allTasks = sprints.flatMap((sprint) => sprint.items);
+    setTasks(allTasks);
+    setIsLoading(false);
+  }, [sprints]);
 
-  const fetchTasks = useCallback(async () => {
-    try {
-      setIsLoading(true); 
-      const boardId = localStorage.getItem("selectedBoardId") || "123";
-      
-      // Chamada usando a Action limpa (Axios)
-      const data = await backlogActions.getTasks(boardId);
-      setTasks(data); 
-    } catch (error) {
-      console.warn("⚠️ API indisponível. Ativando mockTasks.");
-      setTasks(mockTasks); 
-    } finally {
-      setIsLoading(false); 
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
-  
-  let processedTasks = tasks.filter((task: any) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "ALL" || task.status === statusFilter;
-    const matchesPriority = priorityFilter === "ALL" || task.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
-  if (sortByPriority) {
-    const priorityWeight: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-    processedTasks.sort((a: any, b: any) => priorityWeight[b.priority] - priorityWeight[a.priority]);
-  }
-
-  const isEmpty = tasks.length === 0 && !isLoading;
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="flex flex-col w-full h-full p-8 bg-gray-50/50 min-h-screen">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Backlog do Produto</h1>
-          <p className="text-gray-500">Gerencie as tarefas do backlog</p>
+    <div className="w-full space-y-8 p-10">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Backlog do Produto</h1>
+        <p className="text-[#5C403C] mt-1 text-sm">Gerencie suas tarefas de backlog</p>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="relative flex items-center w-80 bg-[#dfdfdf] rounded-lg">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-1 bg-white border border-gray-200 p-1 rounded-md">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-gray-100" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-1.5 rounded transition-colors ${viewMode === "table" ? "bg-gray-100" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              <List size={16} />
+            </button>
+          </div>
         </div>
-        <button 
-          onClick={() => {
-            setTaskToEdit(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors shadow-sm"
+
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors shadow-sm text-sm hover:cursor-pointer"
         >
-          <Plus size={20} />
-          Criar Tarefa
+          <Plus size={16} />
+          Nova Tarefa
         </button>
       </div>
 
-      {isLoading ? (
-         <div className="flex flex-col items-center justify-center mt-20 p-12">
-            <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
-            <p className="text-gray-500 font-medium text-lg">Buscando tarefas...</p>
-         </div>
-      ) : isEmpty ? (
-        <div className="flex flex-col items-center justify-center mt-12 p-12 bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-          <div className="w-full h-2 bg-red-600 absolute top-0 left-0" />
-          <div className="relative mb-6 mt-4">
-            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
-              <ArchiveX size={32} />
-            </div>
+      <div className="space-y-6">
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-red-600 animate-spin mb-4" />
+            <p className="text-muted-foreground text-sm">Loading tasks...</p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Seu Backlog está vazio</h2>
-          <button 
-            onClick={() => {
-              setTaskToEdit(null);
-              setIsModalOpen(true);
-            }}
-            className="mt-6 flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
-          >
-            <Plus size={20} />
-            Criar Tarefa
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col w-full">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="flex flex-1 items-center gap-3 w-full">
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input 
-                  type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}   
-                  placeholder="Pesquisar tarefas..." 
-                  className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
-                />
-              </div>
+        )}
 
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md">
-                <option value="ALL">Todos os Status</option>
-                <option value="TODO">To Do</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="DONE">Done</option>
-              </select>
-
-              <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md">
-                <option value="ALL">Todas Prioridades</option>
-                <option value="HIGH">Alta</option>
-                <option value="MEDIUM">Média</option>
-                <option value="LOW">Baixa</option>
-              </select>
-            </div>
-            
-            <div className="flex gap-2 bg-white border border-gray-200 p-1 rounded-md shrink-0">
-              <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-gray-100' : 'text-gray-500'}`}><LayoutGrid size={18} /></button>
-              <button onClick={() => setViewMode('table')} className={`p-1.5 rounded transition-colors ${viewMode === 'table' ? 'bg-gray-100' : 'text-gray-500'}`}><List size={18} /></button>
-            </div>
+        {!isLoading && tasks.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/20 border border-dashed rounded-lg">
+            <ArchiveX className="h-10 w-10 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium">Backlog is empty</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">
+              Create your first task to start planning your work.
+            </p>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="mt-6 flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm hover:cursor-pointer"
+            >
+              <Plus size={16} />
+              Nova Tarefa
+            </button>
           </div>
-          
-          {viewMode === 'grid' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {processedTasks.map((task: any) => (          
-                <BacklogItem 
-                  key={task.id} task={task} onRefresh={fetchTasks}
-                  onEdit={(taskData) => { setTaskToEdit(taskData); setIsModalOpen(true); }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      <TaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onTaskSaved={fetchTasks} taskToEdit={taskToEdit} />
+        {!isLoading && tasks.length > 0 && filteredTasks.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/20 border border-dashed rounded-lg">
+            <FolderOpen className="h-10 w-10 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium">No results</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">
+              No tasks found matching &quot;{search}&quot;. Try a different search term.
+            </p>
+          </div>
+        )}
+
+        {!isLoading && filteredTasks.length > 0 && viewMode === "table" && (
+          <div className="rounded-lg border bg-card">
+            <DataTable
+              columns={columns}
+              data={filteredTasks}
+              rowSelection={rowSelection}
+              setRowSelection={setRowSelection}
+            />
+          </div>
+        )}
+
+        {!isLoading && filteredTasks.length > 0 && viewMode === "grid" && (
+          <DragDropContext onDragEnd={() => {}}>
+            <Droppable droppableId="backlog-grid">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                >
+                  {filteredTasks.map((task, index) => (
+                    <KanbanCard key={task.id} task={task} index={index} isDraggable={false} />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        )}
+      </div>
+
+      <CreateTaskDialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useDragListeners } from '@/components/features/dashboard/selectedDashboard/sortableItem';
+import { useDragListeners } from '@/features/dashboard/selectedDashboard/sortableItem';
 
 import { Trash2, Pencil, Grip } from 'lucide-react';
 

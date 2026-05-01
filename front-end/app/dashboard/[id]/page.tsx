@@ -2,13 +2,13 @@
 
 import React, { use } from 'react';
 
-import BoardLists from '@/components/features/dashboard/selectedDashboard/boardLists';
-import Section from '@/components/features/dashboard/selectedDashboard/section';
-import CreateListModal from '@/components/features/dashboard/selectedDashboard/CreateList';
-import CreateTaskModal from '@/components/features/dashboard/selectedDashboard/CreateTask';
-import TaskDetailsModal from '@/components/features/dashboard/selectedDashboard/taskDetailsModal';
-import RenameListModal from '@/components/features/dashboard/selectedDashboard/RenameList';
-import EditTaskModal from '@/components/features/dashboard/selectedDashboard/EditTask';
+import BoardLists from '@/features/dashboard/selectedDashboard/boardLists';
+import Section from '@/features/dashboard/selectedDashboard/section';
+import CreateListModal from '@/features/dashboard/selectedDashboard/CreateList';
+import CreateTaskModal from '@/features/dashboard/selectedDashboard/CreateTask';
+import TaskDetailsModal from '@/features/dashboard/selectedDashboard/taskDetailsModal';
+import RenameListModal from '@/features/dashboard/selectedDashboard/RenameList';
+import EditTaskModal from '@/features/dashboard/selectedDashboard/EditTask';
 
 import { useModalStore } from '@/stores/modal';;
 

@@ -1,4 +1,4 @@
-import { Task } from "./list";
+import { Task } from "./task";
 
 export enum Status {
   TODO = 'TODO',

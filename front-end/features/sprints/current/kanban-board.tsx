@@ -2,7 +2,7 @@
 
 import { useState, KeyboardEvent } from "react";
 import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
-import { TaskResponse, ColumnType } from "@/types/task";
+import { Task, ColumnType } from "@/types/task";
 import { KanbanCard } from "./kanban-card";
 import { Trash2, Edit2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,30 +18,33 @@ import {
 } from "@/components/ui/dialog";
 
 interface KanbanBoardProps {
-  tasks: TaskResponse[];
-  setTasks: React.Dispatch<React.SetStateAction<TaskResponse[]>>;
+  tasks: Task[];
   columns: ColumnType[];
   onDeleteColumn: (id: string) => void;
   onRenameColumn: (id: string, newTitle: string) => void;
+  onEditTask: (taskId: string, updatedData: any) => void;
 }
 
-export function KanbanBoard({ tasks, setTasks, columns, onDeleteColumn, onRenameColumn }: KanbanBoardProps) {
+export function KanbanBoard({
+  tasks,
+  columns,
+  onDeleteColumn,
+  onRenameColumn,
+  onEditTask,
+}: KanbanBoardProps) {
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const { source, destination } = result;
+    const { source, destination, draggableId } = result;
 
     if (source.droppableId !== destination.droppableId) {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === result.draggableId
-            ? { ...task, listId: destination.droppableId, status: destination.droppableId }
-            : task
-        )
-      );
+      const task = tasks.find((t) => t.id === draggableId);
+      if (task) {
+        onEditTask(draggableId, { ...task, listId: destination.droppableId, status: destination.droppableId });
+      }
     }
   };
 
@@ -51,7 +54,7 @@ export function KanbanBoard({ tasks, setTasks, columns, onDeleteColumn, onRename
   };
 
   const handleRenameSubmit = (id: string) => {
-    if (editValue.trim() && editValue !== columns.find(c => c.id === id)?.title) {
+    if (editValue.trim() && editValue !== columns.find((c) => c.id === id)?.title) {
       onRenameColumn(id, editValue.trim());
     }
     setEditingColumn(null);
@@ -67,7 +70,7 @@ export function KanbanBoard({ tasks, setTasks, columns, onDeleteColumn, onRename
       <div className="w-full max-w-full pb-4 overflow-x-auto">
         <div className="flex flex-nowrap gap-6 items-start h-full w-max">
           {columns.map((col) => {
-            const columnTasks = tasks.filter((t) => t.listId === col.id);
+            const columnTasks = tasks.filter((t) => t.listId === col.id || t.status === col.id);
             return (
               <div key={col.id} className="shrink-0 w-[320px] bg-[#dfdfdf] rounded-lg p-4 min-h-37.5">
                 <div className="flex items-center justify-between mb-4 group h-8">
@@ -84,11 +87,8 @@ export function KanbanBoard({ tasks, setTasks, columns, onDeleteColumn, onRename
                     <h2 className="font-bold text-lg truncate pr-2">{col.title}</h2>
                   )}
 
-                  <div className={`flex items-center gap-2 ${editingColumn === col.id ? 'hidden' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                    <button
-                      onClick={() => startEditing(col.id, col.title)}
-                      className="text-muted-foreground hover:text-black"
-                    >
+                  <div className={`flex items-center gap-2 ${editingColumn === col.id ? "hidden" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
+                    <button onClick={() => startEditing(col.id, col.title)} className="text-muted-foreground hover:text-black">
                       <Edit2 className="h-4 w-4" />
                     </button>
 
@@ -102,7 +102,7 @@ export function KanbanBoard({ tasks, setTasks, columns, onDeleteColumn, onRename
                         <DialogHeader>
                           <DialogTitle>Excluir coluna</DialogTitle>
                           <DialogDescription>
-                            Tem certeza que deseja excluir a coluna "{col.title}"? Todas as tarefas contidas nela também poderão ser afetadas.
+                            Tem certeza que deseja excluir a coluna "{col.title}"?
                           </DialogDescription>
                         </DialogHeader>
                         <DialogFooter className="mt-4 gap-2">
@@ -125,11 +125,7 @@ export function KanbanBoard({ tasks, setTasks, columns, onDeleteColumn, onRename
 
                 <Droppable droppableId={col.id}>
                   {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="flex flex-col gap-4 min-h-37.5 h-full"
-                    >
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4 min-h-37.5 h-full">
                       {columnTasks.map((task, index) => (
                         <KanbanCard key={task.id} task={task} index={index} />
                       ))}

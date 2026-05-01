@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { initialTasks } from "@/lib/mocks/tasks";
-import { TaskResponse, ColumnType } from "@/types/task";
+import { ColumnType } from "@/types/task";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
 import { KanbanBoard } from "./kanban-board";
+import { useTaskStore } from "@/stores/use-task-store";
 
 export function CurrentSprint() {
-  const [tasks, setTasks] = useState<TaskResponse[]>(initialTasks);
+  const { sprints, onEdit, onDelete } = useTaskStore();
+  const [selectedSprintId, setSelectedSprintId] = useState(sprints[0]?.id || "");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("none");
   const [newColumnTitle, setNewColumnTitle] = useState("");
@@ -20,10 +21,14 @@ export function CurrentSprint() {
     { id: "done", title: "Feito" },
   ]);
 
+  const currentSprint = sprints.find((s) => s.id === selectedSprintId);
+  const tasks = currentSprint?.items || [];
+
   const filteredTasks = useMemo(() => {
-    let result = tasks.filter(t =>
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.description?.toLowerCase().includes(search.toLowerCase())
+    let result = [...tasks].filter(
+      (t) =>
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        t.description?.toLowerCase().includes(search.toLowerCase())
     );
 
     if (sort === "asc") result.sort((a, b) => a.title.localeCompare(b.title));
@@ -35,37 +40,36 @@ export function CurrentSprint() {
 
   const handleAddColumn = () => {
     if (!newColumnTitle.trim()) return;
-    const newColumn = {
-      id: crypto.randomUUID(),
-      title: newColumnTitle
-    };
+    const newColumn = { id: crypto.randomUUID(), title: newColumnTitle };
     setColumns([...columns, newColumn]);
     setNewColumnTitle("");
   };
 
   const handleDeleteColumn = (id: string) => {
-    setColumns(columns.filter(col => col.id !== id));
-    setTasks(tasks.filter(task => task.listId !== id));
+    setColumns(columns.filter((col) => col.id !== id));
   };
 
   const handleRenameColumn = (id: string, newTitle: string) => {
-    setColumns(columns.map(col => col.id === id ? { ...col, title: newTitle } : col));
+    setColumns(columns.map((col) => (col.id === id ? { ...col, title: newTitle } : col)));
   };
 
   return (
-    <div className="flex flex-col gap-6 px-10 py-4 w-full max-w-full min-w-0">
+    <div className="flex flex-col gap-6 w-full max-w-full min-w-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sprint Atual</h1>
-          <p className="text-[#5C403C] mt-1 text-sm">Tracking Sprint 24 — Q3 Release Cycle</p>
+          <p className="text-[#5C403C] mt-1 text-sm">{currentSprint?.name || "Nenhuma sprint"}</p>
         </div>
-        <Select defaultValue="sprint-24">
+        <Select value={selectedSprintId} onValueChange={setSelectedSprintId}>
           <SelectTrigger className="bg-[#C01010] text-white border-0 focus:ring-0 rounded-md font-medium px-8 py-6" chevronClassName="text-white">
-            <SelectValue placeholder="Select Sprint" />
+            <SelectValue placeholder="Selecione a Sprint" />
           </SelectTrigger>
           <SelectContent className="bg-[#C01010] text-white">
-            <SelectItem value="sprint-24" className="hover:bg-[#8d0b0b_!important] px-8 py-4">Sprint 24</SelectItem>
-            <SelectItem value="sprint-23" className="hover:bg-[#8d0b0b_!important] px-8 py-4">Sprint 23</SelectItem>
+            {sprints.map((sprint) => (
+              <SelectItem key={sprint.id} value={sprint.id} className="hover:bg-[#8d0b0b_!important] px-8 py-4">
+                {sprint.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -75,7 +79,7 @@ export function CurrentSprint() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Procurar backlog..."
-            className="border-0 px-10 py-3"
+            className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -100,7 +104,7 @@ export function CurrentSprint() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground">Agrupar por</span>
             <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-35 bg-[#DBDBDB] border-0">
+              <SelectTrigger className="w-35 bg-white border-gray-200">
                 <SelectValue placeholder="Nada" />
               </SelectTrigger>
               <SelectContent>
@@ -116,10 +120,10 @@ export function CurrentSprint() {
 
       <KanbanBoard
         tasks={filteredTasks}
-        setTasks={setTasks}
         columns={columns}
         onDeleteColumn={handleDeleteColumn}
         onRenameColumn={handleRenameColumn}
+        onEditTask={onEdit}
       />
     </div>
   );

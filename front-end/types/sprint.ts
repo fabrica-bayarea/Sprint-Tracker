@@ -1,4 +1,4 @@
-import { TaskResponse } from "./task";
+import { Task } from "./task";
 
 export interface Sprint {
   id: string;
@@ -6,13 +6,13 @@ export interface Sprint {
   startDate: string;
   endDate: string;
   status: string;
-  items: TaskResponse[];
+  items: Task[];
 }
 
 export interface SprintCardProps {
   sprint: any;
   allSprints: any[];
-  onRename: (taskId: string, newTitle: string) => void;
+  onEdit: (taskId: string, updatedData: any) => void;
   onDelete: (taskId: string) => void;
   onMove: (taskIds: string[], targetSprintId: string) => void;
   onAddTask: (sprintId: string, title: string) => void;

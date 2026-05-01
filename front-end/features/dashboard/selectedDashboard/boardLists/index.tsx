@@ -8,8 +8,8 @@ import { useBoardStore } from '@/stores/board';
 import { useDragAndDrop } from '@/hooks/use-drag-and-drop';
 import { useBoardData } from '@/hooks/use-board-data';
 
-import SortableItem from '@/components/features/dashboard/selectedDashboard/sortableItem';
-import ListCard from '@/components/features/dashboard/selectedDashboard/listCard';
+import SortableItem from '@/features/dashboard/selectedDashboard/sortableItem';
+import ListCard from '@/features/dashboard/selectedDashboard/listCard';
 
 import styles from './style.module.css';
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { headers } from 'next/headers';
 
-import Notification from "@/components/features/shared/notification";
+import Notification from "@/components/layout/notification";
 
 import "./globals.css";
 import Providers from "@/providers";
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default async function RootLayout(
   {  children }: Readonly<{ children: React.ReactNode; }>
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  
   const nonce = (await headers()).get('x-nonce')
   
   return (
