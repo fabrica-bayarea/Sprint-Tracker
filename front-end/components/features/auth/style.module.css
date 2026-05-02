@@ -1,0 +1,146 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.links a {
+  color: white;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.links a:hover {
+  background: #fff2;
+  color: #fff;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: white;
+}
+
+.checkbox Label {
+  color: white;
+  font-size: 14px;
+}
+
+.forgotPasswordLink, .createAccountLink {
+  color: #fff;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  transition: color 0.2s;
+}
+
+.forgotPasswordLink:hover, .createAccountLink:hover {
+  color: #ffe0e0;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 24px 0 10px 0;
+  color: white;
+  font-size: 15px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.divider span {
+  padding: 0 10px;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: #fff;
+  opacity: 0.7;
+  border-radius: 2px;
+}
+
+.oauthButtons {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+.oauthCircleButton {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  padding: 0;
+}
+
+.oauthCircleButton:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  transform: scale(1.10);
+}
+
+.oauthCircleButton img {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.methodToggleContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.methodToggleButton {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.methodToggleButtonActive {
+  background: white;
+  color: #091E42;
+}

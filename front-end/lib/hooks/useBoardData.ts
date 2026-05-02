@@ -1,17 +1,28 @@
 import { useEffect } from 'react';
 
-import { getAllList } from '@/lib/actions/list';
-import { getTasksByList } from '@/lib/actions/task';
-import { getUserBoardRole, getBoardById } from '@/lib/actions/board';
-import { getBoardMembers } from '@/lib/actions/boardMember';
+import { getAllList, getListById } from '@/lib/actions/list';
+import { getUserBoardRole, getBoardById, getBoardMembers } from '@/lib/actions/board';
 import { useBoardStore } from '@/lib/stores/board';
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
+import { useBoardWebSocket } from '@/lib/hooks/useBoardWebSocket';
 
-import { List, Status } from '@/lib/types/board'
+import { List, listResponseToList } from '@/lib/types/board';
 
+/**
+ * Hook para carregar e gerenciar os dados iniciais de um board
+ * Busca todas as listas e suas respectivas tarefas, papel do usuário, membros e configura WebSocket.
+ */
 export function useBoardData(boardId: string) {
-  const { setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle, setMembers } = useBoardStore();
-  const { showNotification } = useNotificationStore();
+  const {
+    setLists,
+    setLoading,
+    setIsCurrentUserAdmin,
+    setBoardTitle,
+    setMembers,
+  } = useBoardStore();
+  const { showWarning } = useWarningStore();
+
+  useBoardWebSocket(boardId);
 
   useEffect(() => {
     if (!boardId) return;
@@ -20,12 +31,13 @@ export function useBoardData(boardId: string) {
       setLoading(true);
 
       try {
-        const [listsResult, roleResult, boardResult, membersResult] = await Promise.all([
-          getAllList(boardId),
-          getUserBoardRole(boardId),
-          getBoardById(boardId),
-          getBoardMembers(boardId),
-        ]);
+        const [listsResult, roleResult, boardResult, membersResult] =
+          await Promise.all([
+            getAllList(boardId),
+            getUserBoardRole(boardId),
+            getBoardById(boardId),
+            getBoardMembers(boardId),
+          ]);
 
         if (roleResult.success && roleResult.data) {
           const role = roleResult.data;
@@ -43,24 +55,22 @@ export function useBoardData(boardId: string) {
         if (listsResult.success) {
           const listsWithTasks = await Promise.all(
             (listsResult.data || []).map(async (list: List) => {
-              const tasksResult = await getTasksByList(list.id);
+              const tasksResult = await getListById(list.id);
+              if (tasksResult.success && tasksResult.data) {
+                return listResponseToList(tasksResult.data);
+              }
               return {
                 ...list,
-                tasks: tasksResult.success && tasksResult.data ? tasksResult.data.map((taskResponse) => ({
-                  id: taskResponse.id,
-                  title: taskResponse.title,
-                  description: taskResponse.description,
-                  position: taskResponse.position,
-                  status: taskResponse.status as Status,
-                  dueDate: taskResponse.dueDate,
-                  assigneeId: taskResponse.assigneeId ?? null,
-                })) : []
+                tasks: [],
               };
-            })
+            }),
           );
           setLists(listsWithTasks);
         } else {
-          showNotification("Erro ao buscar dados do quadro: " + listsResult.error, "failed");
+          showWarning(
+            'Erro ao buscar dados do quadro: ' + listsResult.error,
+            'failed',
+          );
         }
       } finally {
         setLoading(false);
@@ -68,5 +78,13 @@ export function useBoardData(boardId: string) {
     };
 
     fetchBoardData();
-  }, [boardId, setLists, setLoading, setIsCurrentUserAdmin, setBoardTitle, setMembers, showNotification]);
+  }, [
+    boardId,
+    setLists,
+    setLoading,
+    setIsCurrentUserAdmin,
+    setBoardTitle,
+    setMembers,
+    showWarning,
+  ]);
 }

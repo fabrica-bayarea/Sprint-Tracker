@@ -1,253 +1,90 @@
 'use server';
 
-import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { getCookie } from "../utils/sessionCookie";
+import { apiClient } from "@/lib/utils/apiClient";
+import { getCookie } from "@/lib/utils/sessionCookie";
+import { env } from "@/lib/config/env";
+import type { CreateTaskData, EditTaskData, Task } from '@/lib/types/board';
 
-const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
-
-interface TaskData {
-  listId: string;
-  title: string;
-  description?: string;
-  position: number;
-  status: string;
-  dueDate?: string;
-  assigneeId?: string | null;
-}
-
-interface UpdateTaskData {
-  listId?: string;
-  title?: string;
-  description?: string;
-  position?: number;
-  status?: string;
-  dueDate?: string;
-  assigneeId?: string | null;
-}
-
-interface TaskResponse {
-  id: string;
-  listId: string;
-  title: string;
-  description?: string;
-  position: number;
-  status: string;
-  dueDate?: string;
-  assigneeId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export async function createTask(taskData: TaskData) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks`, {
+export async function createTask(taskData: CreateTaskData) {
+  return apiClient<Task>('/v1/tasks', {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
     body: JSON.stringify(taskData),
+    errorMessage: "Falha ao criar a tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao criar a tarefa"),
-    };
-  }
-
-  const data: TaskResponse = await response.json();
-  return { success: true, data };
-}
-
-export async function getTasksByList(listId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/list/${listId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar as tarefas da lista"),
-    };
-  }
-
-  const data: TaskResponse[] = await response.json();
-  return { success: true, data };
 }
 
 export async function getTaskById(taskId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/${taskId}`, {
+  return apiClient<Task>(`/v1/tasks/${taskId}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
+    errorMessage: "Falha ao buscar a tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar a tarefa"),
-    };
-  }
-
-  const data: TaskResponse = await response.json();
-  return { success: true, data };
 }
 
-export async function updateTask(taskId: string, updateData: UpdateTaskData) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/${taskId}`, {
+export async function updateTask(taskId: string, updateData: EditTaskData) {
+  return apiClient<Task>(`/v1/tasks/${taskId}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
     body: JSON.stringify(updateData),
+    errorMessage: "Falha ao atualizar a tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao atualizar a tarefa"),
-    };
-  }
-
-  const data: TaskResponse = await response.json();
-  return { success: true, data };
 }
 
 export async function deleteTask(taskId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/${taskId}`, {
+  return apiClient(`/v1/tasks/${taskId}`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
-    },
+    errorMessage: "Falha ao deletar a tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao deletar a tarefa"),
-    };
-  }
-
-  return { success: true, data: { message: 'Tarefa deletada com sucesso' } };
 }
 
 export async function moveTask(taskId: string, newPosition: number) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/${taskId}/position`, {
+  return apiClient<Task>(`/v1/tasks/${taskId}/position`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
-    },
     body: JSON.stringify({ newPosition }),
+    errorMessage: "Falha ao mover a tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao mover a tarefa"),
-    };
-  }
-  
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return { success: true, data: await response.json() };
-  } else {
-    return { success: true, data: null };
-  }
 }
 
 export async function moveTaskOtherList(taskId: string, newPosition: number, newListId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/${taskId}/move`, {
+  return apiClient<Task>(`/v1/tasks/${taskId}/move`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
-    },
     body: JSON.stringify({ newListId, newPosition }),
+    errorMessage: "Falha ao mover a tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao mover a tarefa"),
-    };
-  }
-  
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return { success: true, data: await response.json() };
-  } else {
-    return { success: true, data: null };
-  }
 }
 
 export async function getTaskLogs(taskId: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/task-logs/${taskId}`, {
+  return apiClient(`/v1/task-logs/${taskId}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
+    errorMessage: "Falha ao buscar logs da tarefa",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar logs da tarefa"),
-    };
-  }
-
-  return { success: true, data: await response.json() };
 }
 
-export async function exportTaskLogsCsv(taskId: string): Promise<{ success: boolean; csvUrl?: string; error?: string }> {
-  const response = await fetch(`${BASE_URL_API}/v1/task-logs/${taskId}/export/csv`, {
-    method: "GET",
-    headers: {
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
+export async function exportTaskLogsCsv(
+  taskId: string,
+): Promise<{ success: boolean; csvUrl?: string; error?: string }> {
+  try {
+    const cookie = await getCookie("sprinttacker-session");
+    const response = await fetch(
+      `${env.apiUrl}/v1/task-logs/${taskId}/export/csv`,
+      {
+        method: "GET",
+        headers: cookie ? { Cookie: cookie } : {},
+      },
+    );
 
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao exportar logs"),
-    };
+    if (!response.ok) {
+      return { success: false, error: "Falha ao exportar logs" };
+    }
+
+    const csvText = await response.text();
+    return { success: true, csvUrl: csvText };
+  } catch {
+    return { success: false, error: "Falha ao exportar logs" };
   }
-
-  const csvText = await response.text();
-  return { success: true, csvUrl: csvText };
 }
 
 export async function getExpiredTasks() {
-  const response = await fetch(`${BASE_URL_API}/v1/tasks/due/today`, {
+  return apiClient<Task[]>('/v1/tasks/due/today', {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session")
-    },
+    errorMessage: "Falha ao buscar tarefas expiradas",
   });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await handleFetchError(response, "Falha ao buscar tarefas expiradas"),
-    };
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    const data = await response.json();
-    return { success: true, data };
-  } else {
-    return { success: true, data: [] };
-  }
 }

@@ -5,7 +5,8 @@ import {
   IsStrongPassword,
   MinLength,
 } from 'class-validator';
-import { Match } from 'src/utils/match.decorator';
+
+import { Match } from '@/utils/match.decorator';
 
 export class ResetPasswordDto {
   @ApiProperty({ example: 'StrongP@ssword123' })
@@ -28,7 +29,7 @@ export class ResetPasswordDto {
     message: 'A confirmação da senha deve ter no mínimo 8 caracteres.',
   })
   @Match('newPassword', {
-    message: 'A confirmação da senha não corresponde à nova senha.',
+    message: 'As senhas não coincidem.',
   })
   confirmNewPassword!: string;
 }

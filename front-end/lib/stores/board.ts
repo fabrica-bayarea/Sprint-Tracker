@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import type { BoardMember, List, Task } from '@/lib/types/board';
+import type { BoardMemberView, List, Task } from '@/lib/types/board';
 
 interface BoardState {
   // Estado das listas
@@ -8,13 +8,13 @@ interface BoardState {
   isLoading: boolean;
   isCurrentUserAdmin: boolean;
   boardTitle: string;
-  members: BoardMember[];
+  members: BoardMemberView[];
 
   // Actions para listas
   setLists: (lists: List[]) => void;
   setIsCurrentUserAdmin: (isAdmin: boolean) => void;
   setBoardTitle: (title: string) => void;
-  setMembers: (members: BoardMember[]) => void;
+  setMembers: (members: BoardMemberView[]) => void;
   addList: (list: List) => void;
   renameList: (listId: string, title: string) => void;
   removeList: (listId: string) => void;

@@ -40,3 +40,29 @@
 .requirementNeutral {
   color: #e8e8e8;
 }
+
+.passwordWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 12px; 
+  top: 50%;
+  transform: translateY(-50%); 
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  z-index: 10;
+}
+
+.eyeButton:hover {
+  opacity: 0.7;
+}

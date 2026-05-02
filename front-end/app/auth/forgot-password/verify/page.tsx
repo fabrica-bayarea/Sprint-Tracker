@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { verifyCodeResetPassword, resetPassword } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 import AuthInput from "@/components/ui/authInput";
@@ -19,13 +19,13 @@ export default function VerifyCodeResetPassword() {
   const [confirmNewPassword, setconfirmNewPassword] = useState("")
   const [step, setStep] = useState<'verify' | 'reset'>('verify')
   const [isLoading, setIsLoading] = useState(false)
-  const { showNotification } = useNotificationStore()
+  const { showWarning } = useWarningStore()
 
   async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault()
     
     if (!code.trim()) {
-      showNotification("Por favor, insira o código de verificação", 'failed')
+      showWarning("Por favor, insira o código de verificação", 'failed')
       return
     }
 
@@ -36,9 +36,9 @@ export default function VerifyCodeResetPassword() {
 
       if (result.success) {
         setStep('reset')
-        showNotification("Código verificado com sucesso! Agora defina sua nova senha.", 'success')
+        showWarning("Código verificado com sucesso! Agora defina sua nova senha.", 'success')
       } else {
-        showNotification(result.error || "Código inválido", 'failed')
+        showWarning(result.error || "Código inválido", 'failed')
       }
     } finally {
       setIsLoading(false)
@@ -49,17 +49,17 @@ export default function VerifyCodeResetPassword() {
     e.preventDefault()
     
     if (!newPassword.trim()) {
-      showNotification("Por favor, insira a nova senha", 'failed')
+      showWarning("Por favor, insira a nova senha", 'failed')
       return
     }
 
     if (newPassword !== confirmNewPassword) {
-      showNotification("As senhas não coincidem", 'failed')
+      showWarning("As senhas não coincidem", 'failed')
       return
     }
 
     if (newPassword.length < 8) {
-      showNotification("A senha deve ter pelo menos 8 caracteres", 'failed')
+      showWarning("A senha deve ter pelo menos 8 caracteres", 'failed')
       return
     }
 
@@ -69,11 +69,11 @@ export default function VerifyCodeResetPassword() {
       const result = await resetPassword(newPassword, confirmNewPassword);
 
       if (result.success) {
-        showNotification("Senha redefinida com sucesso!", 'success')
+        showWarning("Senha redefinida com sucesso!", 'success')
         router.push("/auth/login");
         router.refresh();
       } else {
-        showNotification(result.error || "Erro ao redefinir senha", 'failed')
+        showWarning(result.error || "Erro ao redefinir senha", 'failed')
       }
     } finally {
       setIsLoading(false)

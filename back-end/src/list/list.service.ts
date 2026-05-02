@@ -1,65 +1,49 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { BoardGateway } from '@/events/board.gateway';
+import { PrismaService } from '@/prisma/prisma.service';
+
+import { PrismaQueries } from '@/prisma/queries';
+
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
-import { PrismaQueries } from 'src/prisma/queries';
 
 @Injectable()
 export class ListService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly prismaQueries: PrismaQueries,
+    private readonly boardGateway: BoardGateway,
   ) {}
 
-  async create(ownerId: string, dto: CreateListDto) {
-    const board = await this.prisma.board.findFirst({
-      where: {
-        id: dto.boardId,
-        ownerId,
-      },
-    });
-
-    if (!board) {
-      throw new ForbiddenException(
-        'Você não tem permissão para criar lista nesse board.',
-      );
-    }
-
-    return this.prisma.list.create({
+  /**
+   * Cria uma nova lista no quadro e emite evento de criação.
+   */
+  async create(dto: CreateListDto) {
+    const list = await this.prisma.list.create({
       data: {
         boardId: dto.boardId,
         title: dto.title,
         position: dto.position,
       },
     });
+
+    const payload = {
+      boardId: list.boardId,
+      action: 'created list',
+      at: new Date().toISOString(),
+    };
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
+
+    return list;
   }
 
-  async findAll(userId: string, boardId: string) {
-    const board = await this.prisma.board.findFirst({
-      where: { id: boardId },
-      include: {
-        ...this.prismaQueries.boardInclude,
-        members: true,
-      },
-    });
-
-    if (!board) {
-      throw new ForbiddenException('Você não tem acesso a este board.');
-    }
-
-    const isOwner = board.ownerId === userId;
-    const isMember = board.members.length > 0;
-
-    if (!isOwner && !isMember) {
-      throw new ForbiddenException('Você não tem acesso a este board.');
-    }
-
+  /**
+   * Lista todas as listas ativas de um quadro, ordenadas pela posição.
+   */
+  async findAll(boardId: string) {
     return this.prisma.list.findMany({
       where: { boardId, isArchived: false },
       orderBy: { position: 'asc' },
@@ -67,27 +51,56 @@ export class ListService {
     });
   }
 
-  async findOne(id: string) {
-    const list = await this.prisma.list.findUnique({ where: { id } });
-    if (!list) throw new NotFoundException('List not found');
+  /**
+   * Busca uma lista pelo ID ou lança erro se não for encontrada.
+   */
+  async findOne(listId: string) {
+    const list = await this.prisma.list.findUnique({
+      where: {
+        id: listId,
+      },
+      include: {
+        tasks: true,
+      },
+    });
+    if (!list) throw new NotFoundException('Lista não encontrada');
     return list;
   }
 
-  async update(id: string, dto: UpdateListDto) {
-    await this.findOne(id);
-    return this.prisma.list.update({
-      where: { id },
+  /**
+   * Atualiza os dados de uma lista e emite evento de atualização.
+   */
+  async update(listId: string, dto: UpdateListDto) {
+    const exists = await this.prisma.list.findUnique({ where: { id: listId } });
+    if (!exists) throw new NotFoundException('Lista não encontrada');
+
+    const updated = await this.prisma.list.update({
+      where: { id: listId },
       data: dto,
     });
+
+    const payload = {
+      boardId: updated.boardId,
+      action: 'updated list',
+      at: new Date().toISOString(),
+    };
+    this.boardGateway.emitModifiedInBoard(updated.boardId, payload);
+
+    return updated;
   }
 
-  async updatePosition(id: string, newPosition: number) {
-    const list = await this.findOne(id);
+  /**
+   * Atualiza a posição de uma lista e reordena as demais conforme necessário.
+   */
+  async updatePosition(listId: string, newPosition: number) {
+    const list = await this.prisma.list.findUnique({ where: { id: listId } });
+    if (!list) throw new NotFoundException('Lista não encontrada');
     const oldPosition = list.position;
 
     if (newPosition < oldPosition) {
       await this.prisma.list.updateMany({
         where: {
+          boardId: list.boardId,
           position: { gte: newPosition, lt: oldPosition },
         },
         data: {
@@ -97,6 +110,7 @@ export class ListService {
     } else if (newPosition > oldPosition) {
       await this.prisma.list.updateMany({
         where: {
+          boardId: list.boardId,
           position: { gt: oldPosition, lte: newPosition },
         },
         data: {
@@ -105,18 +119,32 @@ export class ListService {
       });
     }
 
-    await this.prisma.list.update({
-      where: { id },
+    const updatedList = await this.prisma.list.update({
+      where: { id: listId },
       data: { position: newPosition },
     });
+
+    const payload = {
+      boardId: list.boardId,
+      action: 'updated list position',
+      at: new Date().toISOString(),
+    };
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
+
+    return updatedList;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  /**
+   * Remove uma lista pelo ID. Cascade-deleta tarefas/labels/logs associados.
+   */
+  async remove(listId: string) {
+    const exists = await this.prisma.list.findUnique({
+      where: { id: listId },
+    });
+    if (!exists) throw new NotFoundException('Lista não encontrada');
 
-    // Cascade-delete child records manually (no onDelete: Cascade in schema)
     const tasks = await this.prisma.task.findMany({
-      where: { listId: id },
+      where: { listId },
       select: { id: true },
     });
     const taskIds = tasks.map((t) => t.id);
@@ -128,9 +156,18 @@ export class ListService {
       await this.prisma.taskLog.deleteMany({
         where: { taskId: { in: taskIds } },
       });
-      await this.prisma.task.deleteMany({ where: { listId: id } });
+      await this.prisma.task.deleteMany({ where: { listId } });
     }
 
-    return this.prisma.list.delete({ where: { id } });
+    const deleted = await this.prisma.list.delete({ where: { id: listId } });
+
+    const payload = {
+      boardId: deleted.boardId,
+      action: 'deleted list',
+      at: new Date().toISOString(),
+    };
+    this.boardGateway.emitModifiedInBoard(deleted.boardId, payload);
+
+    return deleted;
   }
 }

@@ -2,28 +2,48 @@ import { useCallback } from 'react';
 import { createTask, updateTask, deleteTask, moveTask, moveTaskOtherList } from '@/lib/actions/task';
 import { useBoardStore } from '@/lib/stores/board';
 import { useModalStore } from '@/lib/stores/modal';
-import { useNotificationStore } from '@/lib/stores/notification';
+import { useWarningStore } from '@/lib/stores/warning';
 import type { CreateTaskData, Status } from '@/lib/types/board';
 
+interface TaskData {
+  title: string;
+  description?: string;
+  position: number;
+  status: Status;
+  dueDate?: string;
+  assigneeId?: string | null;
+}
+
+/**
+ * Hook para gerenciar operações CRUD de tarefas
+ * Fornece funções para criar, editar, deletar e mover tarefas entre listas
+ * com validações e feedback visual ao usuário
+ */
 export function useTaskOperations() {
   const { addTask, editTask, removeTask, getNextTaskPosition } = useBoardStore();
   const { selectedListId, closeCreateTaskModal } = useModalStore();
-  const { showNotification } = useNotificationStore();
+  const { showWarning } = useWarningStore();
 
-  const handleCreateTask = useCallback(async (taskData: CreateTaskData) => {
-    if (!taskData.title || taskData.title.trim() === "") {
-      showNotification("O título da tarefa não pode estar vazio.", "failed");
+  const handleCreateTask = useCallback(async (taskData: TaskData) => {
+    if (!taskData.title?.trim()) {
+      showWarning("O título da tarefa não pode estar vazio.", "failed");
       return;
     }
 
-    const newTaskData = {
-      listId: selectedListId,
-      ...taskData
-    };
+    const result = await createTask({ listId: selectedListId, ...taskData });
+    if (result.success) {
+      addTask(selectedListId, result.data);
+      closeCreateTaskModal();
+      showWarning("Tarefa criada com sucesso!", "success");
+    } else {
+      showWarning(result.error, "failed");
+    }
+  }, [selectedListId, addTask, closeCreateTaskModal, showWarning]);
 
-    const result = await createTask(newTaskData);
-    if (result.success && result.data) {
-      const task = {
+  const handleEditTask = useCallback(async (taskId: string, updatedData: Partial<CreateTaskData>) => {
+    const result = await updateTask(taskId, updatedData);
+    if (result.success) {
+      editTask(taskId, {
         id: result.data.id,
         title: result.data.title,
         description: result.data.description,
@@ -31,79 +51,34 @@ export function useTaskOperations() {
         status: result.data.status as Status,
         dueDate: result.data.dueDate,
         assigneeId: result.data.assigneeId ?? null,
-      };
-
-      addTask(selectedListId, task);
-      closeCreateTaskModal();
-      showNotification("Tarefa criada com sucesso!", "success");
+      });
+      showWarning("Tarefa editada com sucesso!", "success");
     } else {
-      showNotification("Erro ao criar tarefa: " + result.error, "failed");
+      showWarning(result.error, "failed");
     }
-  }, [selectedListId, addTask, closeCreateTaskModal, showNotification]);
-
-  const handleEditTask = useCallback(async (taskId: string, updatedData: Partial<CreateTaskData>) => {
-    try {
-      const result = await updateTask(taskId, updatedData);
-      if (result.success && result.data) {
-        editTask(taskId, {
-          id: result.data.id,
-          title: result.data.title,
-          description: result.data.description,
-          position: result.data.position,
-          status: result.data.status as Status,
-          dueDate: result.data.dueDate,
-          assigneeId: result.data.assigneeId ?? null,
-        });
-        showNotification("Tarefa editada com sucesso!", "success");
-      } else {
-        showNotification("Erro ao editar tarefa: " + result.error, "failed");
-      }
-    } catch (error) {
-      showNotification("Erro inesperado ao editar tarefa: " + error, "failed");
-    }
-  }, [editTask, showNotification]);
+  }, [editTask, showWarning]);
 
   const handleDeleteTask = useCallback(async (taskId: string) => {
     const result = await deleteTask(taskId);
     if (result.success) {
       removeTask(taskId);
-      showNotification("Tarefa deletada com sucesso!", "success");
+      showWarning("Tarefa deletada com sucesso!", "success");
     } else {
-      showNotification(result.error || 'Erro ao deletar tarefa', "failed");
+      showWarning(result.error, "failed");
     }
-  }, [removeTask, showNotification]);
+  }, [removeTask, showWarning]);
 
   const handleMoveTask = useCallback(async (taskId: string, newPosition: number) => {
-    try {
-      const result = await moveTask(taskId, newPosition);
-      if (result.success) {
-        showNotification("Tarefa movida com sucesso!", "success");
-        return true;
-      } else {
-        showNotification("Erro ao mover tarefa: " + result.error, "failed");
-        return false;
-      }
-    } catch (error) {
-      showNotification("Erro inesperado ao mover tarefa: " + error, "failed");
-      return false;
-    }
-  }, [showNotification]);
+    const result = await moveTask(taskId, newPosition);
+    showWarning(result.success ? "Tarefa movida com sucesso!" : result.error, result.success ? "success" : "failed");
+    return result.success;
+  }, [showWarning]);
 
   const handleMoveTaskToOtherList = useCallback(async (taskId: string, newPosition: number, newListId: string) => {
-    try {
-      const result = await moveTaskOtherList(taskId, newPosition, newListId);
-      if (result.success) {
-        showNotification("Tarefa movida com sucesso!", "success");
-        return true;
-      } else {
-        showNotification("Erro ao mover tarefa: " + result.error, "failed");
-        return false;
-      }
-    } catch (error) {
-      showNotification("Erro inesperado ao mover tarefa: " + error, "failed");
-      return false;
-    }
-  }, [showNotification]);
+    const result = await moveTaskOtherList(taskId, newPosition, newListId);
+    showWarning(result.success ? "Tarefa movida com sucesso!" : result.error, result.success ? "success" : "failed");
+    return result.success;
+  }, [showWarning]);
 
   return {
     handleCreateTask,

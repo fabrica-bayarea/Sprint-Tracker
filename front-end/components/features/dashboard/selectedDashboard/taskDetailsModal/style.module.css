@@ -144,6 +144,25 @@
   font-size: 0.95rem;
 }
 
+.assigneeContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.textValue {
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.placeholder {
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
 @media (max-width: 640px) {
   .modal {
     width: 95%;

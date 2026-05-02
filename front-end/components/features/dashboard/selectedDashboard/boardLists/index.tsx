@@ -20,18 +20,20 @@ export default function BoardLists({ boardId }: { boardId: string }) {
   useBoardData(boardId);
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={lists.map((l) => l.id)} strategy={horizontalListSortingStrategy}>
-        <div className={styles.listsContainer}>
-          {lists.map((list) => (
-            <SortableItem key={list.id} id={list.id}>
-              <ListCard
-                list={list}
-              />
-            </SortableItem>
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={lists.map((l) => l.id)} strategy={horizontalListSortingStrategy}>
+          <div className={styles.listsContainer}>
+            {lists.map((list) => (
+              <SortableItem key={list.id} id={list.id}>
+                <ListCard
+                  list={list}
+                />
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </>
   );
 }

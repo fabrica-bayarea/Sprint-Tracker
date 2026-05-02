@@ -1,6 +1,7 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { BoardVisibility } from 'src/common/enums/board-visibility.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+import { BoardVisibility } from '@/common/enums/board-visibility.enum';
 
 export class CreateBoardDto {
   @ApiProperty({

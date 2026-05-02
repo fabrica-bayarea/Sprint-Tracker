@@ -29,3 +29,23 @@ export async function getCookie(cookieName: string) {
   if (!token) throw new Error("Cookie não encontrado");
   return `${cookieName}=${token}`;
 }
+
+export async function getUserFromCookie() {
+  const cookieStore = cookies();
+  const token = (await cookieStore).get("sprinttacker-session")?.value;
+  if (!token) return null;
+
+  try {
+    const [, payloadPart] = token.split(".");
+    if (!payloadPart) return null;
+
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const json = Buffer.from(padded, "base64").toString("utf8");
+    const payload = JSON.parse(json) as Record<string, unknown>;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}

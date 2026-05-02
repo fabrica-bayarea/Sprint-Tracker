@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsEnum } from 'class-validator';
-import { TaskStatus } from 'src/common/enums/task-status.enum';
+
+import { TaskStatus } from '@/common/enums/task-status.enum';
 
 export class CreateTaskDto {
   @ApiProperty({
@@ -48,8 +49,9 @@ export class CreateTaskDto {
       'ID do membro do board responsável pela tarefa (apenas admin/owner pode atribuir)',
     example: '1234567890abcdef12345678',
     required: false,
+    nullable: true,
   })
   @IsOptional()
   @IsString()
-  assigneeId?: string;
+  assigneeId?: string | null;
 }

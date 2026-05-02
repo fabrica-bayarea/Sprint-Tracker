@@ -1,9 +1,11 @@
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PassportStrategy } from '@nestjs/passport';
 import { User } from '@prisma/client';
+import { Strategy } from 'passport-jwt';
+
+import { PrismaService } from '@/prisma/prisma.service';
+
 import { jwtFromCookie } from './utils/jwt-cookie-extraction';
 
 @Injectable()
@@ -28,7 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { id: payload.sub },
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Usuario não encontrado');
     }
     return user;
   }

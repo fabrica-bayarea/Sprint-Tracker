@@ -1,0 +1,50 @@
+/* Notificação base */
+.warning {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  min-width: 260px;
+  max-width: 340px;
+  z-index: 9999;
+  padding: 16px 24px;
+  border-radius: 8px;
+  border-top: 5px solid;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  background: white;
+  font-weight: 500;
+  font-size: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 1;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(0);
+}
+
+.warning--hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.warning--success {
+  border-top-color: #43a047;
+  color: #2e7d32;
+}
+
+.warning--failed {
+  border-top-color: #c62828;
+  color: #b71c1c;
+}
+
+.warning--info {
+  border-top-color: #1565c0;
+  color: #0d47a1;
+}
+
+.warning__icon {
+  font-weight: 700;
+  font-size: 18px;
+}

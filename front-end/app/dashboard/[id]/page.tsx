@@ -1,58 +1,104 @@
 "use client";
 
-import React, { use, useState } from 'react';
-import { Users } from 'lucide-react';
+import React, { use, useEffect, useState } from 'react';
+import { Plus, Users, ChartLine, List } from 'lucide-react';
 
 import BoardLists from '@/components/features/dashboard/selectedDashboard/boardLists';
-import Section from '@/components/features/dashboard/selectedDashboard/section';
+import Reports from '@/components/features/dashboard/selectedDashboard/reports';
 import CreateListModal from '@/components/features/dashboard/selectedDashboard/CreateList';
+import MembersModal from '@/components/features/dashboard/selectedDashboard/members';
 import CreateTaskModal from '@/components/features/dashboard/selectedDashboard/CreateTask';
-import TaskDetailsModal from '@/components/features/dashboard/selectedDashboard/taskDetailsModal';
-import RenameListModal from '@/components/features/dashboard/selectedDashboard/RenameList';
 import EditTaskModal from '@/components/features/dashboard/selectedDashboard/EditTask';
-import MembersModal from '@/components/features/dashboard/selectedDashboard/MembersModal';
+import TaskDetailsModal from '@/components/features/dashboard/selectedDashboard/taskDetailsModal';
 
+import { getBoardById } from "@/lib/actions/board";
+import { useWarningStore } from '@/lib/stores/warning';
 import { useModalStore } from '@/lib/stores/modal';
-import { useBoardStore } from '@/lib/stores/board';
 
 import styles from './style.module.css';
+import { BoardRoleProvider, useBoardRole } from '@/lib/contexts/BoardRoleContext';
+
+function CreateListButton({ showReports }: { showReports: boolean }) {
+  const { role, loading } = useBoardRole();
+  const { openCreateListModal } = useModalStore();
+
+  const canCreate = !loading && (role === 'ADMIN' || role === 'MEMBER');
+  if (!canCreate) return null;
+
+  return (
+    <button 
+      className={`${styles.button} ${styles['button--primary']}`} 
+      onClick={openCreateListModal}
+      disabled={showReports}
+      style={{ opacity: showReports ? 0.5 : 1, cursor: showReports ? 'not-allowed' : 'pointer' }}
+    >
+      <Plus size={27} /> Criar coluna
+    </button>
+  );
+}
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: boardId } = use(params);
+  const [title, setTitle] = useState("");
+  const [showReports, setShowReports] = useState(false);
+  const { showWarning } = useWarningStore()
 
-  const { openCreateListModal } = useModalStore();
-  const { boardTitle, members } = useBoardStore();
+  const { openMembersModal } = useModalStore();
 
-  const [isMembersOpen, setIsMembersOpen] = useState(false);
+  useEffect(() => {
+    async function fetchGetBoard() {
+      const response = await getBoardById(boardId);
+
+      if (!response.success) {
+        showWarning(response.error || "Erro ao carregar quadro", 'failed')
+      } else {
+        setTitle(response.data?.name);
+      }
+    }
+
+    fetchGetBoard();
+  }, [boardId, showWarning]);
 
   return (
-    <main className={styles.dashboardMainCustom}>
-      <Section
-        title={boardTitle || '...'}
-        actionButton={openCreateListModal}
-        extraActions={
-          <button
-            className={styles.membersButton}
-            onClick={() => setIsMembersOpen(true)}
-            title="Gerenciar membros"
-          >
-            <Users size={18} />
-            <span>{members.length}</span>
-          </button>
-        }
-      >
-        <BoardLists boardId={boardId}/>
-      </Section>
-      <EditTaskModal/>
-      <CreateListModal boardId={boardId}/>
-      <CreateTaskModal/>
-      <TaskDetailsModal/>
-      <RenameListModal/>
-      <MembersModal
-        boardId={boardId}
-        isOpen={isMembersOpen}
-        onClose={() => setIsMembersOpen(false)}
-      />
-    </main>
+    <BoardRoleProvider boardId={boardId}>
+      <main className={styles.dashboardMainCustom}>
+        <section className={styles.board}>
+          <header className={styles.board__header}>
+            <h1 className={styles.board__title}>{title}</h1>
+            <div className={styles.board__actions} role="group" aria-label="Ações do quadro">
+              <button 
+                className={`${styles.button} ${styles['button--neutral']}`} 
+                onClick={() => setShowReports(!showReports)}
+              >
+                {showReports ? (
+                  <>
+                    <List size={27} strokeWidth={1}/> Quadro
+                  </>
+                ) : (
+                  <>
+                    <ChartLine size={27} strokeWidth={1}/> Relatórios
+                  </>
+                )}
+              </button>
+              <button className={`${styles.button} ${styles['button--neutral']}`} onClick={openMembersModal}>
+                <Users size={27} strokeWidth={1.5}/> Membros
+              </button>
+              <CreateListButton showReports={showReports} />
+            </div>
+          </header>
+          {showReports ? (
+            <Reports boardId={boardId} />
+          ) : (
+            <BoardLists boardId={boardId} />
+          )}
+        </section>
+
+        <CreateListModal boardId={ boardId }/>
+        <CreateTaskModal />
+        <TaskDetailsModal />
+        <EditTaskModal />
+        <MembersModal/>
+      </main>
+    </BoardRoleProvider>
   );
 }

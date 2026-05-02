@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { createTransport, Transporter } from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { createTransport, Transporter } from 'nodemailer';
 
 @Injectable()
 export class EmailService {
@@ -25,6 +26,10 @@ export class EmailService {
     }
   }
 
+  getTransporter(): Transporter {
+    return this.transporter;
+  }
+
   private loadTemplate(templateName: string): string {
     const templateBaseDir = path.join(__dirname, 'templates');
     const filePath = path.join(templateBaseDir, templateName);
@@ -45,19 +50,25 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail({
-        from: `"Suporte novoTrello" <${process.env.EMAIL!}>`,
+        from: `"Suporte Sprint Tracker" <${process.env.EMAIL!}>`,
         to,
         subject: 'Recuperação de senha',
         html,
         attachments: [
           {
             filename: 'bayarea-logo.png',
-            path: 'src/assets/bayarea-logo.png',
+            path:
+              process.env.NODE_ENV === 'production'
+                ? 'dist/src/assets/bayarea-logo.png'
+                : 'src/assets/bayarea-logo.png',
             cid: 'bayarea-logo',
           },
           {
             filename: 'iesb-logo.png',
-            path: 'src/assets/iesb-logo.png',
+            path:
+              process.env.NODE_ENV === 'production'
+                ? 'dist/src/assets/iesb-logo.png'
+                : 'src/assets/iesb-logo.png',
             cid: 'iesb-logo',
           },
         ],
