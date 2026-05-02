@@ -19,6 +19,8 @@
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-query": "^5.97.0",
     "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-query": "^5.97.0",
+    "@tanstack/react-table": "^8.21.3",
     "@types/set-cookie-parser": "^2.4.10",
     "axios": "^1.14.0",
     "class-variance-authority": "^0.7.1",
