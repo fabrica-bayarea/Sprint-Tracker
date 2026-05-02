@@ -1,6 +1,8 @@
 'use server';
 
 import { apiClient } from "@/lib/utils/apiClient";
+import { getCookie } from "@/lib/utils/sessionCookie";
+import { env } from "@/lib/config/env";
 import type { CreateTaskData, EditTaskData, Task } from '@/lib/types/board';
 
 export async function createTask(taskData: CreateTaskData) {
@@ -47,6 +49,37 @@ export async function moveTaskOtherList(taskId: string, newPosition: number, new
     body: JSON.stringify({ newListId, newPosition }),
     errorMessage: "Falha ao mover a tarefa",
   });
+}
+
+export async function getTaskLogs(taskId: string) {
+  return apiClient(`/v1/task-logs/${taskId}`, {
+    method: "GET",
+    errorMessage: "Falha ao buscar logs da tarefa",
+  });
+}
+
+export async function exportTaskLogsCsv(
+  taskId: string,
+): Promise<{ success: boolean; csvUrl?: string; error?: string }> {
+  try {
+    const cookie = await getCookie("sprinttacker-session");
+    const response = await fetch(
+      `${env.apiUrl}/v1/task-logs/${taskId}/export/csv`,
+      {
+        method: "GET",
+        headers: cookie ? { Cookie: cookie } : {},
+      },
+    );
+
+    if (!response.ok) {
+      return { success: false, error: "Falha ao exportar logs" };
+    }
+
+    const csvText = await response.text();
+    return { success: true, csvUrl: csvText };
+  } catch {
+    return { success: false, error: "Falha ao exportar logs" };
+  }
 }
 
 export async function getExpiredTasks() {

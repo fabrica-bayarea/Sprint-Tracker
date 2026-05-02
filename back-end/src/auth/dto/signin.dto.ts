@@ -6,14 +6,14 @@ export class SignInDto {
   @IsEmail({}, { message: 'deve ser no modelo de email' })
   @IsNotEmpty({ message: 'preencha com seu email' })
   @IsString({ message: 'email deve ser uma string' })
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'Senha123!' })
   @IsNotEmpty({ message: 'Preencha com sua senha' })
   @IsString({ message: 'senha deve ser uma string' })
-  password: string;
+  password!: string;
 
   @ApiProperty({ example: true })
   @IsBoolean({ message: 'deve ser um booleano' })
-  rememberMe: boolean;
+  rememberMe?: boolean;
 }

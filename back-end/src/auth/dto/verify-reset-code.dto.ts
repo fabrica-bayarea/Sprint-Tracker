@@ -8,5 +8,5 @@ export class VerifyResetCodeDto {
   })
   @IsNotEmpty({ message: 'O código de verificação não pode estar vazio.' })
   @IsString({ message: 'O código de verificação deve ser uma string.' })
-  code: string;
+  code!: string;
 }

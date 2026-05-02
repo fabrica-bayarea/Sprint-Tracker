@@ -79,8 +79,12 @@ export class TaskController {
   @Patch(':taskId')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  update(@Param('taskId') taskId: string, @Body() dto: UpdateTaskDto) {
-    return this.taskService.update(taskId, dto);
+  update(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    return this.taskService.update(taskId, user.id, dto);
   }
 
   @ApiOperation({
@@ -114,8 +118,11 @@ export class TaskController {
   @Delete(':taskId')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  remove(@Param('taskId') taskId: string) {
-    return this.taskService.remove(taskId);
+  remove(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.taskService.remove(taskId, user.id);
   }
 
   @ApiOperation({
@@ -147,9 +154,14 @@ export class TaskController {
   @Patch(':taskId/move')
   @UseGuards(JwtAuthGuard, BoardRoleGuard)
   @BoardRoles(Role.ADMIN, Role.MEMBER)
-  moveTask(@Param('taskId') taskId: string, @Body() dto: MoveTaskOtherListDto) {
+  moveTask(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: MoveTaskOtherListDto,
+  ) {
     return this.taskService.moveTaskToList(
       taskId,
+      user.id,
       dto.newListId,
       dto.newPosition,
     );

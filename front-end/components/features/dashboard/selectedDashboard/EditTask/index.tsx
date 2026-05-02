@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
 import { useModalStore } from '@/lib/stores/modal';
+import { useBoardStore } from '@/lib/stores/board';
 import { useTaskOperations } from '@/lib/hooks/useTaskOperations';
 
 import { Input, Textarea } from "@/components/ui";
@@ -16,6 +17,7 @@ import styles from './style.module.css';
 export default function EditTaskModal () {
   const { handleEditTask } = useTaskOperations();
   const { selectedTask, isEditTaskModalOpen, closeEditTaskModal } = useModalStore();
+  const { isCurrentUserAdmin } = useBoardStore();
   const params = useParams<{ id: string }>();
   const boardId = params?.id ?? '';
 
@@ -38,7 +40,7 @@ export default function EditTaskModal () {
     setDescription(selectedTask.description || '');
     setStatus(selectedTask.status || Status.TODO);
     setDueDate(selectedTask.dueDate ? toLocalDateTime(selectedTask.dueDate) : '');
-    setAssigneeId(selectedTask.assignedToId ?? '');
+    setAssigneeId(selectedTask.assigneeId ?? '');
 
     if (!boardId) {
       setMembers([]);
@@ -101,7 +103,7 @@ export default function EditTaskModal () {
           status,
           dueDate: formatToISO(dueDate),
           position: selectedTask.position,
-          assignedToId: assigneeId || null
+          ...(isCurrentUserAdmin ? { assigneeId: assigneeId || null } : {}),
         }
       );
       closeEditTaskModal();
@@ -149,26 +151,39 @@ export default function EditTaskModal () {
           </div>
 
           <div className={styles.column}>
-            <label className={styles.inputLabel}>Responsável</label>
-            <select
-              value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              className={styles.modalSelect}
-              disabled={isLoadingMembers}
-            >
-              {isLoadingMembers ? (
-                <option value="">Carregando membros...</option>
-              ) : (
+            {isCurrentUserAdmin ? (
+              <>
+                <label className={styles.inputLabel}>Responsável</label>
+                <select
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className={styles.modalSelect}
+                  disabled={isLoadingMembers}
+                >
+                  {isLoadingMembers ? (
+                    <option value="">Carregando membros...</option>
+                  ) : (
+                    <>
+                      <option value="">Sem responsável</option>
+                      {members.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+              </>
+            ) : (
+              assigneeId && (
                 <>
-                  <option value="">Sem responsável</option>
-                  {members.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
+                  <label className={styles.inputLabel}>Responsável</label>
+                  <div className={styles.modalSelect}>
+                    {members.find((m) => m.id === assigneeId)?.name ?? '—'}
+                  </div>
                 </>
-              )}
-            </select>
+              )
+            )}
 
             <label className={styles.inputLabel}>
               Status <span className={styles.requiredMark}>*</span>
@@ -193,7 +208,8 @@ export default function EditTaskModal () {
             />
           </div>
         </div>
-              
+
+
         <div className={styles.modalActions}>
           <button onClick={closeEditTaskModal} className={styles.cancelButton}>Cancelar</button>
           <button onClick={handleSubmit} className={styles.submitButton}>Salvar Alterações</button>

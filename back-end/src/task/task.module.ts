@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { EventsModule } from '@/events/events.module';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { TaskLogModule } from '@/task-log/task-log.module';
 
 import { TaskController } from './task.controller';
 import { TaskService } from './task.service';
@@ -9,6 +10,6 @@ import { TaskService } from './task.service';
 @Module({
   providers: [TaskService],
   controllers: [TaskController],
-  imports: [EventsModule, PrismaModule],
+  imports: [EventsModule, PrismaModule, TaskLogModule],
 })
 export class TaskModule {}

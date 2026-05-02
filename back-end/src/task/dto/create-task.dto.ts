@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsEnum } from 'class-validator';
 
 import { TaskStatus } from '@/common/enums/task-status.enum';
 
@@ -9,14 +9,14 @@ export class CreateTaskDto {
     example: '1234567890abcdef12345678',
   })
   @IsString()
-  listId: string;
+  listId!: string;
 
   @ApiProperty({
     description: 'Título da tarefa',
     example: 'Implementar a funcionalidade de autenticação',
   })
   @IsString()
-  title: string;
+  title!: string;
 
   @ApiProperty({
     description: 'Descrição da tarefa',
@@ -30,9 +30,10 @@ export class CreateTaskDto {
   @ApiProperty({
     description: 'Status da tarefa',
     example: 'TODO',
+    required: true,
   })
-  @IsString()
-  status: TaskStatus;
+  @IsEnum(TaskStatus)
+  status!: TaskStatus;
 
   @ApiProperty({
     description: 'Data de criação da tarefa',
@@ -44,12 +45,13 @@ export class CreateTaskDto {
   dueDate?: Date;
 
   @ApiProperty({
-    description: 'ID do usuário responsável pela tarefa',
+    description:
+      'ID do membro do board responsável pela tarefa (apenas admin/owner pode atribuir)',
     example: '1234567890abcdef12345678',
     required: false,
     nullable: true,
   })
   @IsOptional()
   @IsString()
-  assignedToId?: string | null;
+  assigneeId?: string | null;
 }

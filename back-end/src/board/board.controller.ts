@@ -81,6 +81,17 @@ export class BoardController {
   }
 
   @ApiOperation({
+    summary: 'Retorna o papel do usuário autenticado no quadro',
+    description: 'Retorna OWNER, ADMIN, MEMBER ou OBSERVER',
+  })
+  @ApiResponse({ status: 200, description: 'Papel encontrado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Quadro não encontrado' })
+  @Get(':id/my-role')
+  getMyRole(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.boardService.getUserRole(id, user.id);
+  }
+
+  @ApiOperation({
     summary: 'Atualiza um quadro específico',
     description:
       'Atualiza um quadro específico pelo ID. Autorizado apenas para administradores.',

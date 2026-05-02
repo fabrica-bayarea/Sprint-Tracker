@@ -69,3 +69,8 @@
 .button--primary:hover {
   background: #a40f0f;
 }
+
+.dashboardMainCustom {
+  display: flex;
+  flex-direction: column;
+}

@@ -16,7 +16,7 @@ import styles from './style.module.css';
 
 export default function CreateTaskModal () {
   const { handleCreateTask } = useTaskOperations();
-  const { getNextTaskPosition } = useBoardStore();
+  const { getNextTaskPosition, isCurrentUserAdmin } = useBoardStore();
   const { selectedListId, isCreateTaskModalOpen, closeCreateTaskModal } = useModalStore();
   const params = useParams<{ id: string }>();
   const boardId = params?.id ?? '';
@@ -28,7 +28,7 @@ export default function CreateTaskModal () {
   const [assigneeId, setAssigneeId] = useState('');
   const [members, setMembers] = useState<BoardMemberView[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  
+
   const [error, setError] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,8 +43,8 @@ export default function CreateTaskModal () {
       setStatus(Status.TODO);
       setDueDate('');
       setAssigneeId('');
-      setError(''); 
-      
+      setError('');
+
       const focusTimer = window.setTimeout(() => {
         titleInputRef.current?.focus();
       }, 100);
@@ -103,11 +103,11 @@ export default function CreateTaskModal () {
   const handleSubmit = () => {
     if (!title.trim()) {
       setError("O título da tarefa é obrigatório.");
-      
+
       if (titleInputRef.current) {
         titleInputRef.current.focus();
       }
-      return; 
+      return;
     }
 
     setError('');
@@ -118,7 +118,7 @@ export default function CreateTaskModal () {
       position: nextPosition,
       status: status,
       dueDate: formatToISO(dueDate),
-      assignedToId: assigneeId || undefined,
+      assigneeId: assigneeId || null,
     });
   };
 
@@ -138,19 +138,19 @@ export default function CreateTaskModal () {
             <label className={styles.inputLabel}>
               Título da Tarefa <span className={styles.requiredMark}>*</span>
             </label>
-            
+
             <input
               ref={titleInputRef}
               type="text"
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (error) setError(''); 
+                if (error) setError('');
               }}
               placeholder="Ex: Finalizar relatório..."
               className={styles.modalInput}
             />
-            
+
             <label className={styles.inputLabel}>Descrição</label>
             <div className={styles.textareaWrapper}>
               <Textarea
@@ -159,7 +159,7 @@ export default function CreateTaskModal () {
                 placeholder="Adicione detalhes..."
                 className={styles.modalTextarea}
                 rows={5}
-                maxLength={MAX_DESC_LENGTH} 
+                maxLength={MAX_DESC_LENGTH}
               />
               <div className={styles.charCounter}>
                 {description.length} / {MAX_DESC_LENGTH}
@@ -168,26 +168,30 @@ export default function CreateTaskModal () {
           </div>
 
           <div className={styles.column}>
-            <label className={styles.inputLabel}>Responsável</label>
-            <select
-              value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              className={styles.modalSelect}
-              disabled={isLoadingMembers}
-            >
-              {isLoadingMembers ? (
-                <option value="">Carregando membros...</option>
-              ) : (
-                <>
-                  <option value="">Sem responsável</option>
-                  {members.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
+            {isCurrentUserAdmin && (
+              <>
+                <label className={styles.inputLabel}>Responsável</label>
+                <select
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className={styles.modalSelect}
+                  disabled={isLoadingMembers}
+                >
+                  {isLoadingMembers ? (
+                    <option value="">Carregando membros...</option>
+                  ) : (
+                    <>
+                      <option value="">Sem responsável</option>
+                      {members.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+              </>
+            )}
 
             <label className={styles.inputLabel}>Status <span className={styles.requiredMark}>*</span></label>
             <select
@@ -215,7 +219,8 @@ export default function CreateTaskModal () {
             {error}
           </div>
         )}
-              
+
+
         <div className={styles.modalActions}>
           <button onClick={closeCreateTaskModal} className={styles.cancelButton}>Cancelar</button>
           <button onClick={handleSubmit} className={styles.submitButton}>Criar Tarefa</button>

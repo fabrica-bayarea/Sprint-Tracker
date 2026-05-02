@@ -22,7 +22,7 @@ export default function TaskDetailsModal() {
   const [isLoadingAssignee, setIsLoadingAssignee] = useState(false);
 
   const hasTask = Boolean(selectedTask);
-  const assignedToId = selectedTask?.assignedToId;
+  const assigneeId = selectedTask?.assigneeId;
   const taskId = selectedTask?.id;
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function TaskDetailsModal() {
       return;
     }
 
-    if (!assignedToId) {
+    if (!assigneeId) {
       setAssigneeName('');
       setIsLoadingAssignee(false);
       return;
@@ -51,7 +51,7 @@ export default function TaskDetailsModal() {
         if (cancelled) return;
 
         if (response.success) {
-          const member = response.data.find((item) => String(item.id) === String(assignedToId));
+          const member = response.data.find((item) => String(item.id) === String(assigneeId));
           setAssigneeName(member?.name || 'Usuário não encontrado');
         } else {
           setAssigneeName('Não foi possível carregar');
@@ -72,7 +72,7 @@ export default function TaskDetailsModal() {
     return () => {
       cancelled = true;
     };
-  }, [isTaskDetailsModalOpen, hasTask, boardId, assignedToId, taskId]);
+  }, [isTaskDetailsModalOpen, hasTask, boardId, assigneeId, taskId]);
 
   if (!isTaskDetailsModalOpen || !selectedTask) return null;
 
@@ -114,7 +114,7 @@ export default function TaskDetailsModal() {
     return statusMap[key]?.label || status;
   };
 
-  const hasAssignee = Boolean(selectedTask.assignedToId);
+  const hasAssignee = Boolean(selectedTask.assigneeId);
   const assigneeDisplay = isLoadingAssignee
     ? 'Carregando...'
     : hasAssignee
@@ -164,6 +164,7 @@ export default function TaskDetailsModal() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

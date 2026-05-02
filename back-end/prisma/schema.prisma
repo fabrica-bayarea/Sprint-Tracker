@@ -26,7 +26,8 @@ model User {
   boards              Board[]        @relation("OwnerBoards")
   memberships         BoardMember[]
   tasksCreated        Task[]         @relation("TaskCreator")
-  assignedTasks       Task[]         @relation("TaskAssignedTo")
+  tasksAssigned       Task[]         @relation("TaskAssignee")
+  taskLogs            TaskLog[]      @relation("TaskLogUser")
   notifications       Notification[]
   sentInvites         Invite[]       @relation("Sender")
 
@@ -46,7 +47,49 @@ model Board {
   members     BoardMember[]
   labels      Label[]
   lists       List[]
+  backlogs    Backlog[]
+  sprints     Sprint[]
+  taskLogs    TaskLog[]
   invites     Invite[]
+}
+
+model Backlog {
+  id          String              @id @default(uuid())
+  boardId     String
+  title       String
+  description String?
+  priority    Priority            @default(MEDIUM)
+  status      BacklogStatus       @default(OPEN)
+  board       Board               @relation(fields: [boardId], references: [id])
+  sprints     SprintBacklogItem[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model Sprint {
+  id        String              @id @default(uuid())
+  boardId   String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    SprintStatus        @default(PLANNED)
+  board     Board               @relation(fields: [boardId], references: [id])
+  items     SprintBacklogItem[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+}
+
+model SprintBacklogItem {
+  id          String    @id @default(uuid())
+  sprintId    String
+  backlogId   String
+  sprint      Sprint    @relation(fields: [sprintId], references: [id])
+  backlog     Backlog   @relation(fields: [backlogId], references: [id])
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([sprintId, backlogId])
 }
 
 model BoardMember {
@@ -85,23 +128,38 @@ model List {
 }
 
 model Task {
-  id           String      @id @default(uuid())
-  listId       String
-  creatorId    String
-  assignedToId String?
-  title        String
-  description  String?
-  position     Int
-  status       Status      @default(TODO)
-  dueDate      DateTime?
-  isArchived   Boolean     @default(false)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  completedAt  DateTime?
-  creator      User        @relation("TaskCreator", fields: [creatorId], references: [id])
-  assignedTo   User?       @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
-  list         List        @relation(fields: [listId], references: [id])
-  labels       TaskLabel[]
+  id          String      @id @default(uuid())
+  listId      String
+  creatorId   String
+  assigneeId  String?
+  title       String
+  description String?
+  position    Int
+  status      Status      @default(TODO)
+  dueDate     DateTime?
+  isArchived  Boolean     @default(false)
+  deletedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  creator     User        @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee    User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  list        List        @relation(fields: [listId], references: [id])
+  labels      TaskLabel[]
+  logs        TaskLog[]
+}
+
+model TaskLog {
+  id        String    @id @default(uuid())
+  taskId    String
+  userId    String
+  boardId   String
+  action    LogAction
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  task      Task      @relation(fields: [taskId], references: [id])
+  user      User      @relation("TaskLogUser", fields: [userId], references: [id])
+  board     Board     @relation(fields: [boardId], references: [id])
 }
 
 model Label {
@@ -174,4 +232,32 @@ enum Status {
   IN_PROGRESS
   DONE
   ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BacklogStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+}
+
+enum LogAction {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_MOVED
+  TASK_STATUS_CHANGED
+  TASK_ARCHIVED
+  TASK_DELETED
 }

@@ -25,14 +25,14 @@ export enum BoardVisibility {
 export interface Task {
   id: string;
   listId: string;
-  assignedToId?: string | null;
+  assigneeId?: string | null;
   title: string;
   description?: string;
   position: number;
   status: Status;
   dueDate?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface List {
@@ -83,7 +83,7 @@ export interface BoardMember {
 export interface TaskResponse {
   id: string;
   title: string;
-  assignedToId?: string | null;
+  assigneeId?: string | null;
   description?: string;
   position: number;
   status: string;
@@ -154,7 +154,7 @@ export interface CreateTaskData {
   position: number;
   status: Status;
   dueDate?: string;
-  assignedToId?: string | null;
+  assigneeId?: string | null;
 }
 
 export interface EditTaskData {
@@ -163,7 +163,7 @@ export interface EditTaskData {
   position?: number;
   status?: Status;
   dueDate?: string;
-  assignedToId?: string | null;
+  assigneeId?: string | null;
 }
 
 export interface CreateListData {
@@ -229,7 +229,7 @@ export function taskResponseToTask(taskResponse: TaskResponse, listId: string): 
   return {
     id: taskResponse.id,
     listId,
-    assignedToId: taskResponse.assignedToId ?? null,
+    assigneeId: taskResponse.assigneeId ?? null,
     title: taskResponse.title,
     description: taskResponse.description,
     position: taskResponse.position,

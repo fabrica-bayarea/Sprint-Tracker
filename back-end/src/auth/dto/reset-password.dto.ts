@@ -20,7 +20,7 @@ export class ResetPasswordDto {
         'A nova senha deve ter pelo menos 8 caracteres, incluindo 1 letra maiúscula, 1 número e 1 caractere especial.',
     },
   )
-  newPassword: string;
+  newPassword!: string;
 
   @ApiProperty({ example: 'StrongP@ssword123' })
   @IsString({ message: 'A confirmação da senha deve ser uma string.' })
@@ -31,5 +31,5 @@ export class ResetPasswordDto {
   @Match('newPassword', {
     message: 'As senhas não coincidem.',
   })
-  confirmNewPassword: string;
+  confirmNewPassword!: string;
 }

@@ -5,6 +5,7 @@ import { Check, Trash2, CheckCircle2, MoreVertical } from "lucide-react";
 
 import { getBoards, getBoardMembers, deleteBoardMember, deleteBoard } from "@/lib/actions/board";
 import { getExpiredTasks, deleteTask, updateTask } from "@/lib/actions/task";
+import { Status } from "@/lib/types/board";
 import { useWarningStore } from '@/lib/stores/warning';
 import { useConfirmStore } from '@/lib/stores/confirm';
 import { getUserFromCookie } from '@/lib/utils/sessionCookie';
@@ -20,6 +21,8 @@ interface ExpiredTask {
   description?: string;
   dueDate: string;
   status: string;
+  assigneeId?: string | null;
+  assignee?: { id: string; name: string; email: string } | null;
   list: {
     id: string;
     title: string;
@@ -39,6 +42,7 @@ interface PendenciaItem {
   andamento: string;
   data: string;
   atrasado: boolean;
+  responsavel?: string;
 }
 
 
@@ -76,7 +80,7 @@ export default function Dashboard() {
 
   const handleMarkAsDone = async (taskId: string) => {
     try {
-      const result = await updateTask(taskId, { status: "DONE" });
+      const result = await updateTask(taskId, { status: Status.DONE });
       if (result.success) {
         setPendencias(prevPendencias => 
           prevPendencias.filter(p => p.id !== taskId)
@@ -158,7 +162,7 @@ export default function Dashboard() {
         if (result.success) {
           if (result.data && Array.isArray(result.data) && result.data.length > 0) {
             const currentDate = new Date();
-            const formattedTasks: PendenciaItem[] = result.data.map((task: ExpiredTask) => {
+            const formattedTasks: PendenciaItem[] = (result.data as unknown as ExpiredTask[]).map((task) => {
               const dueDate = new Date(task.dueDate);
               const isOverdue = dueDate < currentDate;
               
@@ -170,7 +174,8 @@ export default function Dashboard() {
                 statusColor: isOverdue ? "#e02b2b" : "#15bd2e",
                 andamento: task.list.title,
                 data: dueDate.toLocaleDateString('pt-BR'),
-                atrasado: isOverdue
+                atrasado: isOverdue,
+                responsavel: task.assignee?.name,
               };
             });
             setPendencias(formattedTasks);
@@ -247,7 +252,10 @@ export default function Dashboard() {
                 <span className={styles.pendenciaAtrasadoWrapper}>
                   {p.atrasado && <span className={styles.pendenciaAtrasado}>Atrasado!</span>}
                 </span>
-                <span className={styles.pendenciaGrupo}>{p.grupo}/<span>{p.andamento}</span></span>
+                <span className={styles.pendenciaGrupo}>
+                  {p.grupo}/<span>{p.andamento}</span>
+                  {p.responsavel && <span style={{ marginLeft: 8, fontStyle: 'italic' }}>· {p.responsavel}</span>}
+                </span>
                 <button 
                   className={styles.pendenciaAction}
                   onClick={() => handleDeleteTask(p.id)}
@@ -322,8 +330,8 @@ export default function Dashboard() {
 
                 <div className={styles.boardImgCustom}></div>
                 <div className={styles.boardInfoCustom}>
-                  <span className={styles.boardNameCustom}>{b.name}</span> 
-                  <span className={styles.boardMembrosCustom}>{b.members} Membros</span> 
+                  <span className={styles.boardNameCustom}>{b.name}</span>
+                  <span className={styles.boardMembrosCustom}>{b.members} Membros</span>
                 </div>
               </div>
             ))

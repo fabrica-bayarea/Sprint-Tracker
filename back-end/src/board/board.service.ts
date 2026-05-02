@@ -8,12 +8,17 @@ import { CreateBoardDto } from './dto/create-board.dto';
 import { InviteBoardDto } from './dto/invite-to-board.dto';
 import { ResponseInviteBoardDto } from './dto/response-invite.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { Role } from '@prisma/client';
+
+import { PrismaQueries } from '@/prisma/queries';
+
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 
 @Injectable()
 export class BoardService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly prismaQueries: PrismaQueries,
     private readonly notificationsGateway: NotificationsGateway,
     private readonly boardGateway: BoardGateway,
   ) {}
@@ -97,6 +102,23 @@ export class BoardService {
   }
 
   /**
+   * Retorna o papel do usuário no quadro: 'OWNER' se for proprietário, role do membership, ou null.
+   */
+  async getUserRole(
+    boardId: string,
+    userId: string,
+  ): Promise<Role | 'OWNER' | null> {
+    const board = await this.prisma.board.findUnique({
+      where: { id: boardId },
+      include: { members: { where: { userId } } },
+    });
+    if (!board) throw new NotFoundException('Quadro não encontrado');
+    if (board.ownerId === userId) return 'OWNER';
+    if (board.members.length > 0) return board.members[0].role;
+    return null;
+  }
+
+  /**
    * Atualiza os dados de um quadro e emite evento de modificação.
    */
   async update(boardId: string, dto: UpdateBoardDto) {
@@ -140,6 +162,21 @@ export class BoardService {
 
         await tx.list.deleteMany({ where: { id: { in: listIds } } });
       }
+
+      await tx.taskLog.deleteMany({ where: { boardId } });
+
+      const sprints = await tx.sprint.findMany({
+        where: { boardId },
+        select: { id: true },
+      });
+      const sprintIds = sprints.map((s) => s.id);
+      if (sprintIds.length) {
+        await tx.sprintBacklogItem.deleteMany({
+          where: { sprintId: { in: sprintIds } },
+        });
+      }
+      await tx.sprint.deleteMany({ where: { boardId } });
+      await tx.backlog.deleteMany({ where: { boardId } });
 
       const labels = await tx.label.findMany({
         where: { boardId },
@@ -267,6 +304,21 @@ export class BoardService {
               });
               await tx.label.deleteMany({ where: { id: { in: labelIds } } });
             }
+
+            await tx.taskLog.deleteMany({ where: { boardId } });
+
+            const sprints = await tx.sprint.findMany({
+              where: { boardId },
+              select: { id: true },
+            });
+            const sprintIds = sprints.map((s) => s.id);
+            if (sprintIds.length) {
+              await tx.sprintBacklogItem.deleteMany({
+                where: { sprintId: { in: sprintIds } },
+              });
+            }
+            await tx.sprint.deleteMany({ where: { boardId } });
+            await tx.backlog.deleteMany({ where: { boardId } });
 
             await tx.invite.deleteMany({ where: { boardId } });
             await tx.boardMember.deleteMany({ where: { boardId } });

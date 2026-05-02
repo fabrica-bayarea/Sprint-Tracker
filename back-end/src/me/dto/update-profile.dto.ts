@@ -8,7 +8,7 @@ export class updateProfileDto {
   @Matches(/^[A-Za-zÀ-ÿ\s]+$/, {
     message: 'O nome deve conter apenas letras e espaços',
   })
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: 'username' })
   @IsOptional()
@@ -16,10 +16,10 @@ export class updateProfileDto {
   @Matches(/.*[a-zA-Z].*/, {
     message: 'O nome deve conter pelo menos uma letra',
   })
-  userName: string;
+  userName!: string;
 
   @ApiProperty({ example: 'example@gmail.com' })
   @IsEmail({}, { message: 'O email deve ser válido' })
   @IsOptional()
-  email: string;
+  email!: string;
 }

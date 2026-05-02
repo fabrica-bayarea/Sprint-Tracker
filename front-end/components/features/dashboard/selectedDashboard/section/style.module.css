@@ -24,6 +24,12 @@
   font-weight: 600;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .criarButton {
   background: #fff;
   color: #c51313;

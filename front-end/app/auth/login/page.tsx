@@ -8,7 +8,7 @@ export default function LoginPage() {
   const baseUrlApi = process.env.BASE_URL_API || 'http://localhost:3000';
 
   return (
-    <LoginForm 
+    <LoginForm
       isLdapEnabled={isLdapEnabled}
       isGoogleEnabled={isGoogleEnabled}
       isMicrosoftEnabled={isMicrosoftEnabled}

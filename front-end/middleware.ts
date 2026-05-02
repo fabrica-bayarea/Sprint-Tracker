@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { env } from "@/lib/config/env";
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const nonce = btoa(crypto.randomUUID());
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
   const cspHeader = `
     default-src 'self';
     script-src 'nonce-${nonce}' 'strict-dynamic' ${
-    env.isDev ? "'unsafe-eval'" : ""
-  };
-    style-src 'self' https://fonts.googleapis.com ${
-      env.isDev ? "'unsafe-inline'" : ""
+      env.isDev ? "'unsafe-eval'" : ""
     };
+    style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
     img-src 'self' data:;
     font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-    connect-src 'self' ws://localhost:3000;
+    connect-src 'self' ${env.apiUrl} ${env.wsUrl};
     frame-ancestors 'self';
     form-action 'self';
     base-uri 'self';

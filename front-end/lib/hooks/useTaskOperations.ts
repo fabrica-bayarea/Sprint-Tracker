@@ -11,7 +11,7 @@ interface TaskData {
   position: number;
   status: Status;
   dueDate?: string;
-  assignedToId?: string | null;
+  assigneeId?: string | null;
 }
 
 /**
@@ -50,7 +50,7 @@ export function useTaskOperations() {
         position: result.data.position,
         status: result.data.status as Status,
         dueDate: result.data.dueDate,
-        assignedToId: result.data.assignedToId ?? null,
+        assigneeId: result.data.assigneeId ?? null,
       });
       showWarning("Tarefa editada com sucesso!", "success");
     } else {

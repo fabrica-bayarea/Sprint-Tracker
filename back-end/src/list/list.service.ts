@@ -1,11 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { BoardGateway } from '@/events/board.gateway';
 import { PrismaService } from '@/prisma/prisma.service';
+
+import { PrismaQueries } from '@/prisma/queries';
 
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
@@ -14,6 +14,7 @@ import { UpdateListDto } from './dto/update-list.dto';
 export class ListService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly prismaQueries: PrismaQueries,
     private readonly boardGateway: BoardGateway,
   ) {}
 
@@ -46,6 +47,7 @@ export class ListService {
     return this.prisma.list.findMany({
       where: { boardId, isArchived: false },
       orderBy: { position: 'asc' },
+      include: this.prismaQueries.listInclude,
     });
   }
 
@@ -133,19 +135,28 @@ export class ListService {
   }
 
   /**
-   * Remove uma lista pelo ID e emite evento de exclusão.
+   * Remove uma lista pelo ID. Cascade-deleta tarefas/labels/logs associados.
    */
   async remove(listId: string) {
     const exists = await this.prisma.list.findUnique({
       where: { id: listId },
-      include: { tasks: true },
     });
     if (!exists) throw new NotFoundException('Lista não encontrada');
 
-    if (exists.tasks && exists.tasks.length > 0) {
-      throw new BadRequestException(
-        'Não é possível excluir uma lista que contém tarefas',
-      );
+    const tasks = await this.prisma.task.findMany({
+      where: { listId },
+      select: { id: true },
+    });
+    const taskIds = tasks.map((t) => t.id);
+
+    if (taskIds.length > 0) {
+      await this.prisma.taskLabel.deleteMany({
+        where: { taskId: { in: taskIds } },
+      });
+      await this.prisma.taskLog.deleteMany({
+        where: { taskId: { in: taskIds } },
+      });
+      await this.prisma.task.deleteMany({ where: { listId } });
     }
 
     const deleted = await this.prisma.list.delete({ where: { id: listId } });

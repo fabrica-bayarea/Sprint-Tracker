@@ -38,6 +38,13 @@ export async function getBoards() {
   };
 }
 
+export async function getUserBoardRole(boardId: string) {
+  return apiClient<string>(`/v1/boards/${boardId}/my-role`, {
+    method: "GET",
+    errorMessage: "Falha ao buscar papel no board",
+  });
+}
+
 export async function getBoardById(boardId: string) {
   const result = await apiClient<BoardResponse>(`/v1/boards/${boardId}`, {
     method: "GET",
