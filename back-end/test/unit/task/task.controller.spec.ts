@@ -83,16 +83,24 @@ describe('TaskController', () => {
   });
 
   describe('update', () => {
-    it('deve chamar taskService.update com o id e o dto', async () => {
+    it('deve chamar taskService.update com o id, user.id e o dto', async () => {
       const id = 'task-1';
+      const user: AuthenticatedUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        userName: 'testuser',
+        role: 'ADMIN',
+        authProvider: 'local',
+      };
       const dto: UpdateTaskDto = { title: 'Atualizado' };
       const updatedTask = { id, title: 'Atualizado' };
 
       mockTaskService.update.mockResolvedValue(updatedTask);
 
-      const result = await controller.update(id, dto);
+      const result = await controller.update(id, user, dto);
 
-      expect(mockTaskService.update).toHaveBeenCalledWith(id, dto);
+      expect(mockTaskService.update).toHaveBeenCalledWith(id, user.id, dto);
       expect(result).toEqual(updatedTask);
     });
   });
@@ -142,22 +150,38 @@ describe('TaskController', () => {
   });
 
   describe('remove', () => {
-    it('deve chamar taskService.remove com o id', async () => {
+    it('deve chamar taskService.remove com o id e user.id', async () => {
       const id = 'task-1';
+      const user: AuthenticatedUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        userName: 'testuser',
+        role: 'ADMIN',
+        authProvider: 'local',
+      };
       const removed = { id };
 
       mockTaskService.remove.mockResolvedValue(removed);
 
-      const result = await controller.remove(id);
+      const result = await controller.remove(id, user);
 
-      expect(mockTaskService.remove).toHaveBeenCalledWith(id);
+      expect(mockTaskService.remove).toHaveBeenCalledWith(id, user.id);
       expect(result).toEqual(removed);
     });
   });
 
   describe('moveTask', () => {
-    it('should call taskService.moveTaskToList with taskId, newListId, and newPosition', async () => {
+    it('should call taskService.moveTaskToList with taskId, user.id, newListId and newPosition', async () => {
       const taskId = 'task-1';
+      const user: AuthenticatedUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        userName: 'testuser',
+        role: 'ADMIN',
+        authProvider: 'local',
+      };
       const dto = {
         newListId: 'list-new',
         newPosition: 1,
@@ -166,11 +190,11 @@ describe('TaskController', () => {
 
       mockTaskService.moveTaskToList.mockResolvedValue(movedTask);
 
-      // O método recebe o taskId do @Param e o DTO do @Body
-      const result = await controller.moveTask(taskId, dto);
+      const result = await controller.moveTask(taskId, user, dto);
 
       expect(mockTaskService.moveTaskToList).toHaveBeenCalledWith(
         taskId,
+        user.id,
         dto.newListId,
         dto.newPosition,
       );

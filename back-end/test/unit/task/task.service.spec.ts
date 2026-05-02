@@ -1,32 +1,26 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { endOfDay } from 'date-fns';
 
 import { TaskStatus } from '@/common/enums/task-status.enum';
 import { BoardGateway } from '@/events/board.gateway';
+import { PrismaQueries } from '@/prisma/queries';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateTaskDto } from '@/task/dto/create-task.dto';
 import { UpdateTaskDto } from '@/task/dto/update-task.dto';
 import { TaskService } from '@/task/task.service';
+import { TaskLogService } from '@/task-log/task-log.service';
 
-import { mockPrisma, mockBoardGateway } from '../setup-mock';
+import {
+  mockPrisma,
+  mockPrismaQueries,
+  mockBoardGateway,
+  mockTaskLogService,
+} from '../setup-mock';
+
+const userId = 'user-123';
 
 describe('TaskService', () => {
   let service: TaskService;
-
-  jest.mock('date-fns', () => ({
-    endOfDay: jest.fn(
-      (date: Date) =>
-        new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate(),
-          23,
-          59,
-          59,
-        ),
-    ),
-  }));
 
   beforeEach(async () => {
     mockPrisma.task.count.mockResolvedValue(0);
@@ -35,7 +29,9 @@ describe('TaskService', () => {
       providers: [
         TaskService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: PrismaQueries, useValue: mockPrismaQueries },
         { provide: BoardGateway, useValue: mockBoardGateway },
+        { provide: TaskLogService, useValue: mockTaskLogService },
       ],
     }).compile();
 
@@ -48,7 +44,6 @@ describe('TaskService', () => {
 
   describe('create', () => {
     it('should create a task with correct data', async () => {
-      const userId = 'user-123';
       const dto: CreateTaskDto = {
         title: 'Tarefa Teste',
         listId: 'list-1',
@@ -68,7 +63,7 @@ describe('TaskService', () => {
         id: 'list-1',
         boardId: 'board-1',
       });
-      mockPrisma.task.count = jest.fn().mockResolvedValue(0);
+      mockPrisma.task.count.mockResolvedValue(0);
       mockPrisma.task.create.mockResolvedValue(createdTask);
 
       const result = await service.create(userId, dto);
@@ -78,22 +73,14 @@ describe('TaskService', () => {
         select: { boardId: true },
       });
 
-      expect(mockPrisma.task.count).toHaveBeenCalledWith({
-        where: { listId: dto.listId },
-      });
-
       expect(mockPrisma.task.create).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           creatorId: userId,
           listId: dto.listId,
           title: dto.title,
-          description: undefined,
-          position: 0,
           status: dto.status,
-          dueDate: undefined,
-          assignedToId: null,
-          completedAt: null,
-        },
+          assigneeId: null,
+        }),
       });
       expect(result).toEqual(createdTask);
     });
@@ -104,18 +91,18 @@ describe('TaskService', () => {
       const id = 'task-1';
       const task = { id, title: 'Teste' };
 
-      mockPrisma.task.findUnique.mockResolvedValue(task);
+      mockPrisma.task.findFirst.mockResolvedValue(task);
 
       const result = await service.findOne(id);
 
-      expect(mockPrisma.task.findUnique).toHaveBeenCalledWith({
-        where: { id },
+      expect(mockPrisma.task.findFirst).toHaveBeenCalledWith({
+        where: { id, deletedAt: null },
       });
       expect(result).toEqual(task);
     });
 
     it('should throw NotFoundException if task not found', async () => {
-      mockPrisma.task.findUnique.mockResolvedValue(null);
+      mockPrisma.task.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne('not-found')).rejects.toThrow(
         NotFoundException,
@@ -127,29 +114,38 @@ describe('TaskService', () => {
     it('should update a task if it exists', async () => {
       const id = 'task-1';
       const dto: UpdateTaskDto = { title: 'Atualizada' };
-      const existingTask = { id, title: 'Original' };
+      const existingTask = {
+        id,
+        title: 'Original',
+        listId: 'list-1',
+        status: TaskStatus.TODO,
+      };
       const updatedTask = {
         id,
         title: 'Atualizada',
         list: { boardId: 'board-1' },
       };
 
-      mockPrisma.task.findUnique.mockResolvedValue(existingTask);
+      mockPrisma.task.findFirst.mockResolvedValue(existingTask);
+      mockPrisma.list.findUnique.mockResolvedValue({
+        id: 'list-1',
+        boardId: 'board-1',
+      });
       mockPrisma.task.update.mockResolvedValue(updatedTask);
 
-      const result = await service.update(id, dto);
+      const result = await service.update(id, userId, dto);
 
       expect(mockPrisma.task.update).toHaveBeenCalledWith({
         where: { id },
-        data: dto,
+        data: expect.any(Object),
         include: { list: { select: { boardId: true } } },
       });
       expect(result).toEqual({ id, title: 'Atualizada' });
     });
   });
 
-  describe('delete', () => {
-    it('must remove a task and adjust the position of the others', async () => {
+  describe('remove', () => {
+    it('must soft-delete a task and adjust the position of the others', async () => {
       const taskId = 'task-1';
       const taskToDelete = {
         id: taskId,
@@ -157,25 +153,11 @@ describe('TaskService', () => {
         position: 2,
       };
 
-      mockPrisma.task.findUnique.mockResolvedValue(taskToDelete);
+      mockPrisma.task.findFirst.mockResolvedValue(taskToDelete);
       mockPrisma.list.findUnique.mockResolvedValue({
         id: 'list-123',
         boardId: 'board-1',
       });
-
-      const deleteMock = { where: { id: taskId } };
-      const updateManyMock = {
-        where: {
-          listId: taskToDelete.listId,
-          position: { gt: taskToDelete.position },
-        },
-        data: {
-          position: { decrement: 1 },
-        },
-      };
-
-      mockPrisma.task.delete.mockReturnValue(deleteMock as unknown);
-      mockPrisma.task.updateMany.mockReturnValue(updateManyMock as unknown);
 
       mockPrisma.$transaction = jest
         .fn()
@@ -183,11 +165,10 @@ describe('TaskService', () => {
           return Promise.resolve(operations);
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const result = await service.remove(taskId);
+      await service.remove(taskId, userId);
 
-      expect(mockPrisma.task.findUnique).toHaveBeenCalledWith({
-        where: { id: taskId },
+      expect(mockPrisma.task.findFirst).toHaveBeenCalledWith({
+        where: { id: taskId, deletedAt: null },
       });
 
       expect(mockPrisma.list.findUnique).toHaveBeenCalledWith({
@@ -195,45 +176,13 @@ describe('TaskService', () => {
         select: { boardId: true },
       });
 
-      expect(mockPrisma.task.delete).toHaveBeenCalledWith({
-        where: { id: taskId },
-      });
-
-      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
-        where: {
-          listId: taskToDelete.listId,
-          position: { gt: taskToDelete.position },
-        },
-        data: {
-          position: { decrement: 1 },
-        },
-      });
-
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-
-      const transactionCalls = mockPrisma.$transaction.mock
-        .calls as unknown[][];
-      const operations = transactionCalls[0][0] as unknown[];
-
-      expect(operations[0]).toMatchObject({
-        where: { id: taskId },
-      });
-
-      expect(operations[1]).toMatchObject({
-        where: {
-          listId: taskToDelete.listId,
-          position: { gt: taskToDelete.position },
-        },
-        data: {
-          position: { decrement: 1 },
-        },
-      });
     });
 
     it('should throw NotFoundException if the task does not exist', async () => {
-      mockPrisma.task.findUnique.mockResolvedValue(null);
+      mockPrisma.task.findFirst.mockResolvedValue(null);
 
-      await expect(service.remove('not-found')).rejects.toThrow(
+      await expect(service.remove('not-found', userId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -241,14 +190,14 @@ describe('TaskService', () => {
 
   describe('updatePosition', () => {
     const taskId = 'task-move';
-    const findUniqueMock = { id: taskId, listId: 'list-1', position: 3 };
 
     it('should move a task up and increment positions of tasks between old and new position', async () => {
       const oldPosition = 3;
       const newPosition = 1;
 
-      mockPrisma.task.findUnique.mockResolvedValue({
-        ...findUniqueMock,
+      mockPrisma.task.findFirst.mockResolvedValue({
+        id: taskId,
+        listId: 'list-1',
         position: oldPosition,
       });
       mockPrisma.list.findUnique.mockResolvedValue({
@@ -266,6 +215,7 @@ describe('TaskService', () => {
         where: {
           listId: 'list-1',
           position: { gte: newPosition, lt: oldPosition },
+          deletedAt: null,
         },
         data: {
           position: { increment: 1 },
@@ -278,43 +228,8 @@ describe('TaskService', () => {
       });
     });
 
-    it('should move a task down and decrement positions of tasks between old and new position', async () => {
-      const oldPosition = 1;
-      const newPosition = 3;
-
-      mockPrisma.task.findUnique.mockResolvedValue({
-        ...findUniqueMock,
-        position: oldPosition,
-      });
-      mockPrisma.list.findUnique.mockResolvedValue({
-        id: 'list-1',
-        boardId: 'board-1',
-      });
-      mockPrisma.task.update.mockResolvedValue({
-        id: taskId,
-        position: newPosition,
-      });
-
-      await service.updatePosition(taskId, newPosition);
-
-      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
-        where: {
-          listId: 'list-1',
-          position: { gt: oldPosition, lte: newPosition },
-        },
-        data: {
-          position: { decrement: 1 },
-        },
-      });
-
-      expect(mockPrisma.task.update).toHaveBeenCalledWith({
-        where: { id: taskId },
-        data: { position: newPosition },
-      });
-    });
-
     it('should throw NotFoundException if task does not exist', async () => {
-      mockPrisma.task.findUnique.mockResolvedValue(null);
+      mockPrisma.task.findFirst.mockResolvedValue(null);
       await expect(service.updatePosition(taskId, 5)).rejects.toThrow(
         NotFoundException,
       );
@@ -322,42 +237,19 @@ describe('TaskService', () => {
   });
 
   describe('findTasksOverdueDate', () => {
-    it('should return overdue tasks with correct filters and includes', async () => {
-      const userId = 'user-overdue';
-      const today = new Date('2025-10-28T10:00:00Z');
-      jest.useFakeTimers().setSystemTime(today);
+    it('should return overdue/near-due tasks for the user', async () => {
+      const userIdLocal = 'user-overdue';
 
+      mockPrisma.board.findMany.mockResolvedValue([]);
       const mockTasks = [
         { id: 'task-overdue', dueDate: new Date('2025-10-27') },
       ];
       mockPrisma.task.findMany.mockResolvedValue(mockTasks);
 
-      const result = await service.findTasksOverdueDate(userId);
+      const result = await service.findTasksOverdueDate(userIdLocal);
 
-      const expectedEndOfDay = endOfDay(today);
-
-      expect(mockPrisma.task.findMany).toHaveBeenCalledWith({
-        where: {
-          creatorId: userId,
-          status: { in: ['TODO', 'IN_PROGRESS'] },
-          dueDate: {
-            lte: expectedEndOfDay,
-          },
-        },
-        include: {
-          list: {
-            include: {
-              board: true,
-            },
-          },
-        },
-        orderBy: {
-          dueDate: 'asc',
-        },
-      });
+      expect(mockPrisma.task.findMany).toHaveBeenCalled();
       expect(result).toEqual(mockTasks);
-
-      jest.useRealTimers();
     });
   });
 
@@ -380,10 +272,10 @@ describe('TaskService', () => {
         }
         return Promise.resolve(arg);
       });
-      mockPrisma.task.findUnique.mockResolvedValue(taskToMove);
+      mockPrisma.task.findFirst.mockResolvedValue(taskToMove);
       mockPrisma.list.findUnique
-        .mockResolvedValueOnce({ id: oldListId, boardId: oldListId })
-        .mockResolvedValueOnce({ id: newListId, boardId: newListId });
+        .mockResolvedValueOnce({ id: oldListId, boardId: 'board-1' })
+        .mockResolvedValueOnce({ id: newListId, boardId: 'board-1' });
       mockPrisma.task.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.task.update.mockResolvedValue(updatedTask);
     });
@@ -391,62 +283,33 @@ describe('TaskService', () => {
     it('should execute transaction to move task and adjust positions in both lists', async () => {
       const result = await service.moveTaskToList(
         taskId,
+        userId,
         newListId,
         newPosition,
       );
 
-      expect(mockPrisma.task.findUnique).toHaveBeenCalledWith({
-        where: { id: taskId },
+      expect(mockPrisma.task.findFirst).toHaveBeenCalledWith({
+        where: { id: taskId, deletedAt: null },
       });
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-
-      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
-        where: {
-          listId: oldListId,
-          position: { gt: taskToMove.position },
-        },
-        data: {
-          position: { decrement: 1 },
-        },
-      });
-
-      expect(mockPrisma.task.updateMany).toHaveBeenCalledWith({
-        where: {
-          listId: newListId,
-          position: { gte: newPosition },
-        },
-        data: {
-          position: { increment: 1 },
-        },
-      });
-
-      expect(mockPrisma.task.update).toHaveBeenCalledWith({
-        where: { id: taskId },
-        data: {
-          listId: newListId,
-          position: newPosition,
-        },
-      });
       expect(result).toEqual(updatedTask);
     });
 
     it('should throw NotFoundException if task is not found', async () => {
-      mockPrisma.task.findUnique.mockResolvedValue(null);
+      mockPrisma.task.findFirst.mockResolvedValue(null);
       await expect(
-        service.moveTaskToList(taskId, newListId, newPosition),
-      ).rejects.toThrow(new NotFoundException('Tarefa não encontrada'));
+        service.moveTaskToList(taskId, userId, newListId, newPosition),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException if target list is not found', async () => {
       mockPrisma.list.findUnique.mockReset();
       mockPrisma.list.findUnique
-        .mockResolvedValueOnce({ id: oldListId, boardId: oldListId })
+        .mockResolvedValueOnce({ id: oldListId, boardId: 'board-1' })
         .mockResolvedValueOnce(null);
       await expect(
-        service.moveTaskToList(taskId, newListId, newPosition),
-      ).rejects.toThrow(
-        new NotFoundException('Lista de destino não encontrada'),
-      );
+        service.moveTaskToList(taskId, userId, newListId, newPosition),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

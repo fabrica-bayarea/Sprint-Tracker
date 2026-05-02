@@ -5,10 +5,12 @@ import { BoardService } from '@/board/board.service';
 import { BoardVisibility } from '@/common/enums/board-visibility.enum';
 import { BoardGateway } from '@/events/board.gateway';
 import { NotificationsGateway } from '@/events/notification.gateway';
+import { PrismaQueries } from '@/prisma/queries';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import {
   mockPrisma,
+  mockPrismaQueries,
   mockBoardGateway,
   mockNotificationGateway,
 } from '../setup-mock';
@@ -21,6 +23,7 @@ describe('BoardService', () => {
       providers: [
         BoardService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: PrismaQueries, useValue: mockPrismaQueries },
         { provide: BoardGateway, useValue: mockBoardGateway },
         { provide: NotificationsGateway, useValue: mockNotificationGateway },
       ],
@@ -73,6 +76,7 @@ describe('BoardService', () => {
       expect(mockPrisma.board.findMany).toHaveBeenCalledWith({
         where: { members: { some: { userId: idUser } }, isArchived: false },
         include: {
+          ...mockPrismaQueries.boardInclude,
           _count: {
             select: { members: true },
           },
@@ -119,6 +123,10 @@ describe('BoardService', () => {
       );
       mockPrisma.list.findMany.mockResolvedValue([]);
       mockPrisma.label.findMany.mockResolvedValue([]);
+      mockPrisma.taskLog.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrisma.sprint.findMany.mockResolvedValue([]);
+      mockPrisma.sprint.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrisma.backlog.deleteMany.mockResolvedValue({ count: 0 });
       mockPrisma.invite.deleteMany.mockResolvedValue({ count: 0 });
       mockPrisma.boardMember.deleteMany.mockResolvedValue({ count: 0 });
       mockPrisma.board.delete.mockResolvedValue(board);

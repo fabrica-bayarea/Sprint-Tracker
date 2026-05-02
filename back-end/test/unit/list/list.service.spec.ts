@@ -4,9 +4,14 @@ import { BoardGateway } from '@/events/board.gateway';
 import { CreateListDto } from '@/list/dto/create-list.dto';
 import { UpdateListDto } from '@/list/dto/update-list.dto';
 import { ListService } from '@/list/list.service';
+import { PrismaQueries } from '@/prisma/queries';
 import { PrismaService } from '@/prisma/prisma.service';
 
-import { mockPrisma, mockBoardGateway } from '../setup-mock';
+import {
+  mockPrisma,
+  mockPrismaQueries,
+  mockBoardGateway,
+} from '../setup-mock';
 
 describe('ListService', () => {
   let service: ListService;
@@ -16,6 +21,7 @@ describe('ListService', () => {
       providers: [
         ListService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: PrismaQueries, useValue: mockPrismaQueries },
         { provide: BoardGateway, useValue: mockBoardGateway },
       ],
     });
@@ -30,31 +36,33 @@ describe('ListService', () => {
   });
 
   describe('create', () => {
-    it('deve criar uma lista se o quadro pertencer ao usuário', async () => {
+    it('deve criar uma lista', async () => {
       const dto: CreateListDto = {
         boardId: 'board-1',
         title: 'To do',
         position: 1,
       };
 
-      mockPrisma.board.findFirst.mockResolvedValue({ id: dto.boardId });
       mockPrisma.list.create.mockResolvedValue({ id: 'list-1', ...dto });
 
       const result = await service.create(dto);
 
       expect(mockPrisma.list.create).toHaveBeenCalledWith({
-        data: dto,
+        data: {
+          boardId: dto.boardId,
+          title: dto.title,
+          position: dto.position,
+        },
       });
       expect(result).toEqual({ id: 'list-1', ...dto });
     });
   });
 
   describe('findAll', () => {
-    it('deve retornar todas as listas do quadro do usuário', async () => {
+    it('deve retornar todas as listas do quadro', async () => {
       const boardId = 'board-1';
       const lists = [{ id: 'list-1', title: 'To do' }];
 
-      mockPrisma.board.findFirst.mockResolvedValue({ id: boardId });
       mockPrisma.list.findMany.mockResolvedValue(lists);
 
       const result = await service.findAll(boardId);
@@ -62,6 +70,7 @@ describe('ListService', () => {
       expect(mockPrisma.list.findMany).toHaveBeenCalledWith({
         where: { boardId, isArchived: false },
         orderBy: { position: 'asc' },
+        include: mockPrismaQueries.listInclude,
       });
       expect(result).toEqual(lists);
     });
@@ -85,7 +94,7 @@ describe('ListService', () => {
     it('deve atualizar uma lista após confirmar que ela existe', async () => {
       const id = 'list-1';
       const dto: UpdateListDto = { title: 'Updated' };
-      const updated = { id, title: 'Updated' };
+      const updated = { id, title: 'Updated', boardId: 'board-1' };
 
       mockPrisma.list.findUnique.mockResolvedValue({ id });
       mockPrisma.list.update.mockResolvedValue(updated);
@@ -108,18 +117,25 @@ describe('ListService', () => {
       const id = 'list-2';
       const oldPosition = 3;
       const newPosition = 1;
+      const boardId = 'board-1';
 
       mockPrisma.list.findUnique.mockResolvedValue({
         id,
         position: oldPosition,
+        boardId,
       });
       mockPrisma.list.updateMany.mockResolvedValue({ count: 2 });
-      mockPrisma.list.update.mockResolvedValue({ id, position: newPosition });
+      mockPrisma.list.update.mockResolvedValue({
+        id,
+        position: newPosition,
+        boardId,
+      });
 
       await service.updatePosition(id, newPosition);
 
       expect(mockPrisma.list.updateMany).toHaveBeenCalledWith({
         where: {
+          boardId,
           position: { gte: newPosition, lt: oldPosition },
         },
         data: {
@@ -137,18 +153,25 @@ describe('ListService', () => {
       const id = 'list-1';
       const oldPosition = 1;
       const newPosition = 3;
+      const boardId = 'board-1';
 
       mockPrisma.list.findUnique.mockResolvedValue({
         id,
         position: oldPosition,
+        boardId,
       });
       mockPrisma.list.updateMany.mockResolvedValue({ count: 2 });
-      mockPrisma.list.update.mockResolvedValue({ id, position: newPosition });
+      mockPrisma.list.update.mockResolvedValue({
+        id,
+        position: newPosition,
+        boardId,
+      });
 
       await service.updatePosition(id, newPosition);
 
       expect(mockPrisma.list.updateMany).toHaveBeenCalledWith({
         where: {
+          boardId,
           position: { gt: oldPosition, lte: newPosition },
         },
         data: {
@@ -166,16 +189,16 @@ describe('ListService', () => {
   describe('remove', () => {
     it('deve deletar uma lista após confirmar que ela existe', async () => {
       const id = 'list-1';
-      const deleted = { message: 'Lista removida com sucesso' };
+      const deleted = { id, boardId: 'board-1' };
 
       mockPrisma.list.findUnique.mockResolvedValue({ id });
+      mockPrisma.task.findMany.mockResolvedValue([]);
       mockPrisma.list.delete.mockResolvedValue(deleted);
 
       const result = await service.remove(id);
 
       expect(mockPrisma.list.findUnique).toHaveBeenCalledWith({
         where: { id },
-        include: { tasks: true },
       });
       expect(mockPrisma.list.delete).toHaveBeenCalledWith({ where: { id } });
       expect(result).toEqual(deleted);

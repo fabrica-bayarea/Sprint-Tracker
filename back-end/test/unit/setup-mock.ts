@@ -51,12 +51,39 @@ export const mockPrisma = {
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
     updateMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  taskLog: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  sprint: {
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  sprintBacklogItem: {
+    deleteMany: jest.fn(),
+  },
+  backlog: {
+    deleteMany: jest.fn(),
   },
   $transaction: jest.fn(),
+};
+
+export const mockPrismaQueries = {
+  boardInclude: {},
+  listInclude: {},
+  taskInclude: {},
+};
+
+export const mockTaskLogService = {
+  createLog: jest.fn(),
 };
 
 export const mockBoardGateway = {
