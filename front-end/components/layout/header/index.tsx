@@ -42,11 +42,11 @@ export default function Header() {
         <div className={styles.wrapper_header_helps}>
           <Bell size={32} color="#949494" strokeWidth={2} aria-label="Notificações" />
           <div className={styles.profileContainer}>
-            <Link href="/dashboard/edit-profile/" className={styles.profileImage} aria-label="Editar perfil">
+            <Link href="/edit-profile/" className={styles.profileImage} aria-label="Editar perfil">
               <div className={styles.profileImageInner}></div>
             </Link>
             <div className={styles.dropdownMenu}>
-              <Link href="/dashboard/edit-profile/" className={styles.dropdownItem}>
+              <Link href="/edit-profile/" className={styles.dropdownItem}>
                 <User size={16} />
                 Editar perfil
               </Link>

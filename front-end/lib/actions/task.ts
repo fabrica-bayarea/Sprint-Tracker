@@ -2,12 +2,12 @@
 
 import api from "@/lib/api/axios";
 import { handleAxiosError } from "@/lib/utils/handle-axios-error";
-import { TaskData, TaskResponse, UpdateTaskData } from "../../types/task";
+import { TaskData, Task, UpdateTaskData } from "../../types/task";
 
 export async function createTask(taskData: TaskData) {
   try {
     const response = await api.post("/v1/tasks", taskData);
-    const data: TaskResponse = response.data;
+    const data: Task = response.data;
     return { success: true, data };
   } catch (error) {
     return {
@@ -20,7 +20,7 @@ export async function createTask(taskData: TaskData) {
 export async function getTasksByList(listId: string) {
   try {
     const response = await api.get(`/v1/tasks/list/${listId}`);
-    const data: TaskResponse[] = response.data;
+    const data: Task[] = response.data;
     return { success: true, data };
   } catch (error) {
     return {
@@ -33,7 +33,7 @@ export async function getTasksByList(listId: string) {
 export async function getTaskById(taskId: string) {
   try {
     const response = await api.get(`/v1/tasks/${taskId}`);
-    const data: TaskResponse = response.data;
+    const data: Task = response.data;
     return { success: true, data };
   } catch (error) {
     return {
@@ -46,7 +46,7 @@ export async function getTaskById(taskId: string) {
 export async function updateTask(taskId: string, updateData: UpdateTaskData) {
   try {
     const response = await api.patch(`/v1/tasks/${taskId}`, updateData);
-    const data: TaskResponse = response.data;
+    const data: Task = response.data;
     return { success: true, data };
   } catch (error) {
     return {

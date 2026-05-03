@@ -3,12 +3,12 @@
 import { Image } from "@/components/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, HelpCircle, Briefcase, Gauge, Logs } from "lucide-react";
+import { HelpCircle, Gauge, Logs, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BoardSelect } from "./board-select";
 
 const navItems = [
-  { label: "Quadros", href: "/dashboard", icon: Briefcase },
+  { label: "Home", href: "/dashboard", icon: Home },
   { label: "Backlog", href: "/dashboard/backlog", icon: Logs },
   { label: "Sprints", href: "/dashboard/sprints", icon: Gauge },
 ];
