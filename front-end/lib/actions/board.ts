@@ -42,6 +42,18 @@ export async function getBoards() {
   }
 }
 
+export async function deleteBoard(boardId: string) {
+  try {
+    await api.delete(`/v1/boards/${boardId}`);
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, "Falha ao remover o board"),
+    };
+  }
+}
+
 export async function getBoardById(boardId: string) {
   try {
     const response = await api.get(`/v1/boards/${boardId}`);
