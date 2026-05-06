@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input, Textarea } from "@/components/ui";
 import { createBoard } from "@/lib/actions/board";
-import { useNotificationStore } from "@/stores/notification";
+import { toast } from "sonner";
 
 interface CreateBoardDialogProps {
   isOpen: boolean;
@@ -14,7 +14,6 @@ interface CreateBoardDialogProps {
 }
 
 export function CreateBoardDialog({ isOpen, onClose }: CreateBoardDialogProps) {
-  const { showNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   
   const [name, setName] = useState("");
@@ -41,7 +40,7 @@ export function CreateBoardDialog({ isOpen, onClose }: CreateBoardDialogProps) {
       queryClient.invalidateQueries({ queryKey: ["boards"] });
       onClose();
     } else {
-      showNotification(result.error || "Unknown error", "failed");
+      toast.error(result.error || "Unknown error");
     }
 
     setLoading(false);

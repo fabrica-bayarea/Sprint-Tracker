@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link";
 
 import { login } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/stores/notification';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 
@@ -13,10 +12,10 @@ import { AuthInput, AuthButton, Image } from "@/components/ui";
 
 import parentStyles from "../style.module.css";
 import styles from "./style.module.css";
+import { toast } from "sonner";
 
 export default function Home() {
   const router = useRouter()
-  const { showNotification } = useNotificationStore()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -29,7 +28,7 @@ export default function Home() {
     if (result.success) {
       router.push("/dashboard");
     } else {
-      showNotification(result.error || "Erro desconhecido", 'failed')
+      toast.error(result.error || "Erro desconhecido")
     }
   }
 

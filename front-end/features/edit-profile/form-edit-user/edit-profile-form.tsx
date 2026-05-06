@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { updateUserProfile } from "@/lib/actions/profile";
-import { useNotificationStore } from '@/stores/notification';
 import { Input, Image } from "@/components/ui";
+import { toast } from "sonner";
 
 interface UserProfile {
   name: string;
@@ -20,7 +20,6 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
     photoUrl: profile?.photoUrl || "/images/iesb-icon.png",
   });
   const [loading, setLoading] = useState(false);
-  const { showNotification } = useNotificationStore();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value, files } = e.target;
@@ -43,9 +42,9 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
     const response = await updateUserProfile(formData);
 
     if (response.success) {
-      showNotification("Perfil atualizado com sucesso!", 'success');
+      toast.success("Perfil atualizado com sucesso!");
     } else {
-      showNotification(response.error || "Erro desconhecido", 'failed');
+      toast.error(response.error || "Erro desconhecido");
     }
 
     setLoading(false);

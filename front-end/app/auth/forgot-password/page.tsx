@@ -4,25 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { forgotPassword } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/stores/notification';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 import AuthInput from "@/components/ui/authInput";
 import AuthButton from "@/components/ui/authButton";
 
 import styles from "./style.module.css";
+import { toast } from "sonner";
 
 export default function ForgotPassword() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { showNotification } = useNotificationStore()
 
   async function handleSubmit(e: React.FormEvent) {
       e.preventDefault()
 
       if (!email.trim()) {
-        showNotification("Por favor, insira seu e-mail", 'failed')
+        toast.error("Por favor, insira seu e-mail")
         return
       }
 
@@ -32,11 +31,11 @@ export default function ForgotPassword() {
         const result = await forgotPassword(email);
 
         if (result.success) {
-          showNotification("E-mail enviado com sucesso! Verifique sua caixa de entrada.", 'success')
+          toast.success("E-mail enviado com sucesso! Verifique sua caixa de entrada.")
           router.push("/auth/forgot-password/verify");
           router.refresh();
         } else {
-          showNotification(result.error || "Erro desconhecido", 'failed')
+          toast.error(result.error || "Erro desconhecido")
         }
       } finally {
         setIsLoading(false)

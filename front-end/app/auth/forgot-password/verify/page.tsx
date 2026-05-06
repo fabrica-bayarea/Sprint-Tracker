@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { verifyCodeResetPassword, resetPassword } from "@/lib/actions/auth";
-import { useNotificationStore } from '@/stores/notification';
 
 import AuthFormContainer from "@/components/ui/authFormContainer";
 import AuthInput from "@/components/ui/authInput";
 import AuthButton from "@/components/ui/authButton";
 
 import styles from "./style.module.css";
+import { toast } from "sonner";
 
 export default function VerifyCodeResetPassword() {
   const router = useRouter()
@@ -19,13 +19,12 @@ export default function VerifyCodeResetPassword() {
   const [confirmNewPassword, setconfirmNewPassword] = useState("")
   const [step, setStep] = useState<'verify' | 'reset'>('verify')
   const [isLoading, setIsLoading] = useState(false)
-  const { showNotification } = useNotificationStore()
 
   async function handleVerifyCode(e: React.FormEvent) {
     e.preventDefault()
 
     if (!code.trim()) {
-      showNotification("Por favor, insira o código de verificação", 'failed')
+      toast.error("Por favor, insira o código de verificação")
       return
     }
 
@@ -36,9 +35,9 @@ export default function VerifyCodeResetPassword() {
 
       if (result.success) {
         setStep('reset')
-        showNotification("Código verificado com sucesso! Agora defina sua nova senha.", 'success')
+        toast.success("Código verificado com sucesso! Agora defina sua nova senha.")
       } else {
-        showNotification(result.error || "Código inválido", 'failed')
+        toast.error(result.error || "Código inválido")
       }
     } finally {
       setIsLoading(false)
@@ -49,17 +48,17 @@ export default function VerifyCodeResetPassword() {
     e.preventDefault()
 
     if (!newPassword.trim()) {
-      showNotification("Por favor, insira a nova senha", 'failed')
+      toast.error("Por favor, insira a nova senha")
       return
     }
 
     if (newPassword !== confirmNewPassword) {
-      showNotification("As senhas não coincidem", 'failed')
+      toast.error("As senhas não coincidem")
       return
     }
 
     if (newPassword.length < 8) {
-      showNotification("A senha deve ter pelo menos 8 caracteres", 'failed')
+      toast.error("A senha deve ter pelo menos 8 caracteres")
       return
     }
 
@@ -69,10 +68,10 @@ export default function VerifyCodeResetPassword() {
       const result = await resetPassword(newPassword, confirmNewPassword);
 
       if (result.success) {
-        showNotification("Senha redefinida com sucesso!", 'success')
+        toast.success("Senha redefinida com sucesso!")
         router.push("/auth/login");
       } else {
-        showNotification(result.error || "Erro ao redefinir senha", 'failed')
+        toast.error(result.error || "Erro ao redefinir senha")
       }
     } finally {
       setIsLoading(false)

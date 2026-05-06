@@ -1,11 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBoards } from "@/lib/actions/board";
 import { getExpiredTasks, deleteTask, updateTask } from "@/lib/actions/task";
-import { useNotificationStore } from '@/stores/notification';
 import { Board, ExpiredTask, PendenciaItem } from "@/types/board";
+import { toast } from "sonner";
 
 export function useDashboard() {
-  const { showNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const { data, isLoading: loadingBoards } = useQuery({
@@ -20,7 +19,7 @@ export function useDashboard() {
       const tasksData = result.data || result;
 
       if (!Array.isArray(tasksData)) {
-        showNotification("Erro ao buscar tarefas", 'failed');
+        toast.error("Erro ao buscar tarefas");
         return [];
       }
 
@@ -48,12 +47,12 @@ export function useDashboard() {
     onSuccess: (result) => {
       if (result.success ?? true) {
         queryClient.invalidateQueries({ queryKey: ["expiredTasks"] });
-        showNotification("Tarefa deletada com sucesso!", 'success');
+        toast.success("Tarefa deletada com sucesso!");
       } else {
-        showNotification(result.error || "Erro ao deletar", 'failed');
+        toast.error(result.error || "Erro ao deletar");
       }
     },
-    onError: () => showNotification("Erro ao deletar tarefa", 'failed')
+    onError: () => toast.error("Erro ao deletar tarefa")
   });
 
   const completeMutation = useMutation({
@@ -61,12 +60,12 @@ export function useDashboard() {
     onSuccess: (result) => {
       if (result.success ?? true) {
         queryClient.invalidateQueries({ queryKey: ["expiredTasks"] });
-        showNotification("Tarefa marcada como concluída!", 'success');
+        toast.success("Tarefa marcada como concluída!");
       } else {
-        showNotification(result.error || "Erro ao atualizar", 'failed');
+        toast.error(result.error || "Erro ao atualizar");
       }
     },
-    onError: () => showNotification("Erro ao atualizar tarefa", 'failed')
+    onError: () => toast.error("Erro ao atualizar tarefa")
   });
 
   return {

@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { headers } from 'next/headers';
-
-import Notification from "@/components/layout/notification";
-
 import "./globals.css";
 import Providers from "@/providers";
+import { Toaster } from "@/components/ui/sonner";
 
 
 const inter = Inter({
@@ -28,7 +26,7 @@ export default async function RootLayout(
     <html lang="pt-br">
       <body className={`${inter.className}`}>
         <Providers>{children}</Providers>
-        <Notification />
+        <Toaster richColors position="top-right"/>
       </body>
     </html>
   );
