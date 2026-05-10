@@ -4,9 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input, Textarea } from "@/components/ui";
 import { createBoard } from "@/lib/actions/board";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CreateBoardDialogProps {
   isOpen: boolean;
@@ -54,14 +55,12 @@ export function CreateBoardDialog({ isOpen, onClose }: CreateBoardDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input 
-            label="Nome" 
             type="text"
             value={name} 
             onChange={(e) => setName(e.target.value)} 
             required 
           />
           <Textarea
-            label="Descrição"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}

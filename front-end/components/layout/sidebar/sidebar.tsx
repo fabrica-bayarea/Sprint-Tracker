@@ -1,6 +1,6 @@
 "use client";
 
-import { Image } from "@/components/ui";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HelpCircle, Gauge, Logs, Home } from "lucide-react";

@@ -1,148 +1,91 @@
 "use client"
 
-import { useState } from "react";
-// Função utilitária para checar requisitos de senha
-function getPasswordRequirements(password: string) {
-  return {
-    hasUppercase: /[A-Z]/.test(password),
-    hasLowercase: /[a-z]/.test(password),
-    hasNumber: /[0-9]/.test(password),
-    hasSpecial: /[^A-Za-z0-9]/.test(password),
-  };
-}
-import { useRouter } from "next/navigation";
-import { CheckCircle } from "lucide-react";
-
-import { register } from "@/lib/actions/auth";
-
-import AuthFormContainer from "@/components/ui/authFormContainer";
-import AuthInput from "@/components/ui/authInput";
-import AuthButton from "@/components/ui/authButton";
-
-import parentStyles from "../style.module.css";
-import styles from "./style.module.css";
-import { toast } from "sonner";
+import Link from "next/link";
+import { Controller } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { useRegister } from "../../../hooks/auth/use-register";
 
 export default function Register() {
-  const router = useRouter()
-  const [fullname, setFullName] = useState("")
-  const [userName, setUserName] = useState("")
-  const [email, setEmail] = useState("")
-  const [confirmEmail, setconfirmEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setconfirmConfirmPassword] = useState("")
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [agreeTerms, setAgreeTerms] = useState(false)
+  const { registerField, handleSubmit, errors, password, passwordRequirements, control } = useRegister();
 
-  const passwordRequirements = getPasswordRequirements(password);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-
-    if (!agreeTerms) {
-      toast.error("Você precisa concordar com os termos de serviço.")
-      return;
-    }
-
-    if (confirmEmail != email) {
-      toast.error("E-mails não coincidem");
-      return;
-    }
-    if (confirmPassword != password) {
-      toast.error("Senhas não coincidem")
-      return;
-    }
-    const result = await register(fullname, userName, email, password);
-
-    if (result.success) {
-      setIsSuccess(true);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      router.push("/dashboard");
-    } else {
-      toast.error(result.error || "Erro desconhecido")
-    }
-  }
-
-  if (isSuccess) {
-    return (
-      <AuthFormContainer title="">
-        <div className={styles.successDiv}>
-          <CheckCircle size={64} color="#fff" />
-          <div className={styles.title}>
-            CONTA CRIADA COM SUCESSO!
-          </div>
-          <div style={{ color: '#fff', textAlign: 'center', fontSize: 15, marginTop: 8 }}>
-            Aguarde!<br />Estamos redirecionando você para sua conta!
-          </div>
-        </div>
-      </AuthFormContainer>
-    );
-  }
+  const getReqClass = (met: boolean) => {
+    if (!password) return "text-[#e8e8e8]";
+    return met ? "text-[#4ade80]" : "text-[#f87171]";
+  };
 
   return (
-    <>
-      <AuthFormContainer title="CRIE SUA CONTA" showBackToLogin={true}>
-        <form className={parentStyles.form} onSubmit={handleSubmit}>
-          <AuthInput
-            onChange={(e) => setFullName(e.target.value)}
-            type="text"
-            placeholder="Nome completo"
-            value={fullname}
-          />
-          <AuthInput
-            onChange={(e) => setUserName(e.target.value)}
-            type="text"
-            placeholder="Nome de usuário"
-            value={userName}
-          />
-          <AuthInput
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            placeholder="E-mail"
-            value={email}
-          />
-          <AuthInput
-            onChange={(e) => setconfirmEmail(e.target.value)}
-            type="email"
-            placeholder="Confirme o e-mail"
-            value={confirmEmail}
-          />
-          <AuthInput
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            placeholder="Senha"
-            value={password}
-          />
-          <div className={styles.passwordRequirements}>
-            <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasUppercase ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
-              {passwordRequirements.hasUppercase ? '✔' : '✖'} Pelo menos 1 letra maiúscula
-            </div>
-            <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasLowercase ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
-              {passwordRequirements.hasLowercase ? '✔' : '✖'} Pelo menos 1 letra minúscula
-            </div>
-            <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasNumber ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
-              {passwordRequirements.hasNumber ? '✔' : '✖'} Pelo menos 1 número
-            </div>
-            <div className={`${styles.requirementItem} ${password ? (passwordRequirements.hasSpecial ? styles.requirementMet : styles.requirementNotMet) : styles.requirementNeutral}`}>
-              {passwordRequirements.hasSpecial ? '✔' : '✖'} Pelo menos 1 caractere especial
-            </div>
+    <div className="relative z-1 mx-5 mb-5 w-[90%] max-w-112.5 rounded-lg bg-[#e02b2b] p-[30px_25px] md:p-10">
+      <Link href="/auth/login" className="mb-3.75 flex w-min items-center gap-1 rounded-lg pr-3 text-[15px] font-medium text-white no-underline transition-all hover:bg-white/10">
+        <svg width="38" height="38" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Voltar
+      </Link>
+
+      <h1 className="mb-5 text-center text-[20px] font-bold text-white md:text-2xl">
+        CRIE SUA CONTA
+      </h1>
+
+      <form className="flex flex-col gap-3.75" onSubmit={handleSubmit}>
+        <Input placeholder="Nome completo" className="bg-white text-black" {...registerField("fullname")} />
+        {errors.fullname && <span className="text-xs text-white/90 -mt-3">{errors.fullname.message}</span>}
+
+        <Input placeholder="Nome de usuário" className="bg-white text-black" {...registerField("userName")} />
+        <Input type="email" placeholder="E-mail" className="bg-white text-black" {...registerField("email")} />
+        <Input type="email" placeholder="Confirme o e-mail" className="bg-white text-black" {...registerField("confirmEmail")} />
+        <Input type="password" placeholder="Senha" className="bg-white text-black" {...registerField("password")} />
+
+        <div className="px-3 text-[13px] leading-relaxed text-white">
+          <div className={`mb-0.5 ${getReqClass(passwordRequirements.hasUppercase)}`}>
+            {passwordRequirements.hasUppercase ? '✔' : '✖'} Pelo menos 1 letra maiúscula
           </div>
-          <AuthInput
-            onChange={(e) => setconfirmConfirmPassword(e.target.value)}
-            type="password"
-            placeholder="Confirme a senha"
-            value={confirmPassword}
-          />
-          <AuthInput
-            type="checkbox"
-            checked={agreeTerms}
-            onChange={() => setAgreeTerms(!agreeTerms)}
-            label="Concordo com ostermos de serviço"
-          />
-          <AuthButton type="submit">Cadastrar</AuthButton>
-        </form>
-      </AuthFormContainer>
-    </>
+          <div className={`mb-0.5 ${getReqClass(passwordRequirements.hasLowercase)}`}>
+            {passwordRequirements.hasLowercase ? '✔' : '✖'} Pelo menos 1 letra minúscula
+          </div>
+          <div className={`mb-0.5 ${getReqClass(passwordRequirements.hasNumber)}`}>
+            {passwordRequirements.hasNumber ? '✔' : '✖'} Pelo menos 1 número
+          </div>
+          <div className={`mb-0.5 ${getReqClass(passwordRequirements.hasSpecial)}`}>
+            {passwordRequirements.hasSpecial ? '✔' : '✖'} Pelo menos 1 caractere especial
+          </div>
+        </div>
+
+        <Input type="password" placeholder="Confirme a senha" className="bg-white text-black" {...registerField("confirmPassword")} />
+
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
+            <Controller
+              name="agreeTerms"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="terms"
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                  className="border-white data-[state=checked]:bg-white data-[state=checked]:text-[#e02b2b]"
+                />
+              )}
+            />
+            <Label htmlFor="terms" className="cursor-pointer text-[13px] text-white">
+              Concordo com os termos de serviço
+            </Label>
+          </div>
+          {errors.agreeTerms && <p className="text-xs text-white/90">{errors.agreeTerms.message}</p>}
+        </div>
+
+        <button
+          type="submit"
+          className="mt-2.5 w-full rounded-lg bg-white p-2.5 text-base font-bold text-[#e02b2b] transition-colors hover:bg-[#f0f0f0] md:p-3"
+        >
+          Cadastrar
+        </button>
+      </form>
+
+      <span className="mt-6.25 block text-center text-[14px] font-bold text-white uppercase">
+        IESB - BAY AREA
+      </span>
+    </div>
   );
 }

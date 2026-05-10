@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Priority, Task } from "@/types/task";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SprintOption {
   id: string;
