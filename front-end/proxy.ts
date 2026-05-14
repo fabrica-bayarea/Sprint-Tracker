@@ -4,7 +4,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  
+
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
   const cspHeader = `
     default-src 'self';

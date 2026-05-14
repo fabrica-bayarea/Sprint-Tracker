@@ -13,9 +13,10 @@ export function useRegister() {
     handleSubmit,
     control,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: {
       fullname: "",
       userName: "",
@@ -37,21 +38,30 @@ export function useRegister() {
   };
 
   const onSubmit = async (data: RegisterFormData) => {
-    const result = await register(data.fullname, data.userName, data.email, data.password);
+    try {
+      const result = await register(data.fullname, data.userName, data.email, data.password);
 
-    if (result.success) {
-      toast.success("Conta criada com sucesso!");
-      router.push("/dashboard");
-    } else {
-      toast.error(result.error || "Erro desconhecido");
+      if (result?.success) {
+        toast.success("Conta criada com sucesso!");
+        router.push("/dashboard");
+      } else {
+        toast.error(result?.error || "Erro ao realizar o registro");
+      }
+    } catch (error) {
+      toast.error("Ocorreu um erro inesperado");
     }
+  };
+
+  const onErrors = (err: any) => {
+    console.log(JSON.stringify(err, null, 2));
   };
 
   return {
     registerField,
-    handleSubmit: handleSubmit(onSubmit),
+    handleSubmit: handleSubmit(onSubmit, onErrors),
     control,
     errors,
+    isSubmitting,
     password,
     passwordRequirements,
   };

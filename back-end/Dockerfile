@@ -43,6 +43,8 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 COPY --from=build --chown=appuser:appgroup /app/dist /app/dist
 COPY --from=build --chown=appuser:appgroup /app/node_modules /app/node_modules
 COPY --from=build --chown=appuser:appgroup /app/prisma /app/prisma
+COPY --chown=appuser:appgroup start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Define o usuário para executar a aplicação
 USER appuser
@@ -53,4 +55,4 @@ ENV NODE_ENV=production
 # Expõe a porta do container
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+CMD ["/app/start.sh"]

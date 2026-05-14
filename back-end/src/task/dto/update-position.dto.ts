@@ -7,5 +7,5 @@ export class UpdatePositionDto {
     example: 1,
   })
   @IsNumber()
-  newPosition: number;
+  newPosition!: number;
 }

@@ -9,23 +9,27 @@ datasource db {
 }
 
 model User {
-  id                  String        @id @default(uuid())
-  email               String        @unique
-  userName            String        @unique
+  id                  String         @id @default(uuid())
+  email               String         @unique
+  userName            String         @unique
   providerId          String?
   authProvider        AuthProvider
-  CreatedAt           DateTime      @default(now())
-  isVerified          Boolean       @default(false)
+  CreatedAt           DateTime       @default(now())
+  isVerified          Boolean        @default(false)
   name                String
   passwordHash        String
   resetToken          String?
   resetTokenExpiresAt DateTime?
   role                Role
-  updatedAt           DateTime      @updatedAt
+  updatedAt           DateTime       @updatedAt
   image               String?
-  boards              Board[]       @relation("OwnerBoards")
+  boards              Board[]        @relation("OwnerBoards")
   memberships         BoardMember[]
-  tasksCreated        Task[]        @relation("TaskCreator")
+  tasksCreated        Task[]         @relation("TaskCreator")
+  tasksAssigned       Task[]         @relation("TaskAssignee")
+  taskLogs            TaskLog[]      @relation("TaskLogUser")
+  notifications       Notification[]
+  sentInvites         Invite[]       @relation("Sender")
 
   @@unique([authProvider, providerId], name: "AuthProviderAndIdUnique")
 }
@@ -45,6 +49,8 @@ model Board {
   lists       List[]
   backlogs    Backlog[]
   sprints     Sprint[]
+  taskLogs    TaskLog[]
+  invites     Invite[]
 }
 
 model Backlog {
@@ -97,6 +103,18 @@ model BoardMember {
   @@id([boardId, userId])
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+  OBSERVER
+}
+
+enum statusInvite {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 model List {
   id         String   @id @default(uuid())
   boardId    String
@@ -113,17 +131,35 @@ model Task {
   id          String      @id @default(uuid())
   listId      String
   creatorId   String
+  assigneeId  String?
   title       String
   description String?
   position    Int
   status      Status      @default(TODO)
   dueDate     DateTime?
   isArchived  Boolean     @default(false)
+  deletedAt   DateTime?
+  completedAt DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   creator     User        @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee    User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
   list        List        @relation(fields: [listId], references: [id])
   labels      TaskLabel[]
+  logs        TaskLog[]
+}
+
+model TaskLog {
+  id        String    @id @default(uuid())
+  taskId    String
+  userId    String
+  boardId   String
+  action    LogAction
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  task      Task      @relation(fields: [taskId], references: [id])
+  user      User      @relation("TaskLogUser", fields: [userId], references: [id])
+  board     Board     @relation(fields: [boardId], references: [id])
 }
 
 model Label {
@@ -146,16 +182,43 @@ model TaskLabel {
   @@id([taskId, labelId])
 }
 
+model Invite {
+  id           String        @id @default(uuid())
+  boardId      String
+  senderId     String
+  recipientId  String
+  email        String
+  createdAt    DateTime      @default(now())
+  statusInvite statusInvite  @default(PENDING)
+  role         Role          @default(MEMBER)
+  board        Board         @relation(fields: [boardId], references: [id])
+  sender       User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  notification Notification?
+}
+
+model Notification {
+  id               String           @id @default(uuid())
+  userId           String
+  isRead           Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  typeNotification typeNotification
+  user             User             @relation(fields: [userId], references: [id])
+  inviteId         String?          @unique
+  invite           Invite?          @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+}
+
+enum typeNotification {
+  INVITE_BOARD
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  WARNING
+}
+
 enum AuthProvider {
   local
   google
   microsoft
-}
-
-enum Role {
-  ADMIN
-  MEMBER
-  OBSERVER
+  ldap
 }
 
 enum BoardVisibility {
@@ -188,4 +251,13 @@ enum SprintStatus {
   PLANNED
   ACTIVE
   COMPLETED
+}
+
+enum LogAction {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_MOVED
+  TASK_STATUS_CHANGED
+  TASK_ARCHIVED
+  TASK_DELETED
 }

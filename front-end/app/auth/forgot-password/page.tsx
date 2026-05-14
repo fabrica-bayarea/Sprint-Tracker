@@ -11,7 +11,7 @@ export default function ForgotPassword() {
 
   return (
     <main className="flex min-h-screen w-full bg-white">
-      <div className="relative hidden w-[60%] flex-col justify-between bg-gradient-to-br from-[#e02b2b] to-[#991b1b] p-10 lg:flex">
+      <div className="relative hidden w-[60%] flex-col justify-between bg-linear-to-br from-[#e02b2b] to-[#991b1b] p-10 lg:flex">
         <div className="absolute left-10 top-10">
           <Image src="/images/iesb-logo.png" alt="IESB" width={100} height={120} className="object-contain" />
         </div>
@@ -23,7 +23,7 @@ export default function ForgotPassword() {
       </div>
 
       <div className="flex w-full flex-col items-center justify-center p-6 sm:p-12 lg:w-[40%]">
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-100">
           <Link href="/auth/login" className="mb-6 flex w-fit items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
             <ArrowLeft size={16} />
             Voltar

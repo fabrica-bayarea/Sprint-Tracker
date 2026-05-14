@@ -7,12 +7,12 @@ export class MoveTaskOtherListDto {
     example: '1234567890abcdef12345678',
   })
   @IsString()
-  newListId: string;
+  newListId!: string;
 
   @ApiProperty({
     description: 'Posição da tarefa na lista',
     example: 1,
   })
   @IsNumber()
-  newPosition: number;
+  newPosition!: number;
 }

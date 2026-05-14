@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { updateUserProfile } from "@/lib/actions/profile";
-import { Input, Image } from "@/components/ui";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import Image from "next/image"
 
 interface UserProfile {
   name: string;
@@ -57,7 +58,6 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
           <Input
             type="text"
             name="name"
-            label="Nome"
             placeholder="Digite seu nome"
             value={form.name}
             onChange={handleChange}
@@ -65,7 +65,6 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
           <Input
             type="text"
             name="userName"
-            label="Nome de usuário"
             placeholder="Escolha um nome de usuário"
             value={form.userName}
             onChange={handleChange}
@@ -73,7 +72,6 @@ export default function EditProfileForm({ profile }: { profile: UserProfile }) {
           <Input
             type="email"
             name="email"
-            label="Email"
             placeholder="Seu e-mail"
             value={form.email}
             onChange={handleChange}

@@ -1,3 +1,5 @@
+"use client"
+
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -12,7 +14,7 @@ export function useLogin() {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -23,13 +25,23 @@ export function useLogin() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    const result = await login(data.email, data.password, data.rememberMe);
+    try {
+      const result = await login(data.email, data.password, data.rememberMe);
 
-    if (result.success) {
-      router.push("/dashboard");
-    } else {
-      toast.error(result.error || "Erro desconhecido");
+      console.log(result);
+
+      if (result && (result.success || !result.error)) {
+        router.push("/dashboard");
+      } else {
+        toast.error(result?.error || "Erro desconhecido");
+      }
+    } catch (error) {
+      toast.error("Ocorreu um erro inesperado");
     }
+  };
+
+  const onErrors = (err: any) => {
+    console.log(JSON.stringify(err, null, 2));
   };
 
   const handleOAuth = (provider: string) => {
@@ -38,9 +50,10 @@ export function useLogin() {
 
   return {
     register,
-    handleSubmit: handleSubmit(onSubmit),
+    handleSubmit: handleSubmit(onSubmit, onErrors),
     control,
     errors,
+    isSubmitting,
     handleOAuth,
   };
 }
