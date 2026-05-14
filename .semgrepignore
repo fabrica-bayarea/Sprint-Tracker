@@ -1,0 +1,10 @@
+# Arquivos ignorados pelo scan do Semgrep.
+#
+# nginx/nginx.conf:
+#   A regra `generic.nginx.security.possible-h2c-smuggling.possible-nginx-h2c-smuggling`
+#   sinaliza qualquer `proxy_set_header Upgrade $var` que não seja literal,
+#   sem interpretar o bloco `map $http_upgrade $upgrade_safe` que já faz
+#   allowlist apenas para "websocket". A mitigação está aplicada e validada
+#   manualmente. Comentários `# nosemgrep` inline não são respeitados ao
+#   rodar com a config registry `p/owasp-top-ten`.
+nginx/nginx.conf
