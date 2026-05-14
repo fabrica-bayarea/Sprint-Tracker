@@ -6,6 +6,7 @@ export interface TaskData {
   position: number;
   status: string;
   dueDate?: string;
+  assigneeId?: string | null;
 }
 
 export interface UpdateTaskData {
@@ -15,6 +16,7 @@ export interface UpdateTaskData {
   position?: number;
   status?: string;
   dueDate?: string;
+  assigneeId?: string | null;
 }
 
 export interface Task {
@@ -28,6 +30,7 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   priority?: Priority;
+  assigneeId?: string | null;
 }
 
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW';

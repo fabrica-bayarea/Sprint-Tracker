@@ -7,7 +7,7 @@ import { BoardData, BoardListItemAPI } from "../../types/board";
 
 export async function createBoard(boardData: BoardData) {
   try {
-    await api.post("/boards", {
+    await api.post("/v1/boards", {
       ...boardData,
       visibility: "PRIVATE",
     });
@@ -23,7 +23,7 @@ export async function createBoard(boardData: BoardData) {
 
 export async function getBoards() {
   try {
-    const response = await api.get("/boards");
+    const response = await api.get("/v1/boards");
     const data: BoardListItemAPI[] = response.data;
 
     return {
@@ -46,7 +46,7 @@ export async function getBoards() {
 export async function deleteBoard(boardId: string) {
   try {
     const safeBoardId = validateId(boardId, 'boardId');
-    await api.delete(`/boards/${safeBoardId}`);
+    await api.delete(`/v1/boards/${safeBoardId}`);
     return { success: true, data: { message: 'success' } };
   } catch (error) {
     return {
@@ -59,7 +59,7 @@ export async function deleteBoard(boardId: string) {
 export async function getBoardById(boardId: string) {
   try {
     const safeBoardId = validateId(boardId, 'boardId');
-    const response = await api.get(`/boards/${safeBoardId}`);
+    const response = await api.get(`/v1/boards/${safeBoardId}`);
     const data = response.data;
 
     return {

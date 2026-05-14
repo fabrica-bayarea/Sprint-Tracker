@@ -5,7 +5,7 @@ import { handleAxiosError } from "@/lib/utils/handle-axios-error";
 
 export async function getUserProfile() {
   try {
-    const response = await api.get("/profile");
+    const response = await api.get("/v1/me/profile");
     return { success: true, data: response.data };
   } catch (error) {
     return {
@@ -17,7 +17,7 @@ export async function getUserProfile() {
 
 export async function updateUserProfile(formData: { name: string; userName: string; email: string; }) {
   try {
-    const response = await api.put("/profile", formData);
+    const response = await api.put("/v1/me/profile", formData);
     return { success: true, data: response.data };
   } catch (error) {
     return {
@@ -29,7 +29,7 @@ export async function updateUserProfile(formData: { name: string; userName: stri
 
 export async function deleteUserProfile() {
   try {
-    const response = await api.delete("/profile");
+    const response = await api.delete("/v1/me");
     return { success: true, data: response.data };
   } catch (error) {
     return {
