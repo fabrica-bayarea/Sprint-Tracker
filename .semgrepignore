@@ -8,3 +8,9 @@
 #   manualmente. Comentários `# nosemgrep` inline não são respeitados ao
 #   rodar com a config registry `p/owasp-top-ten`.
 nginx/nginx.conf
+
+# back-end/test/**:
+#   Arquivos de teste (e2e/unit) usam JWTs, secrets e credenciais mockadas
+#   intencionalmente. Falso-positivo de regras como
+#   `javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret`.
+back-end/test/

@@ -1,6 +1,10 @@
 'use client';
 
-export default function Error({ reset }: { reset: () => void }) {
+interface ErrorPageProps {
+  readonly reset: () => void;
+}
+
+export default function ErrorPage({ reset }: ErrorPageProps) {
 
   return (
     <div className="h-screen flex flex-col justify-center items-center text-center">

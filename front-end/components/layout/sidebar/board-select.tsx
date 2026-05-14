@@ -30,12 +30,13 @@ export const BoardSelect = () => {
             ))}
           </SelectGroup>
           <SelectSeparator />
-          <div
+          <button
+            type="button"
             onClick={() => setIsDialogOpen(true)}
-            className="relative flex w-full cursor-pointer items-center gap-1.5 rounded-md py-2 pr-8 pl-2 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground"
+            className="relative flex w-full cursor-pointer items-center gap-1.5 rounded-md py-2 pr-8 pl-2 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground bg-transparent border-0 text-left"
           >
             <Plus size={12} /> Criar Quadro
-          </div>
+          </button>
         </SelectContent>
       </Select>
 
