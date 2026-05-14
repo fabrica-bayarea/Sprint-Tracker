@@ -25,7 +25,7 @@ export const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   try {
-    const tokenCookie = await getCookie("trello-session");
+    const tokenCookie = await getCookie("sprinttacker-session");
     if (tokenCookie) {
       config.headers['Cookie'] = tokenCookie;
     }

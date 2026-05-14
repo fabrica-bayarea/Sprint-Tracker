@@ -16,7 +16,7 @@ export default function Header() {
   const isSprintsPage = pathname === "/dashboard/sprints";
 
   const handleLogout = async () => {
-    await removeCookie("trello-session");
+    await removeCookie("sprinttacker-session");
     router.push("/auth/login/");
   };
 

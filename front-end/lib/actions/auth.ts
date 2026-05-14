@@ -8,7 +8,7 @@ export async function login(email: string, password: string, rememberMe: boolean
   try {
     const response = await api.post("/v1/auth/signin", { email, password, rememberMe });
     const rawSetCookie = response.headers["set-cookie"];
-    await setSessioCookie(rawSetCookie, "trello-session");
+    await setSessioCookie(rawSetCookie, "sprinttacker-session");
     return { success: true, data: { message: 'success' } };
   } catch (error) {
     return {
@@ -22,7 +22,7 @@ export async function register(name: string, userName: string, email: string, pa
   try {
     const response = await api.post("/v1/auth/signup", { name, userName, email, password });
     const rawSetCookie = response.headers["set-cookie"];
-    await setSessioCookie(rawSetCookie, "trello-session");
+    await setSessioCookie(rawSetCookie, "sprinttacker-session");
     return { success: true, data: { message: 'success' } };
   } catch (error) {
     return {
