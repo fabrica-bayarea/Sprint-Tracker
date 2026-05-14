@@ -2,11 +2,13 @@
 
 import api from "@/lib/api/axios";
 import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { validateId } from "@/lib/utils/validateId";
 import { List, NewListData, PatchListData } from "../../types/list";
 
 export async function getAllList(boardId: string) {
   try {
-    const response = await api.get(`/v1/lists/board/${boardId}`);
+    const safeBoardId = validateId(boardId, 'boardId');
+    const response = await api.get(`/v1/lists/board/${safeBoardId}`);
     const data: List[] = response.data;
     return { success: true, data: data.sort((a, b) => (a.position || 0) - (b.position || 0)) };
   } catch (error) {
@@ -39,7 +41,8 @@ export async function editList(List: PatchListData) {
   }
 
   try {
-    const response = await api.patch(`/v1/lists/${List.id}`, updateData);
+    const safeId = validateId(List.id, 'id');
+    const response = await api.patch(`/v1/lists/${safeId}`, updateData);
     return { success: true, data: response.data || null };
   } catch (error) {
     return {
@@ -51,7 +54,8 @@ export async function editList(List: PatchListData) {
 
 export async function deleteList(listId: string) {
   try {
-    const response = await api.delete(`/v1/lists/${listId}`);
+    const safeListId = validateId(listId, 'listId');
+    const response = await api.delete(`/v1/lists/${safeListId}`);
     return { success: true, data: response.data || null };
   } catch (error) {
     return {
@@ -63,7 +67,8 @@ export async function deleteList(listId: string) {
 
 export async function moveList(listId: string, newPosition: number) {
   try {
-    const response = await api.patch(`/v1/lists/${listId}/position`, { newPosition });
+    const safeListId = validateId(listId, 'listId');
+    const response = await api.patch(`/v1/lists/${safeListId}/position`, { newPosition });
     return { success: true, data: response.data || null };
   } catch (error) {
     return {

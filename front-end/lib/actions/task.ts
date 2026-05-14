@@ -2,6 +2,7 @@
 
 import api from "@/lib/api/axios";
 import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { validateId } from "@/lib/utils/validateId";
 import { TaskData, Task, UpdateTaskData } from "../../types/task";
 
 export async function createTask(taskData: TaskData) {
@@ -19,7 +20,8 @@ export async function createTask(taskData: TaskData) {
 
 export async function getTasksByList(listId: string) {
   try {
-    const response = await api.get(`/v1/tasks/list/${listId}`);
+    const safeListId = validateId(listId, 'listId');
+    const response = await api.get(`/v1/tasks/list/${safeListId}`);
     const data: Task[] = response.data;
     return { success: true, data };
   } catch (error) {
@@ -32,7 +34,8 @@ export async function getTasksByList(listId: string) {
 
 export async function getTaskById(taskId: string) {
   try {
-    const response = await api.get(`/v1/tasks/${taskId}`);
+    const safeTaskId = validateId(taskId, 'taskId');
+    const response = await api.get(`/v1/tasks/${safeTaskId}`);
     const data: Task = response.data;
     return { success: true, data };
   } catch (error) {
@@ -45,7 +48,8 @@ export async function getTaskById(taskId: string) {
 
 export async function updateTask(taskId: string, updateData: UpdateTaskData) {
   try {
-    const response = await api.patch(`/v1/tasks/${taskId}`, updateData);
+    const safeTaskId = validateId(taskId, 'taskId');
+    const response = await api.patch(`/v1/tasks/${safeTaskId}`, updateData);
     const data: Task = response.data;
     return { success: true, data };
   } catch (error) {
@@ -58,7 +62,8 @@ export async function updateTask(taskId: string, updateData: UpdateTaskData) {
 
 export async function deleteTask(taskId: string) {
   try {
-    await api.delete(`/v1/tasks/${taskId}`);
+    const safeTaskId = validateId(taskId, 'taskId');
+    await api.delete(`/v1/tasks/${safeTaskId}`);
     return { success: true, data: { message: 'Tarefa deletada com sucesso' } };
   } catch (error) {
     return {
@@ -70,7 +75,8 @@ export async function deleteTask(taskId: string) {
 
 export async function moveTask(taskId: string, newPosition: number) {
   try {
-    const response = await api.patch(`/v1/tasks/${taskId}/position`, { newPosition });
+    const safeTaskId = validateId(taskId, 'taskId');
+    const response = await api.patch(`/v1/tasks/${safeTaskId}/position`, { newPosition });
     return { success: true, data: response.data || null };
   } catch (error) {
     return {
@@ -82,7 +88,12 @@ export async function moveTask(taskId: string, newPosition: number) {
 
 export async function moveTaskOtherList(taskId: string, newPosition: number, newListId: string) {
   try {
-    const response = await api.patch(`/v1/tasks/${taskId}/move`, { newListId, newPosition });
+    const safeTaskId = validateId(taskId, 'taskId');
+    const safeNewListId = validateId(newListId, 'newListId');
+    const response = await api.patch(`/v1/tasks/${safeTaskId}/move`, {
+      newListId: safeNewListId,
+      newPosition,
+    });
     return { success: true, data: response.data || null };
   } catch (error) {
     return {
