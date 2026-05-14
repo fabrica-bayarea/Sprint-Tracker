@@ -1,111 +1,78 @@
 "use server"
 
-import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { setSessioCookie, getCookie } from "@/lib/utils/sessionCookie";
-
-const BASE_URL_API = process.env.BASE_URL_API || 'http://trello-api:3000';
+import api from "@/lib/api/axios";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { setSessioCookie, getCookie } from "@/lib/utils/session-cookie";
 
 export async function login(email: string, password: string, rememberMe: boolean) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/signin`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password, rememberMe }),
-  });
-
-  if (!response.ok) {
+  try {
+    const response = await api.post("/v1/auth/signin", { email, password, rememberMe });
+    const rawSetCookie = response.headers["set-cookie"];
+    await setSessioCookie(rawSetCookie, "trello-session");
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Erro ao fazer login"),
+      error: handleAxiosError(error, "Erro ao fazer login"),
     };
   }
-
-  const rawSetCookie = response.headers.get("set-cookie");
-  await setSessioCookie(rawSetCookie!);
-
-  return { success: true, data: { message: 'success' } };
 }
 
-export async function register(fullName: string, userName: string, email: string, password: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/signup`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name: fullName, userName, email, password }),
-  });
-
-  if (!response.ok) {
+export async function register(name: string, userName: string, email: string, password: string) {
+  try {
+    const response = await api.post("/v1/auth/signup", { name, userName, email, password });
+    const rawSetCookie = response.headers["set-cookie"];
+    await setSessioCookie(rawSetCookie, "trello-session");
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Erro ao fazer registro"),
+      error: handleAxiosError(error, "Erro ao fazer registro"),
     };
   }
-
-  const rawSetCookie = response.headers.get("set-cookie");
-  await setSessioCookie(rawSetCookie!);
-
-  return { success: true, data: { message: 'success' } };
 }
 
 export async function forgotPassword(email: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/forgot-password`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email }),
-  });
-
-  if (!response.ok) {
+  try {
+    await api.patch("/v1/auth/forgot-password", { email });
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Erro ao solicitar redefinição de senha"),
+      error: handleAxiosError(error, "Erro ao solicitar redefinição de senha"),
     };
   }
-
-  return { success: true, data: { message: 'success' } };
 }
 
 export async function verifyCodeResetPassword(code: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/verify-reset-code`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ code }),
-  });
-
-  if (!response.ok) {
+  try {
+    const response = await api.post("/v1/auth/verify-reset-code", { code });
+    const rawSetCookie = response.headers["set-cookie"];
+    await setSessioCookie(rawSetCookie);
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Codigo de verificação inválido"),
+      error: handleAxiosError(error, "Codigo de verificação inválido"),
     };
   }
-
-  const rawSetCookie = response.headers.get("set-cookie");
-  await setSessioCookie(rawSetCookie!);
-
-  return { success: true, data: { message: 'success' } };
 }
 
 export async function resetPassword(newPassword: string, confirmNewPassword: string) {
-  const response = await fetch(`${BASE_URL_API}/v1/auth/reset-password`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("reset-token"),
-    },
-    body: JSON.stringify({ newPassword, confirmNewPassword }),
-  });
+  try {
+    const resetToken = await getCookie("reset-token");
 
-  if (!response.ok) {
+    await api.post("/v1/auth/reset-password", { newPassword, confirmNewPassword }, {
+      headers: {
+        "Cookie": resetToken
+      }
+    });
+
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Erro ao redefinir senha"),
+      error: handleAxiosError(error, "Erro ao redefinir senha"),
     };
   }
-
-  return { success: true, data: { message: 'success' } };
 }

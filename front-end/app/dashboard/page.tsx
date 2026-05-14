@@ -1,233 +1,121 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, Trash2, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+import { getBoards } from "@/lib/actions/board";
+import { CreateBoardDialog } from "@/features/board/create-board-dialog";
 
-import { getBoards, deleteBoard } from "@/lib/actions/board";
-import { getExpiredTasks, deleteTask, updateTask } from "@/lib/actions/task";
-import { useNotificationStore } from '@/lib/stores/notification';
+const BOARD_COLORS = [
+  "bg-red-500",
+  "bg-blue-500",
+  "bg-emerald-500",
+  "bg-violet-500",
+  "bg-amber-500",
+  "bg-pink-500",
+  "bg-cyan-500",
+  "bg-orange-500",
+];
 
-import Section from '@/components/features/dashboard/selectedDashboard/section';
-
-import styles from './style.module.css';
-
-interface ExpiredTask {
-  id: string;
-  listId: string;
-  title: string;
-  description?: string;
-  dueDate: string;
-  status: string;
-  assigneeId?: string | null;
-  assignee?: { id: string; name: string; email: string } | null;
-  list: {
-    id: string;
-    title: string;
-    board: {
-      id: string;
-      title: string;
-    };
-  };
-}
-
-interface PendenciaItem {
-  id: string;
-  titulo: string;
-  grupo: string;
-  status: string;
-  statusColor: string;
-  andamento: string;
-  data: string;
-  atrasado: boolean;
-  responsavel?: string;
-}
-
-
-interface Board {
-  id: string;
-  name: string;
-  members: { id: string; name: string; avatar: string }[];
-  image: string;
+function getBoardColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return BOARD_COLORS[Math.abs(hash) % BOARD_COLORS.length];
 }
 
 export default function Dashboard() {
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [pendencias, setPendencias] = useState<PendenciaItem[]>([]);
-  const { showNotification } = useNotificationStore()
+  const router = useRouter();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleDeleteBoard = async (boardId: string) => {
-    if (!confirm("Tem certeza que deseja deletar este board? Todas as listas e tarefas serão removidas permanentemente.")) return;
-    try {
-      const result = await deleteBoard(boardId);
-      if (result.success) {
-        setBoards(prev => prev.filter(b => b.id !== boardId));
-        showNotification("Board deletado com sucesso!", 'success');
-      } else {
-        showNotification(result.error || "Erro ao deletar board", 'failed');
-      }
-    } catch {
-      showNotification("Erro ao deletar board", 'failed');
-    }
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["boards"],
+    queryFn: getBoards,
+  });
 
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      const result = await deleteTask(taskId);
-      if (result.success) {
-        setPendencias(prevPendencias => 
-          prevPendencias.filter(p => p.id !== taskId)
-        );
-        showNotification("Tarefa deletada com sucesso!", 'success');
-      } else {
-        showNotification(result.error || "Erro ao deletar tarefa", 'failed');
-      }
-    } catch {
-      showNotification("Erro ao deletar tarefa", 'failed');
-    }
-  };
-
-  const handleMarkAsDone = async (taskId: string) => {
-    try {
-      const result = await updateTask(taskId, { status: "DONE" });
-      if (result.success) {
-        setPendencias(prevPendencias => 
-          prevPendencias.filter(p => p.id !== taskId)
-        );
-        showNotification("Tarefa marcada como concluída!", 'success');
-      } else {
-        showNotification(result.error || "Erro ao atualizar tarefa", 'failed');
-      }
-    } catch {
-      showNotification("Erro ao atualizar tarefa", 'failed');
-    }
-  };
-
-  useEffect(() => {
-    async function fetchBoards() {
-      const result = await getBoards();
-      if (result.success) {
-        setBoards(result.data as Board[]);
-      } else {
-        showNotification(result.error || "Erro ao buscar boards", 'failed')
-      }
-    }
-
-    async function fetchExpiredTasks() {
-      try {
-        const result = await getExpiredTasks();
-        
-        if (result.success) {
-          if (result.data && Array.isArray(result.data) && result.data.length > 0) {
-            const currentDate = new Date();
-            const formattedTasks: PendenciaItem[] = result.data.map((task: ExpiredTask) => {
-              const dueDate = new Date(task.dueDate);
-              const isOverdue = dueDate < currentDate;
-              
-              return {
-                id: task.id,
-                titulo: task.title,
-                grupo: task.list.board.title,
-                status: isOverdue ? "Atrasado!" : "",
-                statusColor: isOverdue ? "#e02b2b" : "#15bd2e",
-                andamento: task.list.title,
-                data: dueDate.toLocaleDateString('pt-BR'),
-                atrasado: isOverdue,
-                responsavel: task.assignee?.name,
-              };
-            });
-            setPendencias(formattedTasks);
-          } else {
-            setPendencias([]);
-          }
-        } else {
-          showNotification(result.error || "Erro ao buscar tarefas expiradas", 'failed')
-        }
-      } catch (error) {
-        showNotification(error as string || "Erro ao buscar tarefas expiradas", 'failed');
-      }
-    }
-
-    fetchBoards();
-    fetchExpiredTasks();
-  }, [showNotification]);
+  const boards = data?.success ? data.data : [];
 
   return (
-    <main className={styles.dashboardMainCustom}>
-      <Section title="Pendências">
-        <div className={styles.pendenciasList}>
-          {pendencias.length === 0 ? (
-            <div className={styles.noPendenciasMessage}>
-              <CheckCircle2 size={48} className={styles.noPendenciasIcon} />
-              <h3>Parabéns! Você está em dia!</h3>
-            </div>
-          ) : (
-            pendencias.map((p) => (
-              <div className={styles.pendenciaRow} key={p.id}>
-                <span className={styles.pendenciaTitulo}>{p.titulo}</span>
-                <span className={styles.pendenciaAtrasadoWrapper}>
-                  {p.atrasado && <span className={styles.pendenciaAtrasado}>Atrasado!</span>}
-                </span>
-                <span className={styles.pendenciaGrupo}>
-                  {p.grupo}/<span>{p.andamento}</span>
-                  {p.responsavel && <span style={{ marginLeft: 8, fontStyle: 'italic' }}>· {p.responsavel}</span>}
-                </span>
-                <button 
-                  className={styles.pendenciaAction}
-                  onClick={() => handleDeleteTask(p.id)}
-                  title="Deletar tarefa"
-                >
-                  <Trash2 size={18} />
-                </button>
-                <button 
-                  className={styles.pendenciaAction}
-                  onClick={() => handleMarkAsDone(p.id)}
-                  title="Marcar como concluída"
-                >
-                  <Check size={18} />
-                </button>
-                <span className={styles.pendenciaData}>{p.data}</span>
-              </div>
-            ))
-          )}
+    <div className="p-8 max-w-5xl mx-auto">
+      <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
+          <div>
+            <h2 className="text-base font-semibold text-[#1E293B]">Quadros</h2>
+            <p className="text-sm text-[#64748B]">
+              Gerenciamento de quadros (criação, listagem, atualização e remoção).
+            </p>
+          </div>
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#C01010] text-white rounded-lg text-sm font-medium hover:bg-[#a00d0d] transition-colors"
+          >
+            <Plus size={16} />
+            Novo Quadro
+          </button>
         </div>
-      </Section>
-      
-      <Section 
-        title="Espaços de trabalho"
-        actionButton={() => window.location.href = '/dashboard/new-board'}
-      >
-        <div className={styles.boardsGridCustom}>
-          {boards.length === 0 ? (
-            <div className={styles.noBoardsMessage}>
-              <h3>Você não está em nenhum board</h3>
-              <p>Que tal criar o seu primeiro espaço de trabalho?</p>
+
+        <div className="p-6">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-20 rounded-lg bg-[#F1F5F9] animate-pulse"
+                />
+              ))}
+            </div>
+          ) : boards && boards.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {boards.map((board) => {
+                const initial = (board.name ?? "?")[0].toUpperCase();
+                const colorClass = getBoardColor(board.name ?? "");
+                return (
+                  <button
+                    key={board.id}
+                    onClick={() => router.push(`/dashboard/board/${board.id}`)}
+                    className="flex items-center gap-3 p-4 rounded-lg border border-[#E2E8F0] hover:border-[#C01010] hover:shadow-md transition-all duration-150 text-left group"
+                  >
+                    <div
+                      className={`flex items-center justify-center w-10 h-10 rounded-lg ${colorClass} text-white font-bold text-lg flex-shrink-0`}
+                    >
+                      {initial}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#1E293B] truncate group-hover:text-[#C01010] transition-colors">
+                        {board.name}
+                      </p>
+                      <p className="text-xs text-[#94A3B8] mt-0.5">Quadro</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           ) : (
-            boards.map((b) => (
-              <div
-                className={
-                  styles.boardCardCustom + ' ' + styles.noImage
-                }
-                key={b.id}
-                onClick={() => window.location.href = `/dashboard/${b.id}`}
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-14 h-14 rounded-full bg-[#FEF2F2] flex items-center justify-center mb-3">
+                <Plus size={24} className="text-[#C01010]" />
+              </div>
+              <p className="text-[#1E293B] font-medium">Nenhum quadro encontrado</p>
+              <p className="text-sm text-[#94A3B8] mt-1">
+                Crie seu primeiro quadro para começar
+              </p>
+              <button
+                onClick={() => setIsDialogOpen(true)}
+                className="mt-4 px-4 py-2 bg-[#C01010] text-white rounded-lg text-sm font-medium hover:bg-[#a00d0d] transition-colors"
               >
-                <button
-                  className={styles.boardDeleteBtn}
-                  onClick={(e) => { e.stopPropagation(); handleDeleteBoard(b.id); }}
-                  title="Deletar board"
-                >
-                  <Trash2 size={15} />
-                </button>
-                <div className={styles.boardImgCustom}></div>
-                <div className={styles.boardInfoCustom}>
-                  <span className={styles.boardNameCustom}>{b.name}</span>
-                  <span className={styles.boardMembrosCustom}>1 Membros</span>
-                </div>
-              </div>
-            ))
+                Criar Quadro
+              </button>
+            </div>
           )}
         </div>
-      </Section>
-    </main>
+      </div>
+
+      <CreateBoardDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+      />
+    </div>
   );
 }

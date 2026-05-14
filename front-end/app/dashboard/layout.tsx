@@ -1,21 +1,16 @@
-import { Image } from "@/components/ui";
-
 import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar/sidebar";
 
-import styles from "./style.module.css";
-
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className={styles.main}>
-      <Header />
-      <Image
-        className={styles.cornerBottomLeft}
-        src="/images/auth-background-bottom.png"
-        alt="Decorativo"
-        width={450}
-        height={450}
-      />
-      {children}
-    </main>
+    <div className="flex flex-row h-svh bg-[#f7f7f8]">
+      <Sidebar />
+      <div className="flex flex-col w-full min-w-0">
+        <Header />
+        <main className="overflow-y-auto h-full min-w-0">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 }

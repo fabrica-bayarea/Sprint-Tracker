@@ -9,9 +9,9 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": ".",
-     "paths": {
-      "src/*": ["src/*"]
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

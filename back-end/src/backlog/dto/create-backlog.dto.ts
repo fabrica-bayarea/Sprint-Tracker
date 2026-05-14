@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsEnum,
-  IsOptional,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsNotEmpty } from 'class-validator';
 import { BacklogPriority } from '../../common/enums/backlog-priority.enum';
 import { BacklogStatus } from '../../common/enums/backlog-status.enum';
 

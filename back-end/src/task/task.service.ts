@@ -1,14 +1,24 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { LogAction, Status } from '@prisma/client';
+
+import { BoardGateway } from '@/events/board.gateway';
+import { PrismaQueries } from '@/prisma/queries';
+import { PrismaService } from '@/prisma/prisma.service';
+import { TaskLogService } from '@/task-log/task-log.service';
+
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { TaskLogService } from 'src/task-log/task-log.service';
-import { LogAction } from '@prisma/client';
 
 @Injectable()
 export class TaskService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly prismaQueries: PrismaQueries,
+    private readonly boardGateway: BoardGateway,
     private readonly taskLogService: TaskLogService,
   ) {}
 
@@ -23,12 +33,17 @@ export class TaskService {
 
   /**
    * Verifica se o usuário pode atribuir tarefas no board (owner ou admin).
-   * Lança ForbiddenException caso contrário.
    */
-  private async assertCanAssign(userId: string, boardId: string): Promise<void> {
+  private async assertCanAssign(
+    userId: string,
+    boardId: string,
+  ): Promise<void> {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId },
-      include: { members: { where: { userId } } },
+      include: {
+        ...this.prismaQueries.boardInclude,
+        members: { where: { userId } },
+      },
     });
     if (!board) throw new NotFoundException('Board não encontrado');
 
@@ -44,12 +59,16 @@ export class TaskService {
 
   /**
    * Verifica se o assignee é membro (ou owner) do board.
-   * Lança ForbiddenException caso contrário.
    */
-  private async assertAssigneeIsMember(assigneeId: string, boardId: string): Promise<void> {
+  private async assertAssigneeIsMember(
+    assigneeId: string,
+    boardId: string,
+  ): Promise<void> {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId },
-      include: { members: { where: { userId: assigneeId } } },
+      include: {
+        members: { where: { userId: assigneeId } },
+      },
     });
     if (!board) throw new NotFoundException('Board não encontrado');
 
@@ -63,17 +82,29 @@ export class TaskService {
     }
   }
 
+  /**
+   * Cria uma nova tarefa na lista e emite evento de criação.
+   */
   async create(userId: string, dto: CreateTaskDto) {
-    const count = await this.prisma.task.count({
-      where: { listId: dto.listId },
+    const list = await this.prisma.list.findUnique({
+      where: { id: dto.listId },
+      select: { boardId: true },
     });
 
-    const boardId = await this.getBoardIdFromList(dto.listId);
+    if (!list) throw new NotFoundException('Lista não encontrada');
 
-    // Se está atribuindo a alguém, valida permissão e membership
-    if (dto.assigneeId) {
+    const count = await this.prisma.task.count({
+      where: { listId: dto.listId, deletedAt: null },
+    });
+
+    const boardId = list.boardId;
+
+    const normalizedAssignee =
+      dto.assigneeId === undefined ? null : dto.assigneeId || null;
+
+    if (normalizedAssignee) {
       await this.assertCanAssign(userId, boardId);
-      await this.assertAssigneeIsMember(dto.assigneeId, boardId);
+      await this.assertAssigneeIsMember(normalizedAssignee, boardId);
     }
 
     const newTask = await this.prisma.task.create({
@@ -85,7 +116,9 @@ export class TaskService {
         position: count,
         status: dto.status,
         dueDate: dto.dueDate,
-        assigneeId: dto.assigneeId ?? null,
+        assigneeId: normalizedAssignee,
+        completedAt:
+          String(dto.status) === String(Status.DONE) ? new Date() : null,
       },
     });
 
@@ -94,8 +127,15 @@ export class TaskService {
       userId,
       boardId,
       action: LogAction.TASK_CREATED,
-      metadata: { title: newTask.title, assigneeId: dto.assigneeId ?? null },
+      metadata: { title: newTask.title, assigneeId: normalizedAssignee },
     });
+
+    const payload = {
+      boardId,
+      action: 'created task',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(boardId, payload);
 
     return newTask;
   }
@@ -107,19 +147,24 @@ export class TaskService {
     });
   }
 
+  /**
+   * Busca uma tarefa pelo ID ou lança erro se não existir.
+   */
   async findOne(id: string) {
     const task = await this.prisma.task.findFirst({
       where: { id, deletedAt: null },
     });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task) throw new NotFoundException('Tarefa não encontrada');
     return task;
   }
 
+  /**
+   * Atualiza os dados de uma tarefa e emite evento de atualização.
+   */
   async update(id: string, userId: string, dto: UpdateTaskDto) {
     const task = await this.findOne(id);
     const boardId = await this.getBoardIdFromList(task.listId);
 
-    // Se está mudando assignee, valida permissão e membership
     const isChangingAssignee =
       dto.assigneeId !== undefined && dto.assigneeId !== task.assigneeId;
     if (isChangingAssignee) {
@@ -129,14 +174,36 @@ export class TaskService {
       }
     }
 
-    const hasStatusChange = dto.status !== undefined && dto.status !== task.status;
+    let completedAt: Date | null | undefined = undefined;
+    const isStatusChanging =
+      dto.status != null && String(dto.status) !== String(task.status);
 
-    const updatedTask = await this.prisma.task.update({
+    if (isStatusChanging) {
+      if (
+        String(dto.status) === String(Status.DONE) &&
+        task.status !== Status.DONE
+      ) {
+        completedAt = new Date();
+      } else if (
+        String(dto.status) !== String(Status.DONE) &&
+        task.status === Status.DONE
+      ) {
+        completedAt = null;
+      }
+    }
+
+    const dataToUpdate = {
+      ...dto,
+      ...(completedAt !== undefined && { completedAt }),
+    };
+
+    const updated = await this.prisma.task.update({
       where: { id },
-      data: dto,
+      data: dataToUpdate,
+      include: { list: { select: { boardId: true } } },
     });
 
-    if (hasStatusChange) {
+    if (isStatusChanging) {
       await this.taskLogService.createLog({
         taskId: id,
         userId,
@@ -154,12 +221,29 @@ export class TaskService {
       });
     }
 
-    return updatedTask;
+    const { list: listRelation, ...taskOnly } = updated;
+    const payload = {
+      boardId: listRelation.boardId,
+      action: 'updated task',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(listRelation.boardId, payload);
+
+    return taskOnly;
   }
 
+  /**
+   * Atualiza a posição de uma tarefa na lista e reordena as demais.
+   */
   async updatePosition(id: string, newPosition: number) {
     const task = await this.findOne(id);
     const oldPosition = task.position;
+
+    const list = await this.prisma.list.findUnique({
+      where: { id: task.listId },
+      select: { boardId: true },
+    });
+    if (!list) throw new NotFoundException('Lista não encontrada');
 
     if (newPosition < oldPosition) {
       await this.prisma.task.updateMany({
@@ -185,24 +269,36 @@ export class TaskService {
       where: { id },
       data: { position: newPosition },
     });
+
+    const payload = {
+      boardId: list.boardId,
+      action: 'updated task position',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
   }
 
+  /**
+   * Soft-delete de uma tarefa, reordena as posições subsequentes e emite evento.
+   */
   async remove(taskId: string, userId: string) {
     const taskToDelete = await this.prisma.task.findFirst({
       where: { id: taskId, deletedAt: null },
     });
 
-    if (!taskToDelete) throw new NotFoundException('Task não encontrada');
+    if (!taskToDelete) throw new NotFoundException('Tarefa não encontrada');
 
-    const boardId = await this.getBoardIdFromList(taskToDelete.listId);
+    const list = await this.prisma.list.findUnique({
+      where: { id: taskToDelete.listId },
+      select: { boardId: true },
+    });
+    if (!list) throw new NotFoundException('Lista não encontrada');
 
     await this.prisma.$transaction([
-      // Soft delete
       this.prisma.task.update({
         where: { id: taskId },
         data: { deletedAt: new Date() },
       }),
-      // Reorder remaining tasks
       this.prisma.task.updateMany({
         where: {
           listId: taskToDelete.listId,
@@ -216,22 +312,26 @@ export class TaskService {
     await this.taskLogService.createLog({
       taskId,
       userId,
-      boardId,
+      boardId: list.boardId,
       action: LogAction.TASK_DELETED,
       metadata: { title: taskToDelete.title },
     });
+
+    const payload = {
+      boardId: list.boardId,
+      action: 'deleted task',
+      at: new Date().toISOString(),
+    } as const;
+    this.boardGateway.emitModifiedInBoard(list.boardId, payload);
   }
 
   /**
-   * Retorna tarefas atrasadas ou perto de vencer (≤12h) que sejam relevantes para o usuário:
-   *  - Tarefas atribuídas a ele OU criadas por ele (escopo "minhas pendências"), OU
-   *  - Em boards onde o usuário é OWNER ou ADMIN (escopo "tarefas do meu time atrasadas")
+   * Retorna tarefas atrasadas ou perto de vencer (≤12h) relevantes ao usuário.
    */
   async findTasksOverdueDate(userId: string) {
     const now = new Date();
     const horizon = new Date(now.getTime() + 12 * 60 * 60 * 1000);
 
-    // Boards onde o user é owner ou admin → vê tudo do board
     const adminBoards = await this.prisma.board.findMany({
       where: {
         OR: [
@@ -264,6 +364,9 @@ export class TaskService {
     });
   }
 
+  /**
+   * Move a tarefa para outra lista e ajusta as posições.
+   */
   async moveTaskToList(
     taskId: string,
     userId: string,
@@ -274,17 +377,21 @@ export class TaskService {
       where: { id: taskId, deletedAt: null },
     });
 
-    if (!task) throw new NotFoundException('Task não encontrada');
+    if (!task) throw new NotFoundException('Tarefa não encontrada');
 
-    const targetList = await this.prisma.list.findUnique({
-      where: { id: newListId },
-    });
+    const [sourceList, targetList] = await Promise.all([
+      this.prisma.list.findUnique({ where: { id: task.listId } }),
+      this.prisma.list.findUnique({ where: { id: newListId } }),
+    ]);
 
-    if (!targetList) throw new NotFoundException('Lista de destino não encontrada');
+    if (!targetList) {
+      throw new NotFoundException('Lista de destino não encontrada');
+    }
+    if (!sourceList) {
+      throw new NotFoundException('Lista de origem não encontrada');
+    }
 
-    const boardId = await this.getBoardIdFromList(task.listId);
-
-    const result = await this.prisma.$transaction(async (prisma) => {
+    const updatedTask = await this.prisma.$transaction(async (prisma) => {
       await prisma.task.updateMany({
         where: {
           listId: task.listId,
@@ -312,7 +419,7 @@ export class TaskService {
     await this.taskLogService.createLog({
       taskId,
       userId,
-      boardId,
+      boardId: sourceList.boardId,
       action: LogAction.TASK_MOVED,
       metadata: {
         fromListId: task.listId,
@@ -321,6 +428,12 @@ export class TaskService {
       },
     });
 
-    return result;
+    this.boardGateway.emitModifiedInBoard(sourceList.boardId, {
+      boardId: sourceList.boardId,
+      action: 'moved task between lists',
+      at: new Date().toISOString(),
+    });
+
+    return updatedTask;
   }
 }

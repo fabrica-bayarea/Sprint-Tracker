@@ -19,6 +19,7 @@ import {
   ForbiddenException,
   HttpException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiOperation,
   ApiResponse,
@@ -28,18 +29,20 @@ import {
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
-import { AuthService } from 'src/auth/auth.service';
-import { SignInDto } from 'src/auth/dto/signin.dto';
-import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { ForgotPasswordDto } from 'src/email/dto/forgot-password.dto';
-import { ChangePasswordDto } from 'src/email/dto/change-password.dto';
 import { Response } from 'express';
-import { IsEnabledAuthGuard } from 'src/auth/guards/is-enable-oauth.guard';
-import { ConfigService } from '@nestjs/config';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
-import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
-import { VerifyResetCodeDto } from 'src/auth/dto/verify-reset-code.dto';
-import { ResetPasswordGuard } from 'src/auth/guards/reset-password.guard';
+
+import { AuthService } from '@/auth/auth.service';
+import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
+import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
+import { SignInDto } from '@/auth/dto/signin.dto';
+import { SignUpDto } from '@/auth/dto/signup.dto';
+import { VerifyResetCodeDto } from '@/auth/dto/verify-reset-code.dto';
+import { IsEnabledAuthGuard } from '@/auth/guards/is-enable-oauth.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
+import { ResetPasswordGuard } from '@/auth/guards/reset-password.guard';
+import { ForgotPasswordDto } from '@/email/dto/forgot-password.dto';
+
+import { LdapLoginDto } from './dto/LdapLoginDto';
 
 @ApiTags('Autenticação e Autorização')
 @Controller({ path: 'auth', version: '1' })
@@ -99,7 +102,12 @@ export class AuthController {
   @Post('signup')
   async signUp(@Body() dto: SignUpDto, @Res() res: Response) {
     try {
-      if (!dto.email || !dto.password || dto.email.trim() === '' || dto.password.trim() === '') {
+      if (
+        !dto.email ||
+        !dto.password ||
+        dto.email.trim() === '' ||
+        dto.password.trim() === ''
+      ) {
         throw new BadRequestException('Email e senha são obrigatórios');
       }
 
@@ -107,7 +115,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           result.accessToken,
           this.setCookieOptions(false),
         )
@@ -119,7 +127,10 @@ export class AuthController {
         error,
       );
 
-      if (error instanceof HttpException) {
+      if (
+        error instanceof HttpException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
 
@@ -149,15 +160,11 @@ export class AuthController {
   @Post('signin')
   async signIn(@Body() dto: SignInDto, @Res() res: Response) {
     try {
-      if (!dto.email || !dto.password) {
-        throw new BadRequestException('Email e senha são obrigatórios');
-      }
-
       const result = await this.authService.signIn(dto);
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           result.accessToken,
           this.setCookieOptions(dto.rememberMe),
         )
@@ -235,7 +242,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           authResult.accessToken,
           this.setCookieOptions(false),
         )
@@ -307,7 +314,7 @@ export class AuthController {
 
       return res
         .cookie(
-          'trello-session',
+          'sprinttacker-session',
           authResult.accessToken,
           this.setCookieOptions(false),
         )
@@ -386,6 +393,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Dados inválidos fornecidos' })
   @ApiUnauthorizedResponse({ description: 'Código de verificação inválido' })
   @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(ResetPasswordGuard)
   async resetPassword(
     @Query('token') token: string,
@@ -441,7 +449,7 @@ export class AuthController {
         //secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 15 * 60 * 1000,
-        path: '/',
+        path: '/v1/auth/reset-password',
       });
 
       return {
@@ -458,7 +466,7 @@ export class AuthController {
         error instanceof UnauthorizedException ||
         error instanceof ForbiddenException
       ) {
-        throw error; // Relança exceções de negócio
+        throw error;
       }
 
       throw new InternalServerErrorException(
@@ -493,12 +501,6 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     try {
-      if (!dto.oldPassword || !dto.newPassword) {
-        throw new BadRequestException(
-          'Senha atual e nova senha são obrigatórias',
-        );
-      }
-
       const userId = req.user.id;
       await this.authService.changePassword(userId, dto);
 
@@ -542,7 +544,7 @@ export class AuthController {
   logout(@Res() res: Response) {
     try {
       return res
-        .clearCookie('trello-session', {
+        .clearCookie('sprinttacker-session', {
           httpOnly: true,
           path: '/',
           secure: this.configService.get<string>('NODE_ENV') === 'production',
@@ -553,6 +555,58 @@ export class AuthController {
     } catch (error) {
       this.logger.error(`Erro ao realizar logout: ${(error as Error).message}`);
       throw new InternalServerErrorException('Erro interno ao realizar logout');
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Autenticação de usuário via LDAP',
+    description: 'Realiza a autenticação do usuário contra o servidor LDAP.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Login LDAP bem-sucedido',
+  })
+  @ApiUnauthorizedResponse({ description: 'Credenciais LDAP inválidas' })
+  @ApiInternalServerErrorResponse({ description: 'Erro de comunicação LDAP' })
+  @HttpCode(HttpStatus.OK)
+  @Post('signin-ldap')
+  async ldapLogin(
+    @Body() loginRequest: LdapLoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<object> {
+    const { enrollment, password } = loginRequest;
+
+    try {
+      const ldapUserAttributes = await this.authService.authenticateLdap(
+        enrollment,
+        password,
+      );
+
+      const { accessToken } = await this.authService.signInWithProvider(
+        'ldap',
+        {
+          providerId: ldapUserAttributes.uid,
+          email: ldapUserAttributes.mail,
+          name: ldapUserAttributes.displayName,
+        },
+      );
+
+      response.cookie(
+        'sprinttacker-session',
+        accessToken,
+        this.setCookieOptions(false),
+      );
+
+      return {
+        message: 'Login via LDAP bem-sucedido. Token armazenado no cookie.',
+        user: {
+          name: ldapUserAttributes.displayName,
+          email: ldapUserAttributes.mail,
+        },
+      };
+    } catch (e) {
+      this.logger.error(`LDAP Auth Falhou: ${(e as Error).message}`);
+      throw e;
     }
   }
 }

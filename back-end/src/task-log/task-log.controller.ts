@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { TaskLogService } from './task-log.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 import { CurrentUser } from '../auth/strategy/decorators/current-user.decorator';
-import { AuthenticatedUser } from 'src/types/user.interface';
+import { AuthenticatedUser } from '@/types/user.interface';
 import {
   ApiCookieAuth,
   ApiOperation,

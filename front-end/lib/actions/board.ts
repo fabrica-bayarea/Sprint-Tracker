@@ -1,133 +1,67 @@
 'use server';
 
-import { handleFetchError } from "@/lib/utils/handleFetchError";
-import { getCookie } from "@/lib/utils/sessionCookie";
-
-interface BoardData {
-  title: string;
-  description: string;
-}
-
-interface BoardListItemAPI {
-  id: string;
-  title: string;
-}
-
-const BASE_URL_API = process.env.BASE_URL_API || 'http://localhost:3000';
+import api from "@/lib/api/axios";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { validateId } from "@/lib/utils/validateId";
+import { BoardData, BoardListItemAPI } from "../../types/board";
 
 export async function createBoard(boardData: BoardData) {
-  const response = await fetch(`${BASE_URL_API}/v1/boards`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
-    body: JSON.stringify({
+  try {
+    await api.post("/boards", {
       ...boardData,
       visibility: "PRIVATE",
-    }),
-  });
+    });
 
-  if (!response.ok) {
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Falha ao criar o board"),
+      error: handleAxiosError(error, "Falha ao criar o board"),
     };
   }
-
-  return { success: true, data: { message: 'success' } };
 }
 
 export async function getBoards() {
-  const response = await fetch(`${BASE_URL_API}/v1/boards`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": await getCookie("trello-session"),
-    },
-  });
+  try {
+    const response = await api.get("/boards");
+    const data: BoardListItemAPI[] = response.data;
 
-  if (!response.ok) {
+    return {
+      success: true,
+      data: data.map((board: BoardListItemAPI) => ({
+        id: board.id,
+        name: board.title,
+        members: [],
+        image: "",
+      })),
+    };
+  } catch (error) {
     return {
       success: false,
-      error: await handleFetchError(response, "Falha ao buscar os boards"),
+      error: handleAxiosError(error, "Falha ao buscar os boards"),
     };
   }
-
-  const data: BoardListItemAPI[] = await response.json();
-  return {
-    success: true,
-    data: data.map((board: BoardListItemAPI) => ({
-      id: board.id,
-      name: board.title,
-      members: [],
-      image: "",
-    })),
-  };
 }
 
 export async function deleteBoard(boardId: string) {
   try {
-    const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "Cookie": await getCookie("trello-session"),
-      },
-    });
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: await handleFetchError(response, "Falha ao deletar o board"),
-      };
-    }
-
-    return { success: true };
-  } catch {
-    return { success: false, error: "Falha ao deletar o board" };
-  }
-}
-
-export async function getUserBoardRole(boardId: string) {
-  try {
-    const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}/my-role`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Cookie": await getCookie("trello-session"),
-      },
-    });
-
-    if (!response.ok) {
-      return { success: false, error: "Falha ao buscar papel no board" };
-    }
-
-    const role: string = await response.json();
-    return { success: true, data: role };
-  } catch {
-    return { success: false, error: "Falha ao buscar papel no board" };
+    const safeBoardId = validateId(boardId, 'boardId');
+    await api.delete(`/boards/${safeBoardId}`);
+    return { success: true, data: { message: 'success' } };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, "Falha ao remover o board"),
+    };
   }
 }
 
 export async function getBoardById(boardId: string) {
   try {
-    const response = await fetch(`${BASE_URL_API}/v1/boards/${boardId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Cookie": await getCookie("trello-session"),
-      },
-    });
+    const safeBoardId = validateId(boardId, 'boardId');
+    const response = await api.get(`/boards/${safeBoardId}`);
+    const data = response.data;
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error: await handleFetchError(response, "Falha ao buscar o board"),
-      };
-    }
-
-    const data = await response.json();
     return {
       success: true,
       data: {
@@ -141,10 +75,10 @@ export async function getBoardById(boardId: string) {
         lists: data.lists,
       },
     };
-  } catch {
-    return { success: false, error: "Falha ao buscar o board" };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, "Falha ao buscar o board"),
+    };
   }
 }
-
-
-

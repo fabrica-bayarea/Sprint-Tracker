@@ -1,0 +1,104 @@
+import { AuthenticatedUser } from '@/types/user.interface';
+
+export const mockPrisma = {
+  board: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  boardMember: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  label: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  taskLabel: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  invite: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  list: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    updateMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  task: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    updateMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  taskLog: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  sprint: {
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  sprintBacklogItem: {
+    deleteMany: jest.fn(),
+  },
+  backlog: {
+    deleteMany: jest.fn(),
+  },
+  $transaction: jest.fn(),
+};
+
+export const mockPrismaQueries = {
+  boardInclude: {},
+  listInclude: {},
+  taskInclude: {},
+};
+
+export const mockTaskLogService = {
+  createLog: jest.fn(),
+};
+
+export const mockBoardGateway = {
+  emitModifiedInBoard: jest.fn(),
+};
+
+export const mockNotificationGateway = {
+  sendNewNotificationToUser: jest.fn(),
+};
+
+export const mockUser: AuthenticatedUser = {
+  id: 'user-id',
+  email: 'test@example.com',
+  name: 'Test User',
+  userName: 'testuser',
+  role: 'ADMIN',
+  authProvider: 'local',
+};

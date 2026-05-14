@@ -1,6 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBacklogDto } from './dto/create-backlog.dto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class BacklogService {
@@ -26,7 +26,7 @@ export class BacklogService {
         },
       });
     } catch (error) {
-      console.error('Error creating backlog:', error);
+      Logger.error('Error creating backlog', error);
     }
   }
 
