@@ -15,6 +15,16 @@ export default function Confirm() {
     }
   }
 
+  const onOverlayKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // O Escape global já é tratado em onKeyDown via document listener;
+    // este handler existe para satisfazer o requisito de acessibilidade
+    // de elementos não-interativos com onClick (typescript:S1082).
+    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault()
+      cancel()
+    }
+  }
+
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isOpen) return
     if (e.key === 'Escape') {
@@ -36,7 +46,12 @@ export default function Confirm() {
   if (!isOpen) return null
 
   return (
-    <div className={styles.modalOverlay} onClick={onOverlayClick}>
+    <div
+      className={styles.modalOverlay}
+      onClick={onOverlayClick}
+      onKeyDown={onOverlayKeyDown}
+      role="presentation"
+    >
       <div className={styles.modalContent} role="dialog" aria-modal="true" aria-labelledby="confirm-title">
         <div className={styles.header}>
           <h2 id="confirm-title">Confirmação</h2>

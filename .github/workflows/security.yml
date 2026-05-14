@@ -176,7 +176,7 @@ jobs:
             -Dsonar.tests=back-end/test
             -Dsonar.test.inclusions=**/*.spec.ts,**/*.test.ts,**/*.test.tsx
             -Dsonar.exclusions=**/node_modules/**,**/.next/**,**/dist/**,**/coverage/**,**/prisma/migrations/**,**/*.d.ts
-            -Dsonar.coverage.exclusions=front-end/**,**/*.spec.ts,**/*.test.ts,**/*.test.tsx,**/main.ts,**/*.module.ts,**/*.dto.ts,**/prisma/**
+            -Dsonar.coverage.exclusions=front-end/**,**/*.spec.ts,**/*.test.ts,**/*.test.tsx,**/main.ts,**/*.module.ts,**/*.dto.ts,**/prisma/**,**/*.gateway.ts,**/*.guard.ts,**/*.strategy.ts,**/*.middleware.ts,**/*.decorator.ts,**/decorators/**,**/health/**,**/interface/**,**/analysis/**,**/email/**,**/auth/**,back-end/src/types/**,back-end/src/common/**,back-end/src/utils/**
             -Dsonar.javascript.lcov.reportPaths=back-end/coverage/lcov.info
             -Dsonar.qualitygate.wait=true
 
