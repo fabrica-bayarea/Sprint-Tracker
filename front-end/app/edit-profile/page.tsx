@@ -23,7 +23,9 @@ export default function EditProfilePage() {
     }
 
     fetchUserProfile();
-  }, [profile]);
+    // Roda só no mount. NÃO incluir `profile` (gera loop infinito:
+    // setProfile -> re-render -> effect dispara -> setProfile -> ...).
+  }, []);
 
   return (
     <div className="p-8 max-w-225 my-12.5 mx-auto bg-white rounded-[10px] shadow-[0_3px_8px_rgba(0,0,0,0.233)] font-sans">
