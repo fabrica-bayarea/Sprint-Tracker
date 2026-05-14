@@ -136,9 +136,9 @@ jobs:
         working-directory: ./front-end
         run: npm audit --audit-level=high || true
 
-      - name: Rodar testes (back-end)
+      - name: Rodar testes com coverage (back-end)
         working-directory: ./back-end
-        run: npm test || true
+        run: npm run test:cov || true
 
       # ------------------------
       # SEMGREP
@@ -176,7 +176,8 @@ jobs:
             -Dsonar.tests=back-end/test
             -Dsonar.test.inclusions=**/*.spec.ts,**/*.test.ts,**/*.test.tsx
             -Dsonar.exclusions=**/node_modules/**,**/.next/**,**/dist/**,**/coverage/**,**/prisma/migrations/**,**/*.d.ts
-            -Dsonar.javascript.lcov.reportPaths=back-end/coverage/lcov.info,front-end/coverage/lcov.info
+            -Dsonar.coverage.exclusions=front-end/**,**/*.spec.ts,**/*.test.ts,**/*.test.tsx,**/main.ts,**/*.module.ts,**/*.dto.ts,**/prisma/**
+            -Dsonar.javascript.lcov.reportPaths=back-end/coverage/lcov.info
             -Dsonar.qualitygate.wait=true
 
       # ------------------------

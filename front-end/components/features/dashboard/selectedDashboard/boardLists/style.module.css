@@ -1,9 +1,0 @@
-.listsContainer {
-  display: flex;
-  min-height: 70vh;
-  gap: 24px;
-  padding: 20px 26px;
-  width: 100%;
-  margin: 0 auto;
-  overflow-x: auto;
-}

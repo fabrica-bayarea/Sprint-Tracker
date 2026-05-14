@@ -1,69 +1,79 @@
 'use server';
 
-import { apiClient } from "@/lib/utils/apiClient";
-import { 
-  List, 
-  ListWithTasksResponse, 
-  CreateListData, 
-  EditListData 
-} from "@/lib/types/board";
-
-export async function getListById(listId: string) {
-  return apiClient<ListWithTasksResponse>(`/v1/lists/${listId}`, {
-    method: "GET",
-    errorMessage: 'Falha ao buscar lista',
-  });
-}
+import api from "@/lib/api/axios";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import { validateId } from "@/lib/utils/validateId";
+import { List, NewListData, PatchListData } from "../../types/list";
 
 export async function getAllList(boardId: string) {
-  const result = await apiClient<List[]>(`/v1/lists/board/${boardId}`, {
-    method: "GET",
-    errorMessage: 'Falha ao buscar listas',
-  });
-
-  if (!result.success) return result;
-
-  return {
-    success: true as const,
-    data: result.data.sort((a: List, b: List) => (a.position || 0) - (b.position || 0))
-  };
+  try {
+    const safeBoardId = validateId(boardId, 'boardId');
+    const response = await api.get(`/v1/lists/board/${safeBoardId}`);
+    const data: List[] = response.data;
+    return { success: true, data: data.sort((a, b) => (a.position || 0) - (b.position || 0)) };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, 'Falha ao buscar listas'),
+    };
+  }
 }
 
-export async function createList(newListData: CreateListData) {
-  return apiClient<List>('/v1/lists', {
-    method: 'POST',
-    body: JSON.stringify(newListData),
-    errorMessage: 'Falha ao criar lista',
-  });
+export async function createList(newListData: NewListData) {
+  try {
+    const response = await api.post("/v1/lists", newListData);
+    return { success: true, data: response.data || null };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, 'Falha ao criar lista'),
+    };
+  }
 }
 
-export async function editList(listData: EditListData) {
-  const updateData: Partial<Omit<EditListData, 'id'>> = {};
-  if (listData.title !== undefined) {
-    updateData.title = listData.title;
+export async function editList(List: PatchListData) {
+  const updateData: Partial<Omit<PatchListData, 'id'>> = {};
+  if (List.title !== undefined) {
+    updateData.title = List.title;
   }
-  if (listData.position !== undefined) {
-    updateData.position = listData.position;
+  if (List.position !== undefined) {
+    updateData.position = List.position;
   }
 
-  return apiClient<List>(`/v1/lists/${listData.id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(updateData),
-    errorMessage: 'Falha ao editar lista',
-  });
+  try {
+    const safeId = validateId(List.id, 'id');
+    const response = await api.patch(`/v1/lists/${safeId}`, updateData);
+    return { success: true, data: response.data || null };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, 'Falha ao editar lista'),
+    };
+  }
 }
 
 export async function deleteList(listId: string) {
-  return apiClient(`/v1/lists/${listId}`, {
-    method: 'DELETE',
-    errorMessage: 'Falha ao deletar lista',
-  });
+  try {
+    const safeListId = validateId(listId, 'listId');
+    const response = await api.delete(`/v1/lists/${safeListId}`);
+    return { success: true, data: response.data || null };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, 'Falha ao deletar lista'),
+    };
+  }
 }
 
 export async function moveList(listId: string, newPosition: number) {
-  return apiClient<List>(`/v1/lists/${listId}/position`, {
-    method: 'PATCH',
-    body: JSON.stringify({ newPosition }),
-    errorMessage: 'Falha ao mover lista',
-  });
+  try {
+    const safeListId = validateId(listId, 'listId');
+    const response = await api.patch(`/v1/lists/${safeListId}/position`, { newPosition });
+    return { success: true, data: response.data || null };
+  } catch (error) {
+    return {
+      success: false,
+      error: handleAxiosError(error, 'Falha ao mover lista'),
+    };
+  }
 }
