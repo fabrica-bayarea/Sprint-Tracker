@@ -92,7 +92,7 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Membros do quadro</DialogTitle>
         </DialogHeader>
@@ -108,7 +108,7 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
                 const name = m.user.name || m.user.userName || m.user.email || m.userId;
                 return (
                   <div key={m.userId} className="flex items-center gap-3 p-3">
-                    <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center text-red-600 dark:text-red-400 font-semibold">
+                    <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center text-red-600 dark:text-red-400 font-semibold flex-shrink-0">
                       {(name[0] || "?").toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -120,7 +120,7 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
                         value={m.role}
                         onValueChange={(v) => handleChangeRole(m.userId, v as Role)}
                       >
-                        <SelectTrigger className="w-36">
+                        <SelectTrigger className="w-32 sm:w-36 flex-shrink-0">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -130,7 +130,7 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
+                      <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground flex-shrink-0">
                         {roleLabel[m.role]}
                       </span>
                     )}
@@ -140,7 +140,7 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemove(m.userId, name)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                         title="Remover membro"
                       >
                         <Trash2 size={16} />
