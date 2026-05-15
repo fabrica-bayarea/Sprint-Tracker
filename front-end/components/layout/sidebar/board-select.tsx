@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,6 +10,8 @@ import { CreateBoardDialog } from "../../../features/board/create-board-dialog";
 import { useBoardStore } from "@/stores/use-board-store";
 
 export const BoardSelect = () => {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { selectedBoardId, setSelectedBoardId } = useBoardStore();
 
@@ -17,9 +20,21 @@ export const BoardSelect = () => {
     queryFn: getBoards
   });
 
+  /**
+   * Atualiza o store e navega quando a rota depende do boardId na URL.
+   * Sem isso, o store muda mas /dashboard/board/[id] continua mostrando
+   * o board antigo (id vem de params).
+   */
+  function handleChange(id: string) {
+    setSelectedBoardId(id);
+    if (pathname.startsWith("/dashboard/board/")) {
+      router.push(`/dashboard/board/${id}`);
+    }
+  }
+
   return (
     <>
-      <Select value={selectedBoardId || ""} onValueChange={setSelectedBoardId}>
+      <Select value={selectedBoardId || ""} onValueChange={handleChange}>
         <SelectTrigger className="w-full h-full">
           <SelectValue placeholder="Choose your Board" />
         </SelectTrigger>
