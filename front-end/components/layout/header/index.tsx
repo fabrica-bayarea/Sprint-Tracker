@@ -1,12 +1,13 @@
 "use client";
 
-import { Bell, User, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { removeCookie } from "@/lib/utils/session-cookie";
 import styles from "./style.module.css";
 import { useSprintStore } from "@/stores/use-sprint-store";
 import { cn } from "@/lib/utils";
+import { NotificationsBell } from "./notifications-bell";
 
 export default function Header() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function Header() {
         )}
 
         <div className={styles.wrapper_header_helps}>
-          <Bell size={32} color="#949494" strokeWidth={2} aria-label="Notificações" />
+          <NotificationsBell />
           <div className={styles.profileContainer}>
             <Link href="/edit-profile/" className={styles.profileImage} aria-label="Editar perfil">
               <div className={styles.profileImageInner}></div>
