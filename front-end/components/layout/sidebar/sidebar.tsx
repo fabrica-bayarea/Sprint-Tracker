@@ -3,15 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HelpCircle, Logs, Home } from "lucide-react";
+import { HelpCircle, Logs, Home, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BoardSelect } from "./board-select";
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: Home },
   { label: "Backlog", href: "/dashboard/backlog", icon: Logs },
-  // Sprints fica oculto até ter SprintModule no backend.
-  // { label: "Sprints", href: "/dashboard/sprints", icon: Gauge },
+  { label: "Sprints", href: "/dashboard/sprints", icon: Gauge },
 ];
 
 export default function Sidebar() {

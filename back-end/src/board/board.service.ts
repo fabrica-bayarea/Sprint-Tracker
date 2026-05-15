@@ -165,18 +165,10 @@ export class BoardService {
 
       await tx.taskLog.deleteMany({ where: { boardId } });
 
-      const sprints = await tx.sprint.findMany({
-        where: { boardId },
-        select: { id: true },
-      });
-      const sprintIds = sprints.map((s) => s.id);
-      if (sprintIds.length) {
-        await tx.sprintBacklogItem.deleteMany({
-          where: { sprintId: { in: sprintIds } },
-        });
-      }
+      // Tasks já foram deletadas acima; sprints podem ser removidas direto
+      // (FK Task.sprintId tem onDelete: SetNull, mas como tasks já não
+      // existem, não há a quem aplicar).
       await tx.sprint.deleteMany({ where: { boardId } });
-      await tx.backlog.deleteMany({ where: { boardId } });
 
       const labels = await tx.label.findMany({
         where: { boardId },
@@ -307,18 +299,7 @@ export class BoardService {
 
             await tx.taskLog.deleteMany({ where: { boardId } });
 
-            const sprints = await tx.sprint.findMany({
-              where: { boardId },
-              select: { id: true },
-            });
-            const sprintIds = sprints.map((s) => s.id);
-            if (sprintIds.length) {
-              await tx.sprintBacklogItem.deleteMany({
-                where: { sprintId: { in: sprintIds } },
-              });
-            }
             await tx.sprint.deleteMany({ where: { boardId } });
-            await tx.backlog.deleteMany({ where: { boardId } });
 
             await tx.invite.deleteMany({ where: { boardId } });
             await tx.boardMember.deleteMany({ where: { boardId } });

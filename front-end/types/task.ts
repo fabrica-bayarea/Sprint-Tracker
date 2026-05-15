@@ -41,6 +41,7 @@ export interface Task {
   updatedAt: string;
   priority?: Priority;
   assigneeId?: string | null;
+  sprintId?: string | null;
   labels?: TaskLabelLink[];
 }
 
