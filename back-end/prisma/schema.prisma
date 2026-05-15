@@ -226,6 +226,7 @@ enum BoardVisibility {
 enum Status {
   TODO
   IN_PROGRESS
+  BLOCKED
   DONE
   ARCHIVED
 }
