@@ -28,6 +28,7 @@ import { CreateListDialog } from "@/features/board/create-list-dialog";
 import { CreateTaskDialog } from "@/features/board/create-task-dialog";
 import { EditTaskDialog } from "@/features/board/edit-task-dialog";
 import { EditListDialog } from "@/features/board/edit-list-dialog";
+import { EditBoardDialog } from "@/features/board/edit-board-dialog";
 import { MembersDialog } from "@/features/board/members-dialog";
 import { TaskCard } from "@/features/board/task-card";
 
@@ -69,6 +70,7 @@ export default function BoardPage() {
   const [createTaskListId, setCreateTaskListId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingList, setEditingList] = useState<{ id: string; title: string } | null>(null);
+  const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
 
@@ -256,14 +258,26 @@ export default function BoardPage() {
             Membros ({members.length})
           </Button>
           {isAdmin && (
-            <Button
-              type="button"
-              onClick={() => setCreateListOpen(true)}
-              className="gap-1.5 bg-red-600 hover:bg-red-700 text-white"
-            >
-              <Plus size={16} />
-              Nova lista
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditBoardOpen(true)}
+                className="gap-1.5"
+                title="Editar quadro"
+              >
+                <Pencil size={16} />
+                Editar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setCreateListOpen(true)}
+                className="gap-1.5 bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Plus size={16} />
+                Nova lista
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -453,6 +467,14 @@ export default function BoardPage() {
         currentTitle={editingList?.title ?? ""}
         isOpen={!!editingList}
         onClose={() => setEditingList(null)}
+      />
+
+      <EditBoardDialog
+        boardId={boardId}
+        currentTitle={board.name ?? ""}
+        currentDescription={board.description ?? ""}
+        isOpen={editBoardOpen}
+        onClose={() => setEditBoardOpen(false)}
       />
     </div>
   );

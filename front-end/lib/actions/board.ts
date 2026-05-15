@@ -43,6 +43,22 @@ export async function getBoards() {
   }
 }
 
+export async function updateBoard(
+  boardId: string,
+  data: { title?: string; description?: string },
+) {
+  try {
+    const safeBoardId = validateId(boardId, 'boardId');
+    await api.patch(`/v1/boards/${safeBoardId}`, data);
+    return { success: true as const, data: { message: 'success' } };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: handleAxiosError(error, "Falha ao atualizar o board"),
+    };
+  }
+}
+
 export async function deleteBoard(boardId: string) {
   try {
     const safeBoardId = validateId(boardId, 'boardId');
