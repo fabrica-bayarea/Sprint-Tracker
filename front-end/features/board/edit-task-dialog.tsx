@@ -21,6 +21,7 @@ import { updateTask, deleteTask } from "@/lib/actions/task";
 import type { Task } from "../../types/task";
 import type { BoardMember } from "@/lib/actions/members";
 import { TaskHistory } from "@/features/board/task-history";
+import { TaskLabelsPicker } from "@/features/board/task-labels-picker";
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -178,6 +179,12 @@ export function EditTaskDialog({
               </Select>
             </div>
           )}
+
+          <TaskLabelsPicker
+            taskId={task.id}
+            boardId={boardId}
+            currentLabels={task.labels ?? []}
+          />
 
           <TaskHistory taskId={task.id} enabled={canViewHistory} />
 

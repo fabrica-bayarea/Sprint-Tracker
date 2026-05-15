@@ -13,7 +13,12 @@ export class PrismaQueries {
   } satisfies Prisma.BoardInclude;
 
   listInclude = {
-    tasks: true,
+    tasks: {
+      where: { deletedAt: null },
+      include: {
+        labels: { include: { label: true } },
+      },
+    },
     board: true,
   } satisfies Prisma.ListInclude;
 

@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2, Pencil, Search, X } from "lucide-react";
+import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2, Pencil, Search, X, Tag } from "lucide-react";
 import { toast } from "sonner";
 import {
   DragDropContext,
@@ -38,6 +38,7 @@ import { CreateTaskDialog } from "@/features/board/create-task-dialog";
 import { EditTaskDialog } from "@/features/board/edit-task-dialog";
 import { EditListDialog } from "@/features/board/edit-list-dialog";
 import { EditBoardDialog } from "@/features/board/edit-board-dialog";
+import { LabelsDialog } from "@/features/board/labels-dialog";
 import { MembersDialog } from "@/features/board/members-dialog";
 import { TaskCard } from "@/features/board/task-card";
 
@@ -81,6 +82,7 @@ export default function BoardPage() {
   const [editingList, setEditingList] = useState<{ id: string; title: string } | null>(null);
   const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [labelsOpen, setLabelsOpen] = useState(false);
   const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all__");
@@ -279,6 +281,16 @@ export default function BoardPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setLabelsOpen(true)}
+            className="gap-1.5"
+            title="Gerenciar labels"
+          >
+            <Tag size={16} />
+            Labels
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -632,6 +644,13 @@ export default function BoardPage() {
         currentDescription={board.description ?? ""}
         isOpen={editBoardOpen}
         onClose={() => setEditBoardOpen(false)}
+      />
+
+      <LabelsDialog
+        boardId={boardId}
+        isOpen={labelsOpen}
+        onClose={() => setLabelsOpen(false)}
+        canManage={isAdmin}
       />
     </div>
   );
