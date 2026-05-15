@@ -621,6 +621,7 @@ export default function BoardPage() {
         canAssign={isAdmin}
         canDelete={canEditTasks}
         canViewHistory={isAdmin}
+        currentUserId={myUserId}
       />
 
       <MembersDialog

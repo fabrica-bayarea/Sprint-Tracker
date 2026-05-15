@@ -28,6 +28,7 @@ model User {
   tasksCreated        Task[]         @relation("TaskCreator")
   tasksAssigned       Task[]         @relation("TaskAssignee")
   taskLogs            TaskLog[]      @relation("TaskLogUser")
+  taskComments        TaskComment[]  @relation("TaskCommentUser")
   notifications       Notification[]
   sentInvites         Invite[]       @relation("Sender")
 
@@ -147,6 +148,20 @@ model Task {
   list        List        @relation(fields: [listId], references: [id])
   labels      TaskLabel[]
   logs        TaskLog[]
+  comments    TaskComment[]
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation("TaskCommentUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
 
 model TaskLog {

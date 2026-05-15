@@ -22,6 +22,7 @@ import type { Task } from "../../types/task";
 import type { BoardMember } from "@/lib/actions/members";
 import { TaskHistory } from "@/features/board/task-history";
 import { TaskLabelsPicker } from "@/features/board/task-labels-picker";
+import { TaskComments } from "@/features/board/task-comments";
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -33,6 +34,7 @@ interface EditTaskDialogProps {
   canDelete?: boolean;
   /** Admin/owner consegue ver histórico (TaskLogs) */
   canViewHistory?: boolean;
+  currentUserId?: string;
 }
 
 const UNASSIGNED = "__unassigned__";
@@ -46,6 +48,7 @@ export function EditTaskDialog({
   canAssign = false,
   canDelete = false,
   canViewHistory = false,
+  currentUserId,
 }: EditTaskDialogProps) {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
@@ -185,6 +188,8 @@ export function EditTaskDialog({
             boardId={boardId}
             currentLabels={task.labels ?? []}
           />
+
+          <TaskComments taskId={task.id} currentUserId={currentUserId} />
 
           <TaskHistory taskId={task.id} enabled={canViewHistory} />
 
