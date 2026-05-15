@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { getBoards } from "@/lib/actions/board";
 import { CreateBoardDialog } from "@/features/board/create-board-dialog";
+import { PendingTasks } from "@/features/dashboard/pending-tasks";
 
 const BOARD_COLORS = [
   "bg-red-500",
@@ -39,6 +40,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
+      <PendingTasks />
       <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
           <div>

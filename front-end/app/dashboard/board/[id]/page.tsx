@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   DragDropContext,
@@ -27,6 +27,7 @@ import { getMyRoleOnBoard, getBoardMembers } from "@/lib/actions/members";
 import { CreateListDialog } from "@/features/board/create-list-dialog";
 import { CreateTaskDialog } from "@/features/board/create-task-dialog";
 import { EditTaskDialog } from "@/features/board/edit-task-dialog";
+import { EditListDialog } from "@/features/board/edit-list-dialog";
 import { MembersDialog } from "@/features/board/members-dialog";
 import { TaskCard } from "@/features/board/task-card";
 
@@ -67,6 +68,7 @@ export default function BoardPage() {
   const [createListOpen, setCreateListOpen] = useState(false);
   const [createTaskListId, setCreateTaskListId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingList, setEditingList] = useState<{ id: string; title: string } | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
   const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
 
@@ -324,6 +326,14 @@ export default function BoardPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                              onClick={() =>
+                                setEditingList({ id: list.id, title: list.title })
+                              }
+                            >
+                              <Pencil size={14} className="mr-2" />
+                              Renomear
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => handleDeleteList(list.id, list.title)}
                               className="text-red-600"
                             >
@@ -435,6 +445,14 @@ export default function BoardPage() {
         isOpen={membersOpen}
         onClose={() => setMembersOpen(false)}
         canManage={isAdmin}
+      />
+
+      <EditListDialog
+        boardId={boardId}
+        listId={editingList?.id ?? null}
+        currentTitle={editingList?.title ?? ""}
+        isOpen={!!editingList}
+        onClose={() => setEditingList(null)}
       />
     </div>
   );
