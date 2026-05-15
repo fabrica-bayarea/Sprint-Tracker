@@ -246,6 +246,15 @@ export default function BoardPage() {
           ) : (
             <p className="text-sm text-[#94A3B8] mt-1 italic">Sem descrição</p>
           )}
+          {lists.length > 0 && (
+            <p className="text-xs text-[#94A3B8] mt-1.5">
+              {lists.length} {lists.length === 1 ? "lista" : "listas"} ·{" "}
+              {lists.reduce((sum, l) => sum + (l.tasks?.length ?? 0), 0)} tarefa
+              {lists.reduce((sum, l) => sum + (l.tasks?.length ?? 0), 0) === 1
+                ? ""
+                : "s"}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button
