@@ -101,3 +101,19 @@ back-end/test-results
 /package.json
 /package-lock.json
 .claude
+# ----------------------
+# Limpeza iCloud sync
+# ----------------------
+# Pasta de WIP sem dono (movida pra cá em vez de deletar)
+scrap/
+
+# Duplicatas que o iCloud cria (' 2.ext', ' 3.ext')
+* [0-9].ts
+* [0-9].tsx
+* [0-9].json
+* [0-9].yml
+* [0-9].yaml
+* [0-9].mjs
+* [0-9].css
+* [0-9].md
+.semgrepignore[ 0-9]*
