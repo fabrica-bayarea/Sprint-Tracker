@@ -11,12 +11,13 @@ import { DataTable } from "@/features/backlog/components/data-table";
 import { getBacklogColumns } from "@/features/backlog/components/columns";
 import { getMyTasks } from "@/lib/actions/backlog";
 
-type StatusFilter = "ALL" | "TODO" | "IN_PROGRESS" | "DONE" | "ARCHIVED";
+type StatusFilter = "ALL" | "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "ARCHIVED";
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string; className: string }[] = [
   { value: "ALL", label: "Todos", className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" },
   { value: "TODO", label: "A fazer", className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" },
   { value: "IN_PROGRESS", label: "Em progresso", className: "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300" },
+  { value: "BLOCKED", label: "Impedido", className: "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300" },
   { value: "DONE", label: "Concluído", className: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" },
   { value: "ARCHIVED", label: "Arquivada", className: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300" },
 ];

@@ -26,7 +26,7 @@ import {
 import { CreateSprintDialog } from "@/features/sprints/create-sprint-dialog";
 import { AddTaskDialog } from "@/features/sprints/add-task-dialog";
 
-type Bucket = "TODO" | "IN_PROGRESS" | "DONE";
+type Bucket = "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE";
 
 const BUCKETS: { key: Bucket; label: string; className: string }[] = [
   {
@@ -40,6 +40,12 @@ const BUCKETS: { key: Bucket; label: string; className: string }[] = [
     label: "Em progresso",
     className:
       "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
+  },
+  {
+    key: "BLOCKED",
+    label: "Impedido",
+    className:
+      "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300",
   },
   {
     key: "DONE",
@@ -81,6 +87,7 @@ export default function SprintsPage() {
     const out: Record<Bucket, SprintTask[]> = {
       TODO: [],
       IN_PROGRESS: [],
+      BLOCKED: [],
       DONE: [],
     };
     if (!sprint) return out;
@@ -242,7 +249,7 @@ export default function SprintsPage() {
       </div>
 
       {/* Kanban */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {BUCKETS.map((bucket) => {
           const tasks = grouped[bucket.key];
           return (

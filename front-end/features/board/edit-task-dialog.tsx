@@ -147,6 +147,7 @@ export function EditTaskDialog({
                 <SelectContent>
                   <SelectItem value="TODO">A fazer</SelectItem>
                   <SelectItem value="IN_PROGRESS">Em progresso</SelectItem>
+                  <SelectItem value="BLOCKED">Impedido</SelectItem>
                   <SelectItem value="DONE">Concluído</SelectItem>
                   <SelectItem value="ARCHIVED">Arquivada</SelectItem>
                 </SelectContent>

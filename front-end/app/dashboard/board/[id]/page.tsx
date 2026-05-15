@@ -401,6 +401,7 @@ export default function BoardPage() {
             { value: "__all__", label: "Todos", className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" },
             { value: "TODO", label: "A fazer", className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" },
             { value: "IN_PROGRESS", label: "Em progresso", className: "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300" },
+            { value: "BLOCKED", label: "Impedido", className: "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300" },
             { value: "DONE", label: "Concluído", className: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" },
           ].map((opt) => {
             const active = statusFilter === opt.value;
