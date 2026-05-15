@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getBoardById } from "@/lib/actions/board";
 import { getAllList, deleteList } from "@/lib/actions/list";
+import { moveTask, moveTaskOtherList } from "@/lib/actions/task";
 import { getMyRoleOnBoard, getBoardMembers } from "@/lib/actions/members";
 
 import { CreateListDialog } from "@/features/board/create-list-dialog";
@@ -54,12 +61,14 @@ interface ListWithTasks {
 export default function BoardPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const boardId = params.id as string;
 
   const [createListOpen, setCreateListOpen] = useState(false);
   const [createTaskListId, setCreateTaskListId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
 
   const { data: boardData, isLoading: loadingBoard } = useQuery({
     queryKey: ["board", boardId],
@@ -86,10 +95,17 @@ export default function BoardPage() {
   });
 
   const board = boardData?.success ? boardData.data : null;
-  const lists: ListWithTasks[] = useMemo(() => {
+  const serverLists: ListWithTasks[] = useMemo(() => {
     if (!listsData?.success) return [];
     return (listsData.data as ListWithTasks[]) ?? [];
   }, [listsData]);
+
+  // Reset optimistic state when server data refreshes
+  useEffect(() => {
+    setOptimisticLists(null);
+  }, [listsData]);
+
+  const lists = optimisticLists ?? serverLists;
 
   const myRole = roleData?.success ? roleData.data.role : null;
   const isAdmin = myRole === "OWNER" || myRole === "ADMIN";
@@ -136,6 +152,67 @@ export default function BoardPage() {
     } else {
       toast.error(r.error || "Erro ao excluir lista");
     }
+  }
+
+  async function handleDragEnd(result: DropResult) {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+    if (!canEditTasks) {
+      toast.error("Você não tem permissão para mover tarefas");
+      return;
+    }
+
+    // Build optimistic state
+    const sourceListId = source.droppableId;
+    const destListId = destination.droppableId;
+    const next = lists.map((l) => ({
+      ...l,
+      tasks: [...(l.tasks ?? [])].sort((a, b) => a.position - b.position),
+    }));
+    const srcList = next.find((l) => l.id === sourceListId);
+    const dstList = next.find((l) => l.id === destListId);
+    if (!srcList || !dstList || !srcList.tasks) return;
+
+    const [moved] = srcList.tasks.splice(source.index, 1);
+    if (!moved) return;
+    if (!dstList.tasks) dstList.tasks = [];
+
+    if (sourceListId === destListId) {
+      dstList.tasks.splice(destination.index, 0, moved);
+    } else {
+      moved.listId = destListId;
+      dstList.tasks.splice(destination.index, 0, moved);
+    }
+
+    // Reassign positions
+    srcList.tasks.forEach((t, i) => {
+      t.position = i;
+    });
+    if (sourceListId !== destListId) {
+      dstList.tasks.forEach((t, i) => {
+        t.position = i;
+      });
+    }
+
+    setOptimisticLists(next);
+
+    // Persist
+    const r =
+      sourceListId === destListId
+        ? await moveTask(draggableId, destination.index)
+        : await moveTaskOtherList(draggableId, destination.index, destListId);
+
+    if (!r.success) {
+      toast.error(r.error || "Erro ao mover tarefa");
+      setOptimisticLists(null);
+    }
+    queryClient.invalidateQueries({ queryKey: ["board-lists", boardId] });
   }
 
   const initial = (board.name ?? "?")[0].toUpperCase();
@@ -213,74 +290,108 @@ export default function BoardPage() {
           )}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {lists.map((list) => {
-            const tasks = (list.tasks ?? []).slice().sort((a, b) => a.position - b.position);
-            return (
-              <div
-                key={list.id}
-                className="flex-shrink-0 w-80 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 flex flex-col max-h-[calc(100vh-280px)]"
-              >
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <h3 className="font-semibold text-[#1E293B] text-sm truncate">
-                    {list.title}
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-[#94A3B8] bg-white border border-[#E2E8F0] rounded px-1.5 py-0.5">
-                      {tasks.length}
-                    </span>
-                    {isAdmin && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            aria-label="Opções da lista"
-                          >
-                            <MoreHorizontal size={14} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteList(list.id, list.title)}
-                            className="text-red-600"
-                          >
-                            <Trash2 size={14} className="mr-2" />
-                            Excluir lista
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {lists.map((list) => {
+              const tasks = (list.tasks ?? [])
+                .slice()
+                .sort((a, b) => a.position - b.position);
+              return (
+                <div
+                  key={list.id}
+                  className="flex-shrink-0 w-80 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 flex flex-col max-h-[calc(100vh-280px)]"
+                >
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="font-semibold text-[#1E293B] text-sm truncate">
+                      {list.title}
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-[#94A3B8] bg-white border border-[#E2E8F0] rounded px-1.5 py-0.5">
+                        {tasks.length}
+                      </span>
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              aria-label="Opções da lista"
+                            >
+                              <MoreHorizontal size={14} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteList(list.id, list.title)}
+                              className="text-red-600"
+                            >
+                              <Trash2 size={14} className="mr-2" />
+                              Excluir lista
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                  {tasks.map((t) => (
-                    <TaskCard
-                      key={t.id}
-                      task={t}
-                      members={members}
-                      onClick={() => setEditingTask(t)}
-                    />
-                  ))}
-                </div>
+                  <Droppable droppableId={list.id} type="task">
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`flex-1 overflow-y-auto space-y-2 pr-1 transition-colors rounded-md ${
+                          snapshot.isDraggingOver ? "bg-red-50/40" : ""
+                        }`}
+                      >
+                        {tasks.map((t, idx) => (
+                          <Draggable
+                            key={t.id}
+                            draggableId={t.id}
+                            index={idx}
+                            isDragDisabled={!canEditTasks}
+                          >
+                            {(dragProvided, dragSnapshot) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={
+                                  dragSnapshot.isDragging
+                                    ? "rotate-1 shadow-lg"
+                                    : ""
+                                }
+                              >
+                                <TaskCard
+                                  task={t}
+                                  members={members}
+                                  onClick={() => setEditingTask(t)}
+                                />
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
 
-                {canEditTasks && (
-                  <button
-                    type="button"
-                    onClick={() => setCreateTaskListId(list.id)}
-                    className="mt-2 w-full flex items-center justify-center gap-1.5 text-sm text-[#64748B] hover:text-[#C01010] hover:bg-white rounded-lg py-2 transition-colors"
-                  >
-                    <Plus size={14} />
-                    Adicionar tarefa
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {canEditTasks && (
+                    <button
+                      type="button"
+                      onClick={() => setCreateTaskListId(list.id)}
+                      className="mt-2 w-full flex items-center justify-center gap-1.5 text-sm text-[#64748B] hover:text-[#C01010] hover:bg-white rounded-lg py-2 transition-colors"
+                    >
+                      <Plus size={14} />
+                      Adicionar tarefa
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </DragDropContext>
       )}
 
       {/* Dialogs */}
