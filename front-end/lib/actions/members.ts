@@ -88,7 +88,14 @@ export async function getMyRoleOnBoard(boardId: string) {
   try {
     const safeId = validateId(boardId, 'boardId');
     const response = await api.get(`/v1/boards/${safeId}/my-role`);
-    return { success: true as const, data: response.data as { role: MyRole } };
+    // Backend retorna a role como string ("OWNER" | "ADMIN" | ...) ou null.
+    // Normaliza para { role } pra ficar consistente no consumo.
+    const raw = response.data as MyRole | { role: MyRole } | null;
+    const role: MyRole =
+      raw && typeof raw === 'object' && 'role' in raw
+        ? (raw.role as MyRole)
+        : (raw as MyRole);
+    return { success: true as const, data: { role } };
   } catch (error) {
     return {
       success: false as const,

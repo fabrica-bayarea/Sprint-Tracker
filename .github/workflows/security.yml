@@ -9,8 +9,13 @@ on:
 
 permissions: read-all
 
+# Concurrency expandida: agrupa por workflow + ref OU head_ref (PR).
+# Evita race-condition entre os triggers push e pull_request quando
+# ambos disparam pra mesma branch — o SonarCloud invalida análises
+# duplicadas concorrentes (ANALYSIS_MODE_INELIGIBLE) e uma delas
+# falha mesmo com Quality Gate OK.
 concurrency:
-  group: security-${{ github.ref }}
+  group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:

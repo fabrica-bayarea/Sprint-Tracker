@@ -5,6 +5,7 @@ import { AnalysisModule } from '@/analysis/analysis.module';
 import { AuthModule } from '@/auth/auth.module';
 import { BoardModule } from '@/board/board.module';
 import { BoardMemberModule } from '@/board-member/board-member.module';
+import { LabelModule } from '@/label/label.module';
 import { EventsModule } from '@/events/events.module';
 import { HealthModule } from '@/health/health.module';
 import { ListModule } from '@/list/list.module';
@@ -29,6 +30,7 @@ import { TaskLogModule } from '@/task-log/task-log.module';
     TaskModule,
     TaskLogModule,
     BoardMemberModule,
+    LabelModule,
     HealthModule,
     AnalysisModule,
   ],

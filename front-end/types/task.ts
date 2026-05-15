@@ -19,6 +19,16 @@ export interface UpdateTaskData {
   assigneeId?: string | null;
 }
 
+export interface TaskLabelLink {
+  labelId: string;
+  taskId: string;
+  label?: {
+    id: string;
+    name: string;
+    color: string;
+  };
+}
+
 export interface Task {
   id: string;
   listId: string;
@@ -31,6 +41,7 @@ export interface Task {
   updatedAt: string;
   priority?: Priority;
   assigneeId?: string | null;
+  labels?: TaskLabelLink[];
 }
 
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW';

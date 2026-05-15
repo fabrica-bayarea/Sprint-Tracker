@@ -64,7 +64,8 @@ export function CreateTaskDialog({
       description: description.trim() || undefined,
       position: nextPosition,
       status: "TODO",
-      dueDate: dueDate || undefined,
+      // Input datetime-local retorna 'YYYY-MM-DDTHH:MM'; Prisma exige ISO-8601 completo
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       assigneeId: assigneeId !== UNASSIGNED ? assigneeId : null,
     });
     setLoading(false);
