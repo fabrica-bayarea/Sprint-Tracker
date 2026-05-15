@@ -7,6 +7,7 @@ export interface TaskData {
   status: string;
   dueDate?: string;
   assigneeId?: string | null;
+  sprintId?: string | null;
 }
 
 export interface UpdateTaskData {
