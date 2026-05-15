@@ -92,7 +92,11 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
+      {/* sm:max-w-xl em vez de só max-w-xl: o DialogContent do shadcn tem
+          sm:max-w-sm (384px) hardcoded como default. Sem o prefixo sm: aqui
+          esse default ganha em viewports >=640px e o conteúdo (avatar + nome
+          + Select role + lixeira) extrapola. */}
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Membros do quadro</DialogTitle>
         </DialogHeader>
