@@ -24,10 +24,10 @@ function formatDue(dateStr?: string) {
 }
 
 const statusBadge: Record<string, { label: string; className: string }> = {
-  TODO: { label: "A fazer", className: "bg-slate-100 text-slate-700" },
-  IN_PROGRESS: { label: "Em progresso", className: "bg-amber-100 text-amber-700" },
-  DONE: { label: "Concluído", className: "bg-emerald-100 text-emerald-700" },
-  ARCHIVED: { label: "Arquivada", className: "bg-zinc-100 text-zinc-500" },
+  TODO: { label: "A fazer", className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200" },
+  IN_PROGRESS: { label: "Em progresso", className: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" },
+  DONE: { label: "Concluído", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" },
+  ARCHIVED: { label: "Arquivada", className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" },
 };
 
 export function TaskCard({ task, members, onClick }: TaskCardProps) {
@@ -54,7 +54,7 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
       tabIndex={0}
       onClick={onClick}
       onKeyDown={handleKey}
-      className="cursor-grab active:cursor-grabbing w-full text-left rounded-lg border border-[#E2E8F0] bg-white p-3 shadow-sm hover:border-[#C01010]/40 hover:shadow transition-all"
+      className="cursor-grab active:cursor-grabbing w-full text-left rounded-lg border border-border bg-card p-3 shadow-sm hover:border-red-600/40 hover:shadow transition-all"
     >
       {task.labels && task.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-1.5">
@@ -73,7 +73,7 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
         </div>
       )}
       <div className="flex items-start justify-between gap-2">
-        <p className="font-medium text-sm text-[#1E293B] line-clamp-2 flex-1">
+        <p className="font-medium text-sm text-foreground line-clamp-2 flex-1">
           {task.title}
         </p>
         <span className={`text-[10px] px-1.5 py-0.5 rounded ${badge.className}`}>
@@ -81,13 +81,13 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
         </span>
       </div>
       {task.description ? (
-        <p className="text-xs text-[#64748B] mt-1 line-clamp-2">{task.description}</p>
+        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
       ) : null}
       <div className="flex items-center justify-between mt-2 gap-2">
         {due ? (
           <div
             className={`flex items-center gap-1 text-[11px] ${
-              overdue ? "text-red-600 font-medium" : "text-[#94A3B8]"
+              overdue ? "text-red-600 font-medium" : "text-muted-foreground"
             }`}
           >
             <Calendar size={11} />
@@ -98,10 +98,10 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
         )}
         {assignee ? (
           <div
-            className="flex items-center gap-1 text-[11px] text-[#64748B]"
+            className="flex items-center gap-1 text-[11px] text-muted-foreground"
             title={assignee.email || ""}
           >
-            <div className="w-5 h-5 rounded-full bg-[#FEF2F2] text-[#C01010] flex items-center justify-center font-semibold text-[10px]">
+            <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 flex items-center justify-center font-semibold text-[10px]">
               {(assignee.name || assignee.userName || "?")[0]?.toUpperCase()}
             </div>
             <span className="truncate max-w-[100px]">
@@ -109,7 +109,7 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-1 text-[11px] text-[#CBD5E1]">
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground/60">
             <User size={11} />
             Sem responsável
           </div>

@@ -12,12 +12,12 @@ export default function Register() {
   const { registerField, handleSubmit, errors, password, isSubmitting, passwordRequirements, control } = useRegister();
 
   const getReqClass = (met: boolean) => {
-    if (!password) return "text-gray-400";
+    if (!password) return "text-muted-foreground";
     return met ? "text-green-500" : "text-red-500";
   };
 
   return (
-    <main className="flex min-h-screen w-full bg-white">
+    <main className="flex min-h-screen w-full bg-background">
       <div className="relative hidden w-[60%] flex-col justify-between bg-linear-to-br from-[#e02b2b] to-[#991b1b] p-10 lg:flex">
         <div className="absolute left-10 top-10">
           <Image src="/images/iesb-logo.png" alt="IESB" width={100} height={120} className="object-contain" />
@@ -35,7 +35,7 @@ export default function Register() {
             <Image src="/images/iesb-logo.png" alt="IESB" width={80} height={96} className="object-contain" />
           </div>
 
-          <h1 className="mb-8 text-center text-2xl font-bold text-gray-900">
+          <h1 className="mb-8 text-center text-2xl font-bold text-foreground">
             CRIE SUA CONTA
           </h1>
 
@@ -43,7 +43,7 @@ export default function Register() {
             <div className="space-y-1">
               <Input
                 placeholder="Nome completo"
-                className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                 {...registerField("fullname")}
               />
               {errors.fullname && <span className="text-xs text-red-500">{errors.fullname.message}</span>}
@@ -52,7 +52,7 @@ export default function Register() {
             <div className="space-y-1">
               <Input
                 placeholder="Nome de usuário"
-                className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                 {...registerField("userName")}
               />
               {errors.userName && <span className="text-xs text-red-500">{errors.userName.message}</span>}
@@ -63,7 +63,7 @@ export default function Register() {
                 <Input
                   type="email"
                   placeholder="E-mail"
-                  className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                  className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                   {...registerField("email")}
                 />
                 {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
@@ -73,7 +73,7 @@ export default function Register() {
                 <Input
                   type="email"
                   placeholder="Confirme o E-mail"
-                  className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                  className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                   {...registerField("confirmEmail")}
                 />
                 {errors.confirmEmail && <span className="text-xs text-red-500">{errors.confirmEmail.message}</span>}
@@ -85,7 +85,7 @@ export default function Register() {
                 <Input
                   type="password"
                   placeholder="Senha"
-                  className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                  className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                   {...registerField("password")}
                 />
               </div>
@@ -93,14 +93,14 @@ export default function Register() {
                 <Input
                   type="password"
                   placeholder="Confirme a senha"
-                  className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                  className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                   {...registerField("confirmPassword")}
                 />
                 {errors.confirmPassword && <span className="text-xs text-red-500">{errors.confirmPassword.message}</span>}
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-[12px] leading-relaxed">
+            <div className="rounded-lg border border-border bg-muted p-3 text-[12px] leading-relaxed">
               <div className={`flex items-center gap-1.5 ${getReqClass(passwordRequirements.hasUppercase)}`}>
                 <span>{passwordRequirements.hasUppercase ? '✔' : '✖'}</span> Pelo menos 1 letra maiúscula
               </div>
@@ -125,11 +125,11 @@ export default function Register() {
                       id="terms"
                       checked={!!field.value}
                       onCheckedChange={field.onChange}
-                      className="border-gray-300 data-[state=checked]:bg-[#e02b2b] data-[state=checked]:text-white"
+                      className="border-input data-[state=checked]:bg-[#e02b2b] data-[state=checked]:text-white"
                     />
                   )}
                 />
-                <Label htmlFor="terms" className="cursor-pointer text-sm font-normal text-gray-600">
+                <Label htmlFor="terms" className="cursor-pointer text-sm font-normal text-foreground">
                   Concordo com os termos de serviço
                 </Label>
               </div>
@@ -145,7 +145,7 @@ export default function Register() {
             </button>
 
             <div className="mt-2 text-center">
-              <Link href="/auth/login" className="text-sm text-gray-500 transition-colors hover:text-[#e02b2b] hover:underline">
+              <Link href="/auth/login" className="text-sm text-muted-foreground transition-colors hover:text-[#e02b2b] hover:underline">
                 Já tem uma conta? <span className="font-bold text-[#e02b2b]">Entrar</span>
               </Link>
             </div>

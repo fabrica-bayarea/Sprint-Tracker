@@ -77,7 +77,7 @@ export function CreateBoardDialog({ isOpen, onClose }: CreateBoardDialogProps) {
             </div>
             <input type="file" accept="image/*" onChange={handleImageChange} className="text-sm" />
           </div>
-          <button type="submit" disabled={loading} className="bg-[#C01010] text-primary-foreground py-2 rounded-md font-medium mt-2">
+          <button type="submit" disabled={loading} className="bg-red-600 text-primary-foreground py-2 rounded-md font-medium mt-2">
             {loading ? "Criando" : "Criar"}
           </button>
         </form>

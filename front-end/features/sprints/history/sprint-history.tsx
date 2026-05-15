@@ -27,14 +27,14 @@ export function SprintHistory() {
         <h1 className="text-3xl font-bold tracking-tight">
           Histórico de Sprints
         </h1>
-        <p className="text-[#5C403C] mt-1 text-sm">Veja todas as sprints já feitas</p>
+        <p className="text-muted-foreground mt-1 text-sm">Veja todas as sprints já feitas</p>
       </div>
 
-      <div className="relative flex items-center w-80 bg-[#dfdfdf] rounded-lg">
+      <div className="relative flex items-center w-80 bg-muted rounded-lg">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Procurar tarefa..."
-          className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
+          className="w-full pl-10 pr-4 py-2 text-sm bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

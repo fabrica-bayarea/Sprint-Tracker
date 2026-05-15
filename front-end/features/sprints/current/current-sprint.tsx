@@ -58,15 +58,15 @@ export function CurrentSprint() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sprint Atual</h1>
-          <p className="text-[#5C403C] mt-1 text-sm">{currentSprint?.name || "Nenhuma sprint"}</p>
+          <p className="text-foreground mt-1 text-sm">{currentSprint?.name || "Nenhuma sprint"}</p>
         </div>
         <Select value={selectedSprintId} onValueChange={setSelectedSprintId}>
-          <SelectTrigger className="bg-[#C01010] text-white border-0 focus:ring-0 rounded-md font-medium px-8 py-6" chevronClassName="text-white">
+          <SelectTrigger className="bg-red-600 text-white border-0 focus:ring-0 rounded-md font-medium px-8 py-6" chevronClassName="text-white">
             <SelectValue placeholder="Selecione a Sprint" />
           </SelectTrigger>
-          <SelectContent className="bg-[#C01010] text-white">
+          <SelectContent className="bg-red-600 text-white">
             {sprints.map((sprint) => (
-              <SelectItem key={sprint.id} value={sprint.id} className="hover:bg-[#8d0b0b_!important] px-8 py-4">
+              <SelectItem key={sprint.id} value={sprint.id} className="hover:bg-red-800! px-8 py-4">
                 {sprint.name}
               </SelectItem>
             ))}
@@ -75,11 +75,11 @@ export function CurrentSprint() {
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex items-center w-80 bg-[#dfdfdf] rounded-lg">
+        <div className="relative flex items-center w-80 bg-muted rounded-lg">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Procurar backlog..."
-            className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
+            className="w-full pl-10 pr-4 py-2 text-sm bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-red-600/20"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -95,7 +95,7 @@ export function CurrentSprint() {
             />
             <button
               onClick={handleAddColumn}
-              className="bg-black text-white p-2 rounded-md hover:bg-gray-800 transition-colors"
+              className="bg-foreground text-background p-2 rounded-md hover:bg-foreground/80 transition-colors"
             >
               <Plus className="h-5 w-5" />
             </button>
@@ -104,7 +104,7 @@ export function CurrentSprint() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground">Agrupar por</span>
             <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-35 bg-white border-gray-200">
+              <SelectTrigger className="w-35 bg-card border-border">
                 <SelectValue placeholder="Nada" />
               </SelectTrigger>
               <SelectContent>

@@ -83,9 +83,9 @@ export function NotificationsBell() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
-        <div className="px-4 py-3 border-b border-[#E2E8F0]">
-          <p className="font-semibold text-sm text-[#1E293B]">Notificações</p>
-          <p className="text-xs text-[#94A3B8]">
+        <div className="px-4 py-3 border-b border-border">
+          <p className="font-semibold text-sm text-foreground">Notificações</p>
+          <p className="text-xs text-muted-foreground">
             {count === 0
               ? "Sem convites pendentes"
               : `${count} convite${count === 1 ? "" : "s"} aguardando resposta`}
@@ -93,21 +93,21 @@ export function NotificationsBell() {
         </div>
         <div className="max-h-[400px] overflow-y-auto">
           {pending.length === 0 ? (
-            <div className="p-8 text-center text-sm text-[#94A3B8]">
+            <div className="p-8 text-center text-sm text-muted-foreground">
               Você está em dia! ✨
             </div>
           ) : (
             pending.map((n) => (
               <div
                 key={n.id}
-                className="p-4 border-b border-[#F1F5F9] last:border-0"
+                className="p-4 border-b border-border last:border-0"
               >
-                <p className="text-sm text-[#1E293B]">
+                <p className="text-sm text-foreground">
                   <strong>{n.sender.name || n.sender.userName}</strong> te
                   convidou para o quadro{" "}
                   <strong>{n.board.title}</strong>
                 </p>
-                <p className="text-xs text-[#94A3B8] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   como <em>{roleLabel[n.role]}</em> · {formatDate(n.createdAt)}
                 </p>
                 <div className="flex gap-2 mt-3">

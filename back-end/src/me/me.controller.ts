@@ -76,4 +76,16 @@ export class ProfileController {
     const notifications = await this.profileService.getNotifications(user.id);
     return notifications;
   }
+
+  @ApiOperation({
+    summary: 'Tasks do usuário (backlog agregado)',
+    description: 'Retorna todas as tasks dos boards que o usuário participa',
+  })
+  @ApiResponse({ status: 200, description: 'Tasks carregadas com sucesso' })
+  @UseGuards(JwtAuthGuard)
+  @Get('tasks')
+  async getMyTasks(@CurrentUser() user: AuthenticatedUser) {
+    const tasks = await this.profileService.getMyTasks(user.id);
+    return tasks;
+  }
 }

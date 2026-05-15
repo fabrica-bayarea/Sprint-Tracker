@@ -51,11 +51,11 @@ export function PendingTasks() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] p-6 mb-6">
-        <div className="h-5 w-32 bg-[#F1F5F9] rounded animate-pulse" />
+      <div className="rounded-xl bg-card shadow-sm border border-border p-6 mb-6">
+        <div className="h-5 w-32 bg-muted rounded animate-pulse" />
         <div className="space-y-2 mt-4">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="h-12 bg-[#F1F5F9] rounded animate-pulse" />
+            <div key={i} className="h-12 bg-muted rounded animate-pulse" />
           ))}
         </div>
       </div>
@@ -67,13 +67,13 @@ export function PendingTasks() {
   }
 
   return (
-    <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] overflow-hidden mb-6">
-      <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center gap-2">
+    <div className="rounded-xl bg-card shadow-sm border border-border overflow-hidden mb-6">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-2">
         <AlertTriangle size={18} className="text-amber-600" />
-        <h2 className="text-base font-semibold text-[#1E293B]">
+        <h2 className="text-base font-semibold text-foreground">
           Pendências ({tasks.length})
         </h2>
-        <span className="text-xs text-[#94A3B8] ml-1">atrasadas ou vencendo em ≤12h</span>
+        <span className="text-xs text-muted-foreground ml-1">atrasadas ou vencendo em ≤12h</span>
       </div>
       <div className="divide-y divide-[#F1F5F9]">
         {tasks.map((t) => {
@@ -86,7 +86,7 @@ export function PendingTasks() {
               key={t.id}
               type="button"
               onClick={() => boardId && router.push(`/dashboard/board/${boardId}`)}
-              className="w-full text-left flex items-center gap-3 px-6 py-3 hover:bg-[#FEF2F2]/30 transition-colors"
+              className="w-full text-left flex items-center gap-3 px-6 py-3 hover:bg-red-100/30 dark:hover:bg-red-950/30 transition-colors"
             >
               <div
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${
@@ -94,8 +94,8 @@ export function PendingTasks() {
                 }`}
               />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-[#1E293B] truncate">{t.title}</p>
-                <div className="flex items-center gap-3 mt-0.5 text-xs text-[#94A3B8]">
+                <p className="font-medium text-sm text-foreground truncate">{t.title}</p>
+                <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
                   <span className="truncate">
                     {t.list?.board?.title} / {t.list?.title}
                   </span>
