@@ -20,6 +20,7 @@ import {
 import { updateTask, deleteTask } from "@/lib/actions/task";
 import type { Task } from "../../types/task";
 import type { BoardMember } from "@/lib/actions/members";
+import { TaskHistory } from "@/features/board/task-history";
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -29,6 +30,8 @@ interface EditTaskDialogProps {
   members?: BoardMember[];
   canAssign?: boolean;
   canDelete?: boolean;
+  /** Admin/owner consegue ver histórico (TaskLogs) */
+  canViewHistory?: boolean;
 }
 
 const UNASSIGNED = "__unassigned__";
@@ -41,6 +44,7 @@ export function EditTaskDialog({
   members = [],
   canAssign = false,
   canDelete = false,
+  canViewHistory = false,
 }: EditTaskDialogProps) {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
@@ -174,6 +178,8 @@ export function EditTaskDialog({
               </Select>
             </div>
           )}
+
+          <TaskHistory taskId={task.id} enabled={canViewHistory} />
 
           <div className="flex justify-between gap-2 pt-2">
             {canDelete ? (

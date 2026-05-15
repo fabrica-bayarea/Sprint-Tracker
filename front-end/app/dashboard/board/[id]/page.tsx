@@ -31,6 +31,7 @@ import { getBoardById } from "@/lib/actions/board";
 import { getAllList, deleteList } from "@/lib/actions/list";
 import { moveTask, moveTaskOtherList } from "@/lib/actions/task";
 import { getMyRoleOnBoard, getBoardMembers } from "@/lib/actions/members";
+import { getUserProfile } from "@/lib/actions/profile";
 
 import { CreateListDialog } from "@/features/board/create-list-dialog";
 import { CreateTaskDialog } from "@/features/board/create-task-dialog";
@@ -83,6 +84,7 @@ export default function BoardPage() {
   const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all__");
+  const [showMineOnly, setShowMineOnly] = useState(false);
 
   const { data: boardData, isLoading: loadingBoard } = useQuery({
     queryKey: ["board", boardId],
@@ -107,6 +109,15 @@ export default function BoardPage() {
     queryFn: () => getBoardMembers(boardId),
     enabled: !!boardId,
   });
+
+  const { data: profileData } = useQuery({
+    queryKey: ["me-profile"],
+    queryFn: getUserProfile,
+    staleTime: 5 * 60 * 1000,
+  });
+  const myUserId = (profileData?.success
+    ? (profileData.data as { id?: string })?.id
+    : undefined) as string | undefined;
 
   const board = boardData?.success ? boardData.data : null;
   const serverLists: ListWithTasks[] = useMemo(() => {
@@ -331,7 +342,22 @@ export default function BoardPage() {
               ))}
             </SelectContent>
           </Select>
-          {(search || assigneeFilter !== "__all__") && (
+          {myUserId && (
+            <Button
+              type="button"
+              variant={showMineOnly ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowMineOnly((v) => !v)}
+              className={
+                showMineOnly
+                  ? "gap-1.5 bg-red-600 hover:bg-red-700 text-white"
+                  : "gap-1.5"
+              }
+            >
+              Minhas tarefas
+            </Button>
+          )}
+          {(search || assigneeFilter !== "__all__" || showMineOnly) && (
             <Button
               type="button"
               variant="ghost"
@@ -339,6 +365,7 @@ export default function BoardPage() {
               onClick={() => {
                 setSearch("");
                 setAssigneeFilter("__all__");
+                setShowMineOnly(false);
               }}
               className="gap-1.5"
             >
@@ -394,10 +421,15 @@ export default function BoardPage() {
                     return false;
                   }
                 }
+                if (showMineOnly && myUserId && t.assigneeId !== myUserId) {
+                  return false;
+                }
                 return true;
               });
               const hasActiveFilter =
-                searchLower !== "" || assigneeFilter !== "__all__";
+                searchLower !== "" ||
+                assigneeFilter !== "__all__" ||
+                showMineOnly;
               return (
                 <div
                   key={list.id}
@@ -538,6 +570,7 @@ export default function BoardPage() {
         members={members}
         canAssign={isAdmin}
         canDelete={canEditTasks}
+        canViewHistory={isAdmin}
       />
 
       <MembersDialog
