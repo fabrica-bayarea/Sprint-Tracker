@@ -38,11 +38,23 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
   const overdue = task.dueDate && new Date(task.dueDate).getTime() < Date.now();
   const badge = statusBadge[task.status] ?? statusBadge.TODO;
 
+  function handleKey(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick();
+    }
+  }
+
   return (
-    <button
-      type="button"
+    // div + role=button para que o pointerDown chegue limpo no Draggable
+    // (botões nativos podem capturar pointer events de forma diferente em
+    // alguns browsers, quebrando o início do drag).
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full text-left rounded-lg border border-[#E2E8F0] bg-white p-3 shadow-sm hover:border-[#C01010]/40 hover:shadow transition-all"
+      onKeyDown={handleKey}
+      className="cursor-grab active:cursor-grabbing w-full text-left rounded-lg border border-[#E2E8F0] bg-white p-3 shadow-sm hover:border-[#C01010]/40 hover:shadow transition-all"
     >
       <div className="flex items-start justify-between gap-2">
         <p className="font-medium text-sm text-[#1E293B] line-clamp-2 flex-1">
@@ -87,6 +99,6 @@ export function TaskCard({ task, members, onClick }: TaskCardProps) {
           </div>
         )}
       </div>
-    </button>
+    </div>
   );
 }
