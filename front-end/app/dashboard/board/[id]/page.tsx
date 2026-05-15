@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Users, Layout, MoreHorizontal, Trash2, Pencil, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   DragDropContext,
@@ -13,6 +13,14 @@ import {
 } from "@hello-pangea/dnd";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +81,8 @@ export default function BoardPage() {
   const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
+  const [search, setSearch] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("__all__");
 
   const { data: boardData, isLoading: loadingBoard } = useQuery({
     queryKey: ["board", boardId],
@@ -291,6 +301,54 @@ export default function BoardPage() {
         </div>
       </div>
 
+      {/* Filtros */}
+      {lists.length > 0 && (
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none"
+            />
+            <Input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por título ou descrição..."
+              className="pl-9"
+            />
+          </div>
+          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Filtrar por responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos os responsáveis</SelectItem>
+              <SelectItem value="__unassigned__">Sem responsável</SelectItem>
+              {members.map((m) => (
+                <SelectItem key={m.userId} value={m.userId}>
+                  {m.user.name || m.user.userName || m.user.email || m.userId}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(search || assigneeFilter !== "__all__") && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setAssigneeFilter("__all__");
+              }}
+              className="gap-1.5"
+            >
+              <X size={14} />
+              Limpar
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Kanban */}
       {lists.length === 0 ? (
         <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] p-12 text-center">
@@ -318,9 +376,28 @@ export default function BoardPage() {
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {lists.map((list) => {
-              const tasks = (list.tasks ?? [])
+              const allTasks = (list.tasks ?? [])
                 .slice()
                 .sort((a, b) => a.position - b.position);
+              const searchLower = search.trim().toLowerCase();
+              const tasks = allTasks.filter((t) => {
+                if (searchLower) {
+                  const matchText =
+                    t.title.toLowerCase().includes(searchLower) ||
+                    (t.description?.toLowerCase().includes(searchLower) ?? false);
+                  if (!matchText) return false;
+                }
+                if (assigneeFilter !== "__all__") {
+                  if (assigneeFilter === "__unassigned__") {
+                    if (t.assigneeId) return false;
+                  } else if (t.assigneeId !== assigneeFilter) {
+                    return false;
+                  }
+                }
+                return true;
+              });
+              const hasActiveFilter =
+                searchLower !== "" || assigneeFilter !== "__all__";
               return (
                 <div
                   key={list.id}
@@ -332,7 +409,7 @@ export default function BoardPage() {
                     </h3>
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-[#94A3B8] bg-white border border-[#E2E8F0] rounded px-1.5 py-0.5">
-                        {tasks.length}
+                        {hasActiveFilter ? `${tasks.length}/${allTasks.length}` : tasks.length}
                       </span>
                       {isAdmin && (
                         <DropdownMenu>
@@ -387,7 +464,7 @@ export default function BoardPage() {
                             key={t.id}
                             draggableId={t.id}
                             index={idx}
-                            isDragDisabled={!canEditTasks}
+                            isDragDisabled={!canEditTasks || hasActiveFilter}
                           >
                             {(dragProvided, dragSnapshot) => (
                               <div
