@@ -85,6 +85,7 @@ export default function BoardPage() {
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all__");
   const [showMineOnly, setShowMineOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("__all__");
 
   const { data: boardData, isLoading: loadingBoard } = useQuery({
     queryKey: ["board", boardId],
@@ -357,7 +358,10 @@ export default function BoardPage() {
               Minhas tarefas
             </Button>
           )}
-          {(search || assigneeFilter !== "__all__" || showMineOnly) && (
+          {(search ||
+            assigneeFilter !== "__all__" ||
+            showMineOnly ||
+            statusFilter !== "__all__") && (
             <Button
               type="button"
               variant="ghost"
@@ -366,6 +370,7 @@ export default function BoardPage() {
                 setSearch("");
                 setAssigneeFilter("__all__");
                 setShowMineOnly(false);
+                setStatusFilter("__all__");
               }}
               className="gap-1.5"
             >
@@ -373,6 +378,35 @@ export default function BoardPage() {
               Limpar
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Pills de status */}
+      {lists.length > 0 && (
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs text-[#94A3B8]">Status:</span>
+          {[
+            { value: "__all__", label: "Todos", className: "bg-slate-100 text-slate-700" },
+            { value: "TODO", label: "A fazer", className: "bg-slate-100 text-slate-700" },
+            { value: "IN_PROGRESS", label: "Em progresso", className: "bg-amber-100 text-amber-700" },
+            { value: "DONE", label: "Concluído", className: "bg-emerald-100 text-emerald-700" },
+          ].map((opt) => {
+            const active = statusFilter === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setStatusFilter(opt.value)}
+                className={`text-xs px-2.5 py-1 rounded-full transition-all ${
+                  active
+                    ? "bg-red-600 text-white"
+                    : `${opt.className} hover:opacity-80`
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -424,12 +458,16 @@ export default function BoardPage() {
                 if (showMineOnly && myUserId && t.assigneeId !== myUserId) {
                   return false;
                 }
+                if (statusFilter !== "__all__" && t.status !== statusFilter) {
+                  return false;
+                }
                 return true;
               });
               const hasActiveFilter =
                 searchLower !== "" ||
                 assigneeFilter !== "__all__" ||
-                showMineOnly;
+                showMineOnly ||
+                statusFilter !== "__all__";
               return (
                 <div
                   key={list.id}

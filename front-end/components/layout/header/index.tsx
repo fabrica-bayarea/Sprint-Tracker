@@ -10,6 +10,7 @@ import styles from "./style.module.css";
 import { useSprintStore } from "@/stores/use-sprint-store";
 import { cn } from "@/lib/utils";
 import { NotificationsBell } from "./notifications-bell";
+import { ThemeToggle } from "./theme-toggle";
 
 interface UserProfile {
   name?: string | null;
@@ -62,6 +63,7 @@ export default function Header() {
         )}
 
         <div className={styles.wrapper_header_helps}>
+          <ThemeToggle />
           <NotificationsBell />
           <div className={styles.profileContainer}>
             <Link
