@@ -1,23 +1,39 @@
-import api from '@/lib/api/axios';
+"use server";
 
-export const backlogActions = {
-  getTasks: async (boardId: string) => {
-    const { data } = await api.get(`/boards/${boardId}/backlog`);
-    return data;
-  },
-  
-  createTask: async (boardId: string, taskData: any) => {
-    const { data } = await api.post(`/boards/${boardId}/backlog`, taskData);
-    return data;
-  },
-  
-  updateTask: async (boardId: string, taskId: string, taskData: any) => {
-    const { data } = await api.patch(`/boards/${boardId}/backlog/${taskId}`, taskData);
-    return data;
-  },
-  
-  deleteTask: async (boardId: string, taskId: string) => {
-    const { data } = await api.delete(`/boards/${boardId}/backlog/${taskId}`);
-    return data;
+import api from "@/lib/api/axios";
+import { handleAxiosError } from "@/lib/utils/handle-axios-error";
+import type { Task } from "@/types/task";
+
+/** Task no contexto do backlog inclui informações da list e board */
+export interface BacklogTask extends Task {
+  list: {
+    id: string;
+    title: string;
+    board: {
+      id: string;
+      title: string;
+    };
+  };
+  assignee?: {
+    id: string;
+    name: string | null;
+    userName: string | null;
+    email: string | null;
+  } | null;
+}
+
+/**
+ * Backlog = agregado de todas as tasks dos boards visíveis ao usuário.
+ * Retorna tasks ordenadas por updatedAt desc.
+ */
+export async function getMyTasks() {
+  try {
+    const response = await api.get("/v1/me/tasks");
+    return { success: true as const, data: response.data as BacklogTask[] };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: handleAxiosError(error, "Erro ao buscar backlog"),
+    };
   }
-};
+}

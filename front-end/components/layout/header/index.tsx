@@ -36,7 +36,10 @@ export default function Header() {
     "?"
   )[0]?.toUpperCase();
 
-  const isSprintsPage = pathname === "/dashboard/sprints";
+  // Tabs de Sprints (Atual/Histórico/Burndown) ficam ocultas até existir
+  // SprintModule no backend. Mantemos a referência ao pathname pra reativar
+  // facilmente quando a rota voltar a ser funcional.
+  const isSprintsPage = false && pathname === "/dashboard/sprints";
 
   const handleLogout = async () => {
     await removeCookie("sprinttacker-session");
@@ -54,7 +57,7 @@ export default function Header() {
               <button
                 key={tab}
                 onClick={() => setView(tab)}
-                className={cn(view === tab ? "font-semibold text-[#B91C1C] border-b-[#B91C1C] border-b-2" : "text-[#475569]", "transition-all duration-200 ease-in-out hover:cursor-pointer hover:text-[#B91C1C]")}
+                className={cn(view === tab ? "font-semibold text-red-700 dark:text-red-400 border-b-red-700 dark:border-b-red-400 border-b-2" : "text-muted-foreground", "transition-all duration-200 ease-in-out hover:cursor-pointer hover:text-red-700 dark:hover:text-red-400")}
               >
                 {tab}
               </button>
@@ -68,7 +71,7 @@ export default function Header() {
           <div className={styles.profileContainer}>
             <Link
               href="/edit-profile/"
-              className="w-10 h-10 rounded-full bg-[#FEF2F2] text-[#C01010] flex items-center justify-center font-semibold text-base hover:bg-[#FEE2E2] transition-colors"
+              className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center font-semibold text-base hover:bg-red-200 dark:hover:bg-red-900/40 transition-colors"
               aria-label={`Editar perfil de ${profile?.name || profile?.userName || "usuário"}`}
               title={profile?.name || profile?.userName || profile?.email || ""}
             >

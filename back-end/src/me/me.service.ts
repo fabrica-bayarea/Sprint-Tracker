@@ -108,6 +108,44 @@ export class ProfileService {
     return { message: 'Conta e dados associados excluídos com sucesso' };
   }
 
+  /**
+   * Retorna todas as tasks dos boards visíveis ao usuário (owner ou member).
+   * Usado pela view de Backlog, que agrega tasks de todos os boards.
+   */
+  async getMyTasks(userId: string) {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        deletedAt: null,
+        list: {
+          board: {
+            members: {
+              some: { userId },
+            },
+            isArchived: false,
+          },
+        },
+      },
+      include: {
+        assignee: {
+          select: { id: true, name: true, userName: true, email: true },
+        },
+        labels: {
+          include: { label: true },
+        },
+        list: {
+          select: {
+            id: true,
+            title: true,
+            board: { select: { id: true, title: true } },
+          },
+        },
+      },
+      orderBy: [{ updatedAt: 'desc' }],
+    });
+
+    return tasks;
+  }
+
   async getNotifications(userId: string) {
     const notifications = await this.prisma.invite.findMany({
       where: { recipientId: userId },
