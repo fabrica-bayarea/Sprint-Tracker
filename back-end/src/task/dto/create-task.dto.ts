@@ -54,4 +54,15 @@ export class CreateTaskDto {
   @IsOptional()
   @IsString()
   assigneeId?: string | null;
+
+  @ApiProperty({
+    description:
+      'ID da sprint à qual a tarefa pertence (opcional). Sprint precisa ser do mesmo board e não estar COMPLETED.',
+    example: '1234567890abcdef12345678',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  sprintId?: string | null;
 }

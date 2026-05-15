@@ -49,8 +49,7 @@ export function TaskComments({ taskId, currentUserId }: TaskCommentsProps) {
   });
   const comments: TaskComment[] = data?.success ? data.data : [];
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     if (!content.trim()) return;
     setSending(true);
     const r = await createComment(taskId, content.trim());
@@ -60,6 +59,14 @@ export function TaskComments({ taskId, currentUserId }: TaskCommentsProps) {
       queryClient.invalidateQueries({ queryKey: ["task-comments", taskId] });
     } else {
       toast.error(r.error || "Erro ao comentar");
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Cmd/Ctrl + Enter envia. Enter solto continua produzindo nova linha.
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit();
     }
   }
 
@@ -192,16 +199,21 @@ export function TaskComments({ taskId, currentUserId }: TaskCommentsProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
+      {/* div em vez de form: este componente vive dentro do <form> do
+          EditTaskDialog, e form aninhado é inválido em HTML (o submit faria
+          bubble pro form de cima, salvando a task em vez de criar o comentário). */}
+      <div className="mt-3 flex gap-2">
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Escreva um comentário..."
+          onKeyDown={handleKeyDown}
+          placeholder="Escreva um comentário... (Ctrl/Cmd+Enter pra enviar)"
           rows={2}
           className="flex-1 text-sm"
         />
         <Button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={sending || !content.trim()}
           className="bg-red-600 hover:bg-red-700 text-white self-end"
           size="sm"
@@ -209,7 +221,7 @@ export function TaskComments({ taskId, currentUserId }: TaskCommentsProps) {
           <Send size={14} className="mr-1" />
           {sending ? "..." : "Enviar"}
         </Button>
-      </form>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LogAction, Status } from '@prisma/client';
+import { LogAction, SprintStatus, Status } from '@prisma/client';
 
 import { BoardGateway } from '@/events/board.gateway';
 import { PrismaQueries } from '@/prisma/queries';
@@ -107,6 +108,25 @@ export class TaskService {
       await this.assertAssigneeIsMember(normalizedAssignee, boardId);
     }
 
+    const normalizedSprint =
+      dto.sprintId === undefined ? null : dto.sprintId || null;
+
+    if (normalizedSprint) {
+      const sprint = await this.prisma.sprint.findUnique({
+        where: { id: normalizedSprint },
+        select: { boardId: true, status: true },
+      });
+      if (!sprint) throw new NotFoundException('Sprint não encontrada');
+      if (sprint.boardId !== boardId) {
+        throw new BadRequestException('Sprint é de outro board');
+      }
+      if (sprint.status === SprintStatus.COMPLETED) {
+        throw new BadRequestException(
+          'Sprint encerrada não aceita tasks novas',
+        );
+      }
+    }
+
     const newTask = await this.prisma.task.create({
       data: {
         creatorId: userId,
@@ -117,6 +137,7 @@ export class TaskService {
         status: dto.status,
         dueDate: dto.dueDate,
         assigneeId: normalizedAssignee,
+        sprintId: normalizedSprint,
         completedAt:
           String(dto.status) === String(Status.DONE) ? new Date() : null,
       },

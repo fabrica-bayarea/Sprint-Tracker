@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createTask } from "@/lib/actions/task";
+import { listSprints } from "@/lib/actions/sprint";
 import type { BoardMember } from "@/lib/actions/members";
 
 interface CreateTaskDialogProps {
@@ -30,6 +31,7 @@ interface CreateTaskDialogProps {
 }
 
 const UNASSIGNED = "__unassigned__";
+const NO_SPRINT = "__no_sprint__";
 
 export function CreateTaskDialog({
   isOpen,
@@ -44,13 +46,27 @@ export function CreateTaskDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>(UNASSIGNED);
+  const [sprintId, setSprintId] = useState<string>(NO_SPRINT);
   const [dueDate, setDueDate] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Sprints elegíveis = PLANNED ou ACTIVE (COMPLETED não aceita tasks).
+  const { data: sprintsData } = useQuery({
+    queryKey: ["sprints", boardId],
+    queryFn: () => listSprints(boardId),
+    enabled: isOpen && !!boardId,
+    staleTime: 30_000,
+  });
+  const eligibleSprints =
+    sprintsData?.success
+      ? sprintsData.data.filter((s) => s.status !== "COMPLETED")
+      : [];
 
   function reset() {
     setTitle("");
     setDescription("");
     setAssigneeId(UNASSIGNED);
+    setSprintId(NO_SPRINT);
     setDueDate("");
   }
 
@@ -67,12 +83,14 @@ export function CreateTaskDialog({
       // Input datetime-local retorna 'YYYY-MM-DDTHH:MM'; Prisma exige ISO-8601 completo
       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       assigneeId: assigneeId !== UNASSIGNED ? assigneeId : null,
+      sprintId: sprintId !== NO_SPRINT ? sprintId : null,
     });
     setLoading(false);
 
     if (result.success) {
       reset();
       queryClient.invalidateQueries({ queryKey: ["board-lists", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-active", boardId] });
       onClose();
       toast.success("Tarefa criada");
     } else {
@@ -140,6 +158,26 @@ export function CreateTaskDialog({
               </div>
             )}
           </div>
+
+          {eligibleSprints.length > 0 && (
+            <div className="space-y-2">
+              <Label>Sprint</Label>
+              <Select value={sprintId} onValueChange={setSprintId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhuma sprint" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_SPRINT}>Nenhuma sprint</SelectItem>
+                  {eligibleSprints.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                      {s.status === "ACTIVE" ? " (ativa)" : " (planejada)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
