@@ -336,12 +336,16 @@ export default function BoardPage() {
                     </div>
                   </div>
 
-                  <Droppable droppableId={list.id} type="task">
+                  <Droppable
+                    droppableId={list.id}
+                    type="task"
+                    ignoreContainerClipping
+                  >
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex-1 overflow-y-auto space-y-2 pr-1 transition-colors rounded-md ${
+                        className={`flex-1 overflow-y-auto space-y-2 pr-1 transition-colors rounded-md min-h-[80px] ${
                           snapshot.isDraggingOver ? "bg-red-50/40" : ""
                         }`}
                       >
