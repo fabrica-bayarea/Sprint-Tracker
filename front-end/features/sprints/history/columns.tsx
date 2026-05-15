@@ -13,7 +13,7 @@ const getStatusConfig = (status: string) => {
   if (s === "REVIEW") return { color: "bg-orange-500", text: "Em Revisão" };
   if (s === "CRITICAL") return { color: "bg-red-500", text: "Crítico" };
   if (s === "DONE") return { color: "bg-green-500", text: "Concluído" };
-  return { color: "bg-gray-300", text: status };
+  return { color: "bg-muted-foreground/40", text: status };
 };
 
 export const getColumns = (): ColumnDef<any>[] => [

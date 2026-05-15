@@ -6,7 +6,7 @@ export const BurndownSprint = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Burndown</h1>
-          <p className="text-[#5C403C] mt-1 text-sm">Veja as métricas das suas sprints</p>
+          <p className="text-muted-foreground mt-1 text-sm">Veja as métricas das suas sprints</p>
         </div>
       </div>
 

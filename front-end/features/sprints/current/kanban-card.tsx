@@ -16,7 +16,7 @@ export function KanbanCard({ task, index, isDraggable = true }: KanbanCardProps)
   const priority = priorityConfig[task.priority || "LOW"];
 
   const cardContent = (
-    <Card className={`border-t-[3px] ${priority.borderClass} shadow-sm rounded-md bg-white h-full`}>
+    <Card className={`border-t-[3px] ${priority.borderClass} shadow-sm rounded-md bg-card h-full`}>
       <CardHeader className="p-6 py-0 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-2 mt-4">
           {isDraggable && <GripVertical className="h-4 w-4 text-muted-foreground/40" />}
@@ -34,7 +34,7 @@ export function KanbanCard({ task, index, isDraggable = true }: KanbanCardProps)
       <CardContent className="p-6 pt-2 flex flex-col justify-between h-full">
         <div>
           <h3 className="font-bold text-[18px] mb-2 leading-tight">{task.title}</h3>
-          <p className="text-[13px] text-[#475569] leading-relaxed">
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
             {task.description}
           </p>
         </div>

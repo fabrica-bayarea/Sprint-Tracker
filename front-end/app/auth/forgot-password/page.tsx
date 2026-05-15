@@ -10,7 +10,7 @@ export default function ForgotPassword() {
   const { register, onSubmit, formState: { errors, isSubmitting } } = useForgotPassword();
 
   return (
-    <main className="flex min-h-screen w-full bg-white">
+    <main className="flex min-h-screen w-full bg-background">
       <div className="relative hidden w-[60%] flex-col justify-between bg-linear-to-br from-[#e02b2b] to-[#991b1b] p-10 lg:flex">
         <div className="absolute left-10 top-10">
           <Image src="/images/iesb-logo.png" alt="IESB" width={100} height={120} className="object-contain" />
@@ -24,7 +24,7 @@ export default function ForgotPassword() {
 
       <div className="flex w-full flex-col items-center justify-center p-6 sm:p-12 lg:w-[40%]">
         <div className="w-full max-w-100">
-          <Link href="/auth/login" className="mb-6 flex w-fit items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
+          <Link href="/auth/login" className="mb-6 flex w-fit items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             <ArrowLeft size={16} />
             Voltar
           </Link>
@@ -33,10 +33,10 @@ export default function ForgotPassword() {
             <Image src="/images/iesb-logo.png" alt="IESB" width={80} height={96} className="object-contain" />
           </div>
 
-          <h1 className="mb-4 text-center text-2xl font-bold text-gray-900">
+          <h1 className="mb-4 text-center text-2xl font-bold text-foreground">
             ESQUECEU SUA SENHA?
           </h1>
-          <p className="mb-8 text-center text-sm leading-relaxed text-gray-600">
+          <p className="mb-8 text-center text-sm leading-relaxed text-foreground">
             Para redefinir sua senha, insira seu e-mail cadastrado e clique em &quot;Enviar e-mail&quot;. Você receberá um e-mail com instruções.
           </p>
 
@@ -45,7 +45,7 @@ export default function ForgotPassword() {
               <Input
                 type="email"
                 placeholder="Insira o seu e-mail"
-                className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                 {...register("email")}
               />
               {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}

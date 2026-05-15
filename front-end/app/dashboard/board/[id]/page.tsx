@@ -143,11 +143,11 @@ export default function BoardPage() {
   if (loadingBoard) {
     return (
       <div className="p-8 max-w-7xl mx-auto space-y-6">
-        <div className="h-8 w-32 bg-[#F1F5F9] rounded animate-pulse" />
-        <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] p-6 h-24 animate-pulse" />
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+        <div className="rounded-xl bg-card shadow-sm border border-border p-6 h-24 animate-pulse" />
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-64 bg-[#F1F5F9] rounded-xl animate-pulse" />
+            <div key={i} className="h-64 bg-muted rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -157,13 +157,13 @@ export default function BoardPage() {
   if (!board) {
     return (
       <div className="p-8 max-w-5xl mx-auto flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-[#1E293B] font-medium text-lg">Quadro não encontrado</p>
-        <p className="text-sm text-[#94A3B8] mt-1">
+        <p className="text-foreground font-medium text-lg">Quadro não encontrado</p>
+        <p className="text-sm text-muted-foreground mt-1">
           O quadro que você está procurando não existe ou você não tem acesso.
         </p>
         <button
           onClick={() => router.push("/dashboard")}
-          className="mt-4 px-4 py-2 bg-[#C01010] text-white rounded-lg text-sm font-medium hover:bg-[#a00d0d] transition-colors"
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
         >
           Voltar para o início
         </button>
@@ -250,28 +250,28 @@ export default function BoardPage() {
     <div className="p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
       <button
         onClick={() => router.push("/dashboard")}
-        className="flex items-center gap-2 text-sm text-[#64748B] hover:text-[#C01010] transition-colors"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-red-600 dark:hover:text-red-400 transition-colors"
       >
         <ArrowLeft size={16} />
         Voltar
       </button>
 
       {/* Board header */}
-      <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] p-6 flex items-center gap-4">
+      <div className="rounded-xl bg-card shadow-sm border border-border p-6 flex items-center gap-4">
         <div
           className={`flex items-center justify-center w-16 h-16 rounded-xl ${colorClass} text-white font-bold text-2xl shadow-sm`}
         >
           {initial}
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold text-[#1E293B] leading-tight">{board.name}</h1>
+          <h1 className="text-xl font-semibold text-foreground leading-tight">{board.name}</h1>
           {board.description ? (
-            <p className="text-sm text-[#64748B] mt-1">{board.description}</p>
+            <p className="text-sm text-muted-foreground mt-1">{board.description}</p>
           ) : (
-            <p className="text-sm text-[#94A3B8] mt-1 italic">Sem descrição</p>
+            <p className="text-sm text-muted-foreground mt-1 italic">Sem descrição</p>
           )}
           {lists.length > 0 && (
-            <p className="text-xs text-[#94A3B8] mt-1.5">
+            <p className="text-xs text-muted-foreground mt-1.5">
               {lists.length} {lists.length === 1 ? "lista" : "listas"} ·{" "}
               {lists.reduce((sum, l) => sum + (l.tasks?.length ?? 0), 0)} tarefa
               {lists.reduce((sum, l) => sum + (l.tasks?.length ?? 0), 0) === 1
@@ -331,7 +331,7 @@ export default function BoardPage() {
           <div className="relative flex-1 max-w-md">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
             />
             <Input
               type="search"
@@ -396,12 +396,12 @@ export default function BoardPage() {
       {/* Pills de status */}
       {lists.length > 0 && (
         <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs text-[#94A3B8]">Status:</span>
+          <span className="text-xs text-muted-foreground">Status:</span>
           {[
-            { value: "__all__", label: "Todos", className: "bg-slate-100 text-slate-700" },
-            { value: "TODO", label: "A fazer", className: "bg-slate-100 text-slate-700" },
-            { value: "IN_PROGRESS", label: "Em progresso", className: "bg-amber-100 text-amber-700" },
-            { value: "DONE", label: "Concluído", className: "bg-emerald-100 text-emerald-700" },
+            { value: "__all__", label: "Todos", className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" },
+            { value: "TODO", label: "A fazer", className: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200" },
+            { value: "IN_PROGRESS", label: "Em progresso", className: "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300" },
+            { value: "DONE", label: "Concluído", className: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" },
           ].map((opt) => {
             const active = statusFilter === opt.value;
             return (
@@ -424,12 +424,12 @@ export default function BoardPage() {
 
       {/* Kanban */}
       {lists.length === 0 ? (
-        <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] p-12 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#F1F5F9] flex items-center justify-center mx-auto mb-3">
-            <Layout size={20} className="text-[#94A3B8]" />
+        <div className="rounded-xl bg-card shadow-sm border border-border p-12 text-center">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+            <Layout size={20} className="text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-[#1E293B]">Nenhuma lista ainda</p>
-          <p className="text-xs text-[#94A3B8] mt-1">
+          <p className="text-sm font-medium text-foreground">Nenhuma lista ainda</p>
+          <p className="text-xs text-muted-foreground mt-1">
             {isAdmin
               ? "Crie a primeira lista (ex: Backlog, Em progresso, Concluído)"
               : "Aguarde um admin criar listas neste quadro."}
@@ -483,14 +483,14 @@ export default function BoardPage() {
               return (
                 <div
                   key={list.id}
-                  className="flex-shrink-0 w-80 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 flex flex-col"
+                  className="flex-shrink-0 w-80 bg-muted/50 rounded-xl border border-border p-3 flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-3 px-1">
-                    <h3 className="font-semibold text-[#1E293B] text-sm truncate">
+                    <h3 className="font-semibold text-foreground text-sm truncate">
                       {list.title}
                     </h3>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-[#94A3B8] bg-white border border-[#E2E8F0] rounded px-1.5 py-0.5">
+                      <span className="text-xs text-muted-foreground bg-card border border-border rounded px-1.5 py-0.5">
                         {hasActiveFilter ? `${tasks.length}/${allTasks.length}` : tasks.length}
                       </span>
                       {isAdmin && (
@@ -577,7 +577,7 @@ export default function BoardPage() {
                     <button
                       type="button"
                       onClick={() => setCreateTaskListId(list.id)}
-                      className="mt-2 w-full flex items-center justify-center gap-1.5 text-sm text-[#64748B] hover:text-[#C01010] hover:bg-white rounded-lg py-2 transition-colors"
+                      className="mt-2 w-full flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:bg-card rounded-lg py-2 transition-colors"
                     >
                       <Plus size={14} />
                       Adicionar tarefa

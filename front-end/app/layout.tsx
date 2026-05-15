@@ -23,7 +23,7 @@ export default async function RootLayout(
   const nonce = (await headers()).get('x-nonce')
   
   return (
-    <html lang="pt-br">
+    <html lang="pt-br" suppressHydrationWarning>
       <body className={`${inter.className}`}>
         <Providers>{children}</Providers>
         <Toaster richColors position="top-right"/>

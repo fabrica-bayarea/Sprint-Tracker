@@ -75,7 +75,7 @@ export function TaskLabelsPicker({ taskId, boardId, currentLabels }: TaskLabelsP
             <button
               type="button"
               disabled={busy || allLabels.length === 0}
-              className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-dashed border-[#CBD5E1] text-[#64748B] hover:border-[#C01010] hover:text-[#C01010] transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-dashed border-border text-muted-foreground hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50"
             >
               <Plus size={12} />
               {currentLabels.length === 0 ? "Adicionar label" : "Editar"}
@@ -83,7 +83,7 @@ export function TaskLabelsPicker({ taskId, boardId, currentLabels }: TaskLabelsP
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             {allLabels.length === 0 ? (
-              <div className="p-3 text-xs text-[#94A3B8]">
+              <div className="p-3 text-xs text-muted-foreground">
                 Nenhuma label criada ainda no board.
               </div>
             ) : (
@@ -103,7 +103,7 @@ export function TaskLabelsPicker({ taskId, boardId, currentLabels }: TaskLabelsP
                       style={{ backgroundColor: l.color }}
                     />
                     <span className="flex-1 truncate">{l.name}</span>
-                    {assigned && <Check size={14} className="text-[#C01010]" />}
+                    {assigned && <Check size={14} className="text-red-600 dark:text-red-400" />}
                   </DropdownMenuItem>
                 );
               })

@@ -27,7 +27,7 @@ export function ThemeToggle() {
         className="inline-flex items-center justify-center w-7 h-7"
         aria-label="Alternar tema"
       >
-        <Sun size={20} color="#949494" strokeWidth={2} />
+        <Sun size={20} className="text-muted-foreground" strokeWidth={2} />
       </button>
     );
   }
@@ -42,7 +42,7 @@ export function ThemeToggle() {
           className="inline-flex items-center justify-center hover:opacity-80 transition-opacity"
           aria-label="Alternar tema"
         >
-          <Icon size={20} color="#949494" strokeWidth={2} />
+          <Icon size={20} className="text-muted-foreground" strokeWidth={2} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

@@ -41,17 +41,17 @@ export default function Dashboard() {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <PendingTasks />
-      <div className="rounded-xl bg-white shadow-sm border border-[#E2E8F0] overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
+      <div className="rounded-xl bg-card shadow-sm border border-border overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <h2 className="text-base font-semibold text-[#1E293B]">Quadros</h2>
-            <p className="text-sm text-[#64748B]">
+            <h2 className="text-base font-semibold text-foreground">Quadros</h2>
+            <p className="text-sm text-muted-foreground">
               Gerenciamento de quadros (criação, listagem, atualização e remoção).
             </p>
           </div>
           <button
             onClick={() => setIsDialogOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#C01010] text-white rounded-lg text-sm font-medium hover:bg-[#a00d0d] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
           >
             <Plus size={16} />
             Novo Quadro
@@ -64,7 +64,7 @@ export default function Dashboard() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-20 rounded-lg bg-[#F1F5F9] animate-pulse"
+                  className="h-20 rounded-lg bg-muted animate-pulse"
                 />
               ))}
             </div>
@@ -77,7 +77,7 @@ export default function Dashboard() {
                   <button
                     key={board.id}
                     onClick={() => router.push(`/dashboard/board/${board.id}`)}
-                    className="flex items-center gap-3 p-4 rounded-lg border border-[#E2E8F0] hover:border-[#C01010] hover:shadow-md transition-all duration-150 text-left group"
+                    className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-red-600 hover:shadow-md transition-all duration-150 text-left group"
                   >
                     <div
                       className={`flex items-center justify-center w-10 h-10 rounded-lg ${colorClass} text-white font-bold text-lg flex-shrink-0`}
@@ -85,10 +85,10 @@ export default function Dashboard() {
                       {initial}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-[#1E293B] truncate group-hover:text-[#C01010] transition-colors">
+                      <p className="font-medium text-foreground truncate group-hover:text-red-600 dark:hover:text-red-400 transition-colors">
                         {board.name}
                       </p>
-                      <p className="text-xs text-[#94A3B8] mt-0.5">Quadro</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Quadro</p>
                     </div>
                   </button>
                 );
@@ -96,16 +96,16 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-14 h-14 rounded-full bg-[#FEF2F2] flex items-center justify-center mb-3">
-                <Plus size={24} className="text-[#C01010]" />
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center mb-3">
+                <Plus size={24} className="text-red-600 dark:text-red-400" />
               </div>
-              <p className="text-[#1E293B] font-medium">Nenhum quadro encontrado</p>
-              <p className="text-sm text-[#94A3B8] mt-1">
+              <p className="text-foreground font-medium">Nenhum quadro encontrado</p>
+              <p className="text-sm text-muted-foreground mt-1">
                 Crie seu primeiro quadro para começar
               </p>
               <button
                 onClick={() => setIsDialogOpen(true)}
-                className="mt-4 px-4 py-2 bg-[#C01010] text-white rounded-lg text-sm font-medium hover:bg-[#a00d0d] transition-colors"
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
               >
                 Criar Quadro
               </button>

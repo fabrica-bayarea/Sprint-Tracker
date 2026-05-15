@@ -116,9 +116,9 @@ export function LabelsDialog({ boardId, isOpen, onClose, canManage = false }: La
         </DialogHeader>
 
         <div className="space-y-3 mt-2">
-          <div className="border border-[#E2E8F0] rounded-lg divide-y">
+          <div className="border border-border rounded-lg divide-y">
             {labels.length === 0 ? (
-              <div className="p-4 text-sm text-[#94A3B8] text-center">
+              <div className="p-4 text-sm text-muted-foreground text-center">
                 Nenhuma label ainda.
               </div>
             ) : (
@@ -170,13 +170,13 @@ export function LabelsDialog({ boardId, isOpen, onClose, canManage = false }: La
                       className="w-4 h-4 rounded-full flex-shrink-0"
                       style={{ backgroundColor: l.color }}
                     />
-                    <span className="flex-1 text-sm text-[#1E293B] truncate">{l.name}</span>
+                    <span className="flex-1 text-sm text-foreground truncate">{l.name}</span>
                     {canManage && (
                       <>
                         <button
                           type="button"
                           onClick={() => startEdit(l)}
-                          className="p-1 text-[#94A3B8] hover:text-[#1E293B] transition-colors"
+                          className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                           aria-label="Editar"
                         >
                           <Pencil size={14} />
@@ -184,7 +184,7 @@ export function LabelsDialog({ boardId, isOpen, onClose, canManage = false }: La
                         <button
                           type="button"
                           onClick={() => handleDelete(l.id, l.name)}
-                          className="p-1 text-[#94A3B8] hover:text-red-600 transition-colors"
+                          className="p-1 text-muted-foreground hover:text-red-600 transition-colors"
                           aria-label="Excluir"
                         >
                           <Trash2 size={14} />
@@ -198,8 +198,8 @@ export function LabelsDialog({ boardId, isOpen, onClose, canManage = false }: La
           </div>
 
           {canManage && (
-            <form onSubmit={handleCreate} className="border border-[#E2E8F0] rounded-lg p-3 space-y-2">
-              <div className="text-sm font-medium text-[#1E293B] flex items-center gap-1.5">
+            <form onSubmit={handleCreate} className="border border-border rounded-lg p-3 space-y-2">
+              <div className="text-sm font-medium text-foreground flex items-center gap-1.5">
                 <Plus size={14} />
                 Nova label
               </div>

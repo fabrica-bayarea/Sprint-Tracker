@@ -12,7 +12,7 @@ export default function Login() {
   const { register, handleSubmit, errors, handleOAuth, control, isSubmitting } = useLogin();
 
   return (
-    <main className="flex min-h-screen w-full bg-white">
+    <main className="flex min-h-screen w-full bg-background">
       <div className="relative hidden w-[60%] flex-col justify-between bg-linear-to-br from-[#e02b2b] to-[#991b1b] p-10 lg:flex">
         <div className="absolute left-10 top-10">
           <Image src="/images/iesb-logo.png" alt="IESB" width={100} height={120} className="object-contain" />
@@ -31,7 +31,7 @@ export default function Login() {
             <Image src="/images/iesb-logo.png" alt="IESB" width={80} height={96} className="object-contain" />
           </div>
 
-          <h1 className="mb-8 text-center text-2xl font-bold text-gray-900">
+          <h1 className="mb-8 text-center text-2xl font-bold text-foreground">
             ACESSE SUA CONTA
           </h1>
 
@@ -39,7 +39,7 @@ export default function Login() {
             <div className="space-y-1">
               <Input
                 placeholder="Nome de usuário ou e-mail"
-                className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                 {...register("email")}
               />
               {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
@@ -49,7 +49,7 @@ export default function Login() {
               <Input
                 type="password"
                 placeholder="Senha"
-                className="border-gray-300 bg-white text-black focus-visible:ring-[#e02b2b]"
+                className="border-input bg-card text-foreground focus-visible:ring-[#e02b2b]"
                 {...register("password")}
               />
               {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
@@ -64,11 +64,11 @@ export default function Login() {
                     id="rememberMe"
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    className="border-gray-300 data-[state=checked]:bg-[#e02b2b] data-[state=checked]:text-white"
+                    className="border-input data-[state=checked]:bg-[#e02b2b] data-[state=checked]:text-white"
                   />
                 )}
               />
-              <Label htmlFor="rememberMe" className="cursor-pointer text-sm font-normal text-gray-600">
+              <Label htmlFor="rememberMe" className="cursor-pointer text-sm font-normal text-foreground">
                 Lembrar de mim
               </Label>
             </div>
@@ -82,7 +82,7 @@ export default function Login() {
             </button>
 
             <div className="mt-2 flex items-center justify-between">
-              <Link href="/auth/forgot-password" className="text-sm text-gray-500 transition-colors hover:text-[#e02b2b] hover:underline">
+              <Link href="/auth/forgot-password" className="text-sm text-muted-foreground transition-colors hover:text-[#e02b2b] hover:underline">
                 Esqueceu sua senha?
               </Link>
               <Link href="/auth/register" className="text-sm text-[#e02b2b] font-medium transition-colors hover:underline">
@@ -91,7 +91,7 @@ export default function Login() {
             </div>
           </form>
 
-          <div className="my-8 flex w-full items-center gap-3 text-sm font-medium text-gray-400 before:h-px before:flex-1 before:bg-gray-200 after:h-px after:flex-1 after:bg-gray-200">
+          <div className="my-8 flex w-full items-center gap-3 text-sm font-medium text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
             <span className="px-2">Conecte-se com</span>
           </div>
 
@@ -99,7 +99,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => handleOAuth('google')}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:bg-muted hover:shadow-md"
             >
               <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -111,7 +111,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => handleOAuth('microsoft')}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:bg-muted hover:shadow-md"
             >
               <svg viewBox="0 0 21 21" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
                 <path d="M0 0h10v10H0z" fill="#f25022" /><path d="M11 0h10v10H11z" fill="#7fba00" /><path d="M0 11h10v10H0z" fill="#00a4ef" /><path d="M11 11h10v10H11z" fill="#ffb900" />

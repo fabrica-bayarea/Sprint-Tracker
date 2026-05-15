@@ -3,7 +3,7 @@ import Sidebar from "@/components/layout/sidebar/sidebar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-row h-svh bg-[#f7f7f8]">
+    <div className="flex flex-row h-svh bg-background">
       <Sidebar />
       <div className="flex flex-col w-full min-w-0">
         <Header />

@@ -13,7 +13,9 @@
 
 /* Modal container */
 .modalContent {
-  background: #fff;
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   width: 92%;
@@ -34,14 +36,14 @@
 .header h2 {
   margin: 0;
   font-size: 18px;
-  color: #111827;
+  color: var(--foreground);
 }
 
 .iconButton {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--muted-foreground);
   border-radius: 8px;
   width: 36px;
   height: 36px;
@@ -52,12 +54,12 @@
   line-height: 1;
 }
 .iconButton:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--muted);
+  color: var(--foreground);
 }
 
 .message {
-  color: #111827;
+  color: var(--foreground);
   font-size: 15px;
 }
 
@@ -69,9 +71,9 @@
 
 .cancelButton {
   padding: 10px 14px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #111827;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;

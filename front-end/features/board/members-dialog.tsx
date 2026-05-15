@@ -98,9 +98,9 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
         </DialogHeader>
 
         <div className="mt-2 space-y-4">
-          <div className="border border-[#E2E8F0] rounded-lg divide-y">
+          <div className="border border-border rounded-lg divide-y">
             {members.length === 0 ? (
-              <div className="p-4 text-sm text-[#94A3B8] text-center">
+              <div className="p-4 text-sm text-muted-foreground text-center">
                 Nenhum membro ainda.
               </div>
             ) : (
@@ -108,12 +108,12 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
                 const name = m.user.name || m.user.userName || m.user.email || m.userId;
                 return (
                   <div key={m.userId} className="flex items-center gap-3 p-3">
-                    <div className="w-9 h-9 rounded-full bg-[#FEF2F2] flex items-center justify-center text-[#C01010] font-semibold">
+                    <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center text-red-600 dark:text-red-400 font-semibold">
                       {(name[0] || "?").toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[#1E293B] truncate">{name}</p>
-                      <p className="text-xs text-[#94A3B8] truncate">{m.user.email}</p>
+                      <p className="font-medium text-foreground truncate">{name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{m.user.email}</p>
                     </div>
                     {canManage ? (
                       <Select
@@ -130,7 +130,7 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-xs px-2 py-1 rounded bg-[#F1F5F9] text-[#64748B]">
+                      <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
                         {roleLabel[m.role]}
                       </span>
                     )}
@@ -153,8 +153,8 @@ export function MembersDialog({ boardId, isOpen, onClose, canManage = false }: M
           </div>
 
           {canManage && (
-            <form onSubmit={handleAdd} className="border border-[#E2E8F0] rounded-lg p-4 space-y-3">
-              <div className="text-sm font-medium text-[#1E293B] flex items-center gap-2">
+            <form onSubmit={handleAdd} className="border border-border rounded-lg p-4 space-y-3">
+              <div className="text-sm font-medium text-foreground flex items-center gap-2">
                 <UserPlus size={16} />
                 Adicionar membro por email
               </div>

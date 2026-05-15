@@ -72,7 +72,7 @@ export function KanbanBoard({
           {columns.map((col) => {
             const columnTasks = tasks.filter((t) => t.listId === col.id || t.status === col.id);
             return (
-              <div key={col.id} className="shrink-0 w-[320px] bg-[#dfdfdf] rounded-lg p-4 min-h-37.5">
+              <div key={col.id} className="shrink-0 w-[320px] bg-muted rounded-lg p-4 min-h-37.5">
                 <div className="flex items-center justify-between mb-4 group h-8">
                   {editingColumn === col.id ? (
                     <Input
@@ -81,14 +81,14 @@ export function KanbanBoard({
                       onChange={(e) => setEditValue(e.target.value)}
                       onBlur={() => handleRenameSubmit(col.id)}
                       onKeyDown={(e) => handleKeyDown(e, col.id)}
-                      className="h-8 font-bold text-lg px-2 bg-white"
+                      className="h-8 font-bold text-lg px-2 bg-card"
                     />
                   ) : (
                     <h2 className="font-bold text-lg truncate pr-2">{col.title}</h2>
                   )}
 
                   <div className={`flex items-center gap-2 ${editingColumn === col.id ? "hidden" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
-                    <button onClick={() => startEditing(col.id, col.title)} className="text-muted-foreground hover:text-black">
+                    <button onClick={() => startEditing(col.id, col.title)} className="text-muted-foreground hover:text-foreground">
                       <Edit2 className="h-4 w-4" />
                     </button>
 
@@ -107,7 +107,7 @@ export function KanbanBoard({
                         </DialogHeader>
                         <DialogFooter className="mt-4 gap-2">
                           <DialogClose asChild>
-                            <button className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-sm font-medium transition-colors">
+                            <button className="px-4 py-2 bg-muted hover:bg-muted/70 text-foreground rounded-md text-sm font-medium transition-colors">
                               Cancelar
                             </button>
                           </DialogClose>
