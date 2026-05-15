@@ -401,7 +401,7 @@ export default function BoardPage() {
               return (
                 <div
                   key={list.id}
-                  className="flex-shrink-0 w-80 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 flex flex-col max-h-[calc(100vh-280px)]"
+                  className="flex-shrink-0 w-80 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] p-3 flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-3 px-1">
                     <h3 className="font-semibold text-[#1E293B] text-sm truncate">
@@ -455,7 +455,7 @@ export default function BoardPage() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex-1 overflow-y-auto space-y-2 pr-1 transition-colors rounded-md min-h-[80px] ${
+                        className={`space-y-2 pr-1 transition-colors rounded-md min-h-[80px] ${
                           snapshot.isDraggingOver ? "bg-red-50/40" : ""
                         }`}
                       >

@@ -71,7 +71,8 @@ export function EditTaskDialog({
       title: title.trim(),
       description: description.trim() || undefined,
       status,
-      dueDate: dueDate || undefined,
+      // datetime-local → ISO-8601 (Prisma exige)
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       assigneeId: canAssign ? (assigneeId !== UNASSIGNED ? assigneeId : null) : undefined,
     });
     setLoading(false);
