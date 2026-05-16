@@ -1,4 +1,5 @@
 node_modules
+.next
 .git
 *.log
 *.md
@@ -6,3 +7,13 @@ test
 tests
 .vscode
 .env
+.env.local
+.DS_Store
+scrap
+# Lixo iCloud (duplicatas que o sync cria como `* N.ext`)
+* [0-9].ts
+* [0-9].tsx
+* [0-9].json
+* [0-9].yml
+* [0-9].yaml
+* [0-9].mjs
