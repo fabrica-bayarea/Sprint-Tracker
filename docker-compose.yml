@@ -97,6 +97,12 @@ services:
       - ./front-end:/app:delegated
       - front-node-modules:/app/node_modules
       - front-next:/app/.next
+      # Mascara .env.local do host pra que as env vars do compose
+      # (BASE_URL_API=http://back:3000) sejam usadas pela server action.
+      # Sem isso, o Next.js carrega .env.local do host com URLs apontando
+      # pra localhost:3000 e o login some no vazio (server action chama
+      # localhost dentro do próprio container front, onde nada atende).
+      - /dev/null:/app/.env.local
 
 volumes:
   postgres-data:
