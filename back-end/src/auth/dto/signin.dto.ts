@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, IsBoolean } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class SignInDto {
   @ApiProperty({ example: 'username@gmail.com' })
@@ -13,7 +19,12 @@ export class SignInDto {
   @IsString({ message: 'senha deve ser uma string' })
   password!: string;
 
-  @ApiProperty({ example: true })
+  // `?` no TypeScript não faz a validação ser opcional — class-validator
+  // ainda exige boolean se o decorator @IsBoolean estiver presente.
+  // Sem @IsOptional, o front mandar undefined (checkbox não marcado)
+  // virava 400 "deve ser um booleano".
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
   @IsBoolean({ message: 'deve ser um booleano' })
   rememberMe?: boolean;
 }
