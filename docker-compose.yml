@@ -1,0 +1,105 @@
+# Sprint Tracker — stack de desenvolvimento self-contained.
+#
+# Uso:
+#   docker compose up --build       (primeira vez ou após mudar deps)
+#   docker compose up               (próximas vezes)
+#   docker compose down             (para tudo)
+#   docker compose down -v          (apaga volumes — perde dados do DB)
+#
+# Após o primeiro `up`, o banco está vazio. Pra criar usuário, use o
+# fluxo normal de registro em http://localhost:3001/auth/register
+# ou crie via prisma studio: `docker compose exec back npx prisma studio`.
+#
+# Hot reload funciona via bind mounts em `src/` e `prisma/` (back) e
+# diretório inteiro do front. Mexer no código do host = rebuild
+# automático dentro do container.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sprint-tracker-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sprinttacker
+    ports:
+      - "5433:5432"  # 5433 no host pra não colidir com Postgres local na 5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sprinttacker"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  back:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile.dev
+    container_name: sprint-tracker-back
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sprinttacker?schema=public
+      PORT: "3000"
+      NODE_ENV: development
+      BASE_URL: http://localhost:3000
+      BASE_URL_UI: http://localhost:3001
+      BASE_URL_API: http://localhost:3000
+      JWT_SECRET: dev-jwt-secret-change-in-production-please
+      JWT_RESET_SECRET: dev-reset-secret-change-in-production-please
+      ENABLE_GOOGLE_OAUTH: "false"
+      ENABLE_MICROSOFT_OAUTH: "false"
+      ENABLE_LDAP_OAUTH: "false"
+      # LDAP_* placeholder porque o módulo usa getOrThrow no constructor
+      # mesmo com LDAP desabilitado. Valores fake só pra não crashar.
+      LDAP_URL: ldap://disabled
+      LDAP_ADMIN_DN: cn=disabled
+      LDAP_ADMIN_PASSWORD: disabled
+      LDAP_USER_BASE_DN: ou=disabled
+      EMAIL: noreply@dev.local
+      PASS: disabled
+      DEBUG: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      # Hot reload: bind dos diretórios de código.
+      - ./back-end/src:/app/src:delegated
+      - ./back-end/prisma:/app/prisma:delegated
+      # node_modules como named volume pra não ser sobrescrito pelo bind
+      # do host (binários Mac/Linux são diferentes).
+      - back-node-modules:/app/node_modules
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:3000/health-check || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  front:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile.dev
+    container_name: sprint-tracker-front
+    depends_on:
+      back:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      # Server-to-server: o Next (rodando no container front) chama o
+      # back pela rede docker via service name.
+      BASE_URL_API: http://back:3000
+      BASE_URL_WS: http://back:3000
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./front-end:/app:delegated
+      - front-node-modules:/app/node_modules
+      - front-next:/app/.next
+
+volumes:
+  postgres-data:
+  back-node-modules:
+  front-next:
+  front-node-modules:
