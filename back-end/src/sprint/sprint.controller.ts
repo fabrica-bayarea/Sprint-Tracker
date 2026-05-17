@@ -54,6 +54,20 @@ export class SprintController {
     return this.sprintService.getActive(boardId, user.id);
   }
 
+  @ApiOperation({
+    summary: 'Histórico de sprints encerradas do board',
+    description:
+      'Retorna sprints COMPLETED com tasks separadas em concluídas/incompletas e métricas agregadas',
+  })
+  @ApiResponse({ status: 200, description: 'Histórico retornado' })
+  @Get('boards/:boardId/sprints/history')
+  getHistory(
+    @Param('boardId') boardId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sprintService.getHistory(boardId, user.id);
+  }
+
   @ApiOperation({ summary: 'Cria uma sprint no board (admin)' })
   @ApiResponse({ status: 201, description: 'Sprint criada' })
   @ApiResponse({ status: 403, description: 'Sem permissão' })

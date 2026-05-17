@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HelpCircle, Logs, Home, Gauge } from "lucide-react";
+import { HelpCircle, Logs, Home, Gauge, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BoardSelect } from "./board-select";
 
@@ -11,6 +11,7 @@ const navItems = [
   { label: "Home", href: "/dashboard", icon: Home },
   { label: "Backlog", href: "/dashboard/backlog", icon: Logs },
   { label: "Sprints", href: "/dashboard/sprints", icon: Gauge },
+  { label: "Histórico", href: "/dashboard/sprints/history", icon: History },
 ];
 
 export default function Sidebar() {

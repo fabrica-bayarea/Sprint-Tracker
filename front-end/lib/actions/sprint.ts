@@ -41,6 +41,31 @@ export interface ActiveSprint extends Sprint {
   tasks: SprintTask[];
 }
 
+export interface HistorySprintTask {
+  id: string;
+  title: string;
+  status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "ARCHIVED";
+  completedAt: string | null;
+  assignee: {
+    id: string;
+    name: string | null;
+    userName: string | null;
+    email: string | null;
+  } | null;
+  list: { id: string; title: string };
+}
+
+export interface HistorySprint extends Sprint {
+  completedTasks: HistorySprintTask[];
+  incompleteTasks: HistorySprintTask[];
+  stats: {
+    total: number;
+    completed: number;
+    incomplete: number;
+    completionRate: number;
+  };
+}
+
 export async function listSprints(boardId: string) {
   try {
     const safeBoardId = validateId(boardId, "boardId");
@@ -68,6 +93,21 @@ export async function getActiveSprint(boardId: string) {
     return {
       success: false as const,
       error: handleAxiosError(error, "Erro ao buscar sprint ativa"),
+    };
+  }
+}
+
+export async function getSprintHistory(boardId: string) {
+  try {
+    const safeBoardId = validateId(boardId, "boardId");
+    const response = await api.get(
+      `/v1/boards/${safeBoardId}/sprints/history`,
+    );
+    return { success: true as const, data: response.data as HistorySprint[] };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: handleAxiosError(error, "Erro ao buscar histórico de sprints"),
     };
   }
 }
