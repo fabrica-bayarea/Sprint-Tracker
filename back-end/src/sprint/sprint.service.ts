@@ -66,6 +66,58 @@ export class SprintService {
     });
   }
 
+  /**
+   * Retorna sprints COMPLETED do board, mais recentes primeiro, com as tasks
+   * agrupadas em concluídas vs. incompletas e métricas agregadas.
+   *
+   * Tasks `ARCHIVED` são excluídas (não contam como concluídas nem incompletas).
+   * Como o schema atual não rastreia movimentação entre sprints, "incompletas"
+   * aqui são tasks que ficaram no sprint fechado sem serem marcadas DONE.
+   */
+  async getHistory(boardId: string, userId: string) {
+    await this.assertBoardAccess(boardId, userId);
+    const sprints = await this.prisma.sprint.findMany({
+      where: { boardId, status: SprintStatus.COMPLETED },
+      orderBy: [{ endDate: 'desc' }],
+      include: {
+        tasks: {
+          where: { deletedAt: null, status: { not: 'ARCHIVED' } },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            completedAt: true,
+            assignee: {
+              select: { id: true, name: true, userName: true, email: true },
+            },
+            list: { select: { id: true, title: true } },
+          },
+          orderBy: [{ completedAt: 'desc' }, { updatedAt: 'desc' }],
+        },
+      },
+    });
+
+    return sprints.map((sprint) => {
+      const completedTasks = sprint.tasks.filter((t) => t.status === 'DONE');
+      const incompleteTasks = sprint.tasks.filter((t) => t.status !== 'DONE');
+      const total = sprint.tasks.length;
+      const completionRate =
+        total > 0 ? Math.round((completedTasks.length / total) * 100) : 0;
+      const { tasks: _drop, ...rest } = sprint;
+      return {
+        ...rest,
+        completedTasks,
+        incompleteTasks,
+        stats: {
+          total,
+          completed: completedTasks.length,
+          incomplete: incompleteTasks.length,
+          completionRate,
+        },
+      };
+    });
+  }
+
   /** Retorna a sprint ativa (status=ACTIVE) com tasks completas. Null se não houver. */
   async getActive(boardId: string, userId: string) {
     await this.assertBoardAccess(boardId, userId);
