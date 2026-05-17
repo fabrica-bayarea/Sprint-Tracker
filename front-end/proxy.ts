@@ -6,18 +6,37 @@ export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
 
   // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
-  const cspHeader = `
-    default-src 'self';
-    script-src 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''};
-    style-src 'self' https://fonts.googleapis.com ${isDev ? "'unsafe-inline'" : ''};
-    img-src 'self' data:;
-    font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-    connect-src 'self';
-    frame-ancestors 'self';
-    form-action 'self';
-    base-uri 'self';
-    object-src 'none';
-  `;
+  //
+  // Em dev (Turbopack/HMR), o Next injeta scripts inline sem nonce e
+  // abre WebSocket pra hot reload. CSP estrito com nonce bloqueia esses
+  // scripts e quebra interações (submit do form de login, por exemplo).
+  // Por isso afrouxamos script-src e connect-src só em dev.
+  // Em prod, mantemos nonce + strict-dynamic + connect-src restrito.
+  const cspHeader = isDev
+    ? `
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+      img-src 'self' data: blob:;
+      font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
+      connect-src 'self' ws: wss: http://localhost:3000 http://back:3000;
+      frame-ancestors 'self';
+      form-action 'self';
+      base-uri 'self';
+      object-src 'none';
+    `
+    : `
+      default-src 'self';
+      script-src 'nonce-${nonce}' 'strict-dynamic';
+      style-src 'self' https://fonts.googleapis.com;
+      img-src 'self' data:;
+      font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
+      connect-src 'self';
+      frame-ancestors 'self';
+      form-action 'self';
+      base-uri 'self';
+      object-src 'none';
+    `;
   const sanitizedCspHeader = cspHeader.replace(/\s{2,}/g, ' ').trim();
 
   const requestHeaders = new Headers(request.headers);
