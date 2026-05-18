@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createSprint, updateSprint } from "@/lib/actions/sprint";
 
 interface CreateSprintDialogProps {
@@ -33,6 +34,7 @@ export function CreateSprintDialog({
   const [goal, setGoal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startNow, setStartNow] = useState(true);
   const [loading, setLoading] = useState(false);
 
   function reset() {
@@ -40,6 +42,7 @@ export function CreateSprintDialog({
     setGoal("");
     setStartDate("");
     setEndDate("");
+    setStartNow(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -59,9 +62,13 @@ export function CreateSprintDialog({
       return;
     }
 
-    // Ativa a sprint imediatamente. O backend bloqueia se já houver outra
-    // ACTIVE — nesse caso, fica como PLANNED mesmo e avisamos.
-    const activated = await updateSprint(created.data.id, { status: "ACTIVE" });
+    // Se o usuário desmarcou "Iniciar agora", deixa como PLANNED.
+    // Senão tenta ativar. Backend bloqueia se já houver outra ACTIVE —
+    // nesse caso fica como PLANNED mesmo e avisamos.
+    const shouldActivate = startNow;
+    const activated = shouldActivate
+      ? await updateSprint(created.data.id, { status: "ACTIVE" })
+      : null;
     setLoading(false);
 
     queryClient.invalidateQueries({ queryKey: ["sprint-active", boardId] });
@@ -69,11 +76,13 @@ export function CreateSprintDialog({
     reset();
     onClose();
 
-    if (activated.success) {
-      toast.success("Sprint criada e ativada");
+    if (!shouldActivate) {
+      toast.success("Sprint planejada criada. Ative quando começar o ciclo.");
+    } else if (activated?.success) {
+      toast.success("Sprint criada e iniciada");
     } else {
       toast.warning(
-        "Sprint criada como PLANNED. Já existe outra sprint ativa neste board.",
+        "Sprint criada como planejada. Já existe outra sprint ativa neste board.",
       );
     }
   }
@@ -84,7 +93,8 @@ export function CreateSprintDialog({
         <DialogHeader>
           <DialogTitle>Nova sprint</DialogTitle>
           <DialogDescription>
-            A sprint começa em PLANNED. Ative quando começar o ciclo.
+            Por padrão a sprint já é iniciada. Desmarque pra criar apenas
+            como planejada (pra uso futuro).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
@@ -135,6 +145,26 @@ export function CreateSprintDialog({
             </div>
           </div>
 
+          <label
+            htmlFor="start-now"
+            className="flex items-start gap-3 p-3 rounded-md border cursor-pointer hover:bg-muted/40 has-checked:border-red-500 has-checked:bg-red-50 dark:has-checked:bg-red-950/20"
+          >
+            <Checkbox
+              id="start-now"
+              checked={startNow}
+              onCheckedChange={(c) => setStartNow(c === true)}
+              className="mt-0.5 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-sm">Iniciar sprint agora</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {startNow
+                  ? "Sprint vira ativa imediatamente. Se já houver outra ativa, fica planejada."
+                  : "Cria apenas como planejada. Útil pra preparar sprints futuras (ex: 'próxima sprint' no fechamento)."}
+              </div>
+            </div>
+          </label>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
@@ -144,7 +174,11 @@ export function CreateSprintDialog({
               disabled={loading}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {loading ? "Criando..." : "Criar sprint"}
+              {loading
+                ? "Criando..."
+                : startNow
+                  ? "Criar e iniciar"
+                  : "Criar como planejada"}
             </Button>
           </div>
         </form>

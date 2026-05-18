@@ -4,10 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SprintStatus } from '@prisma/client';
+import { LogAction, SprintStatus } from '@prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
+import { CloseSprintDto, IncompleteTasksAction } from './dto/close-sprint.dto';
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 
@@ -209,6 +210,115 @@ export class SprintService {
     // Tasks têm onDelete: SetNull no schema, então ficam apenas órfãs da sprint
     // (continuam no seu board/list).
     return this.prisma.sprint.delete({ where: { id: sprintId } });
+  }
+
+  /**
+   * Encerra a sprint redistribuindo tasks incompletas conforme decisão do user.
+   *
+   * Diferente do PATCH genérico, esse endpoint trata tasks órfãs e loga cada
+   * movimentação em TaskLog com action TASK_SPRINT_CHANGED, pra responder
+   * "essa task veio da sprint X" no histórico futuramente.
+   */
+  async closeSprint(sprintId: string, userId: string, dto: CloseSprintDto) {
+    const sprint = await this.assertSprintAccess(sprintId, userId);
+    await this.assertBoardAdmin(sprint.boardId, userId);
+
+    if (sprint.status === SprintStatus.COMPLETED) {
+      throw new BadRequestException('Sprint já está encerrada');
+    }
+
+    if (
+      dto.incompleteTasksAction === IncompleteTasksAction.MOVE_TO_NEXT &&
+      !dto.targetSprintId
+    ) {
+      throw new BadRequestException(
+        'targetSprintId é obrigatório quando incompleteTasksAction=MOVE_TO_NEXT',
+      );
+    }
+
+    // Valida targetSprintId quando MOVE_TO_NEXT: precisa existir, ser do mesmo
+    // board, estar PLANNED, e não ser a própria sprint sendo encerrada.
+    if (
+      dto.incompleteTasksAction === IncompleteTasksAction.MOVE_TO_NEXT &&
+      dto.targetSprintId
+    ) {
+      if (dto.targetSprintId === sprintId) {
+        throw new BadRequestException(
+          'targetSprintId não pode ser a própria sprint sendo encerrada',
+        );
+      }
+      const target = await this.prisma.sprint.findUnique({
+        where: { id: dto.targetSprintId },
+      });
+      if (!target) {
+        throw new NotFoundException('Sprint de destino não encontrada');
+      }
+      if (target.boardId !== sprint.boardId) {
+        throw new BadRequestException(
+          'Sprint de destino pertence a outro board',
+        );
+      }
+      if (target.status !== SprintStatus.PLANNED) {
+        throw new BadRequestException(
+          'Sprint de destino precisa estar PLANNED',
+        );
+      }
+    }
+
+    const incompleteTasks = await this.prisma.task.findMany({
+      where: {
+        sprintId,
+        status: { not: 'DONE' },
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    const incompleteIds = incompleteTasks.map((t) => t.id);
+
+    await this.prisma.$transaction(async (tx) => {
+      if (
+        incompleteIds.length > 0 &&
+        dto.incompleteTasksAction !== IncompleteTasksAction.KEEP
+      ) {
+        const newSprintId =
+          dto.incompleteTasksAction === IncompleteTasksAction.MOVE_TO_NEXT
+            ? (dto.targetSprintId ?? null)
+            : null;
+
+        await tx.task.updateMany({
+          where: { id: { in: incompleteIds } },
+          data: { sprintId: newSprintId },
+        });
+
+        await tx.taskLog.createMany({
+          data: incompleteIds.map((taskId) => ({
+            taskId,
+            userId,
+            boardId: sprint.boardId,
+            action: LogAction.TASK_SPRINT_CHANGED,
+            metadata: {
+              fromSprintId: sprintId,
+              toSprintId: newSprintId,
+              reason: 'sprint_closed',
+              decision: dto.incompleteTasksAction,
+            },
+          })),
+        });
+      }
+
+      await tx.sprint.update({
+        where: { id: sprintId },
+        data: { status: SprintStatus.COMPLETED },
+      });
+    });
+
+    return {
+      sprintId,
+      status: SprintStatus.COMPLETED,
+      incompleteTaskCount: incompleteIds.length,
+      action: dto.incompleteTasksAction,
+      targetSprintId: dto.targetSprintId ?? null,
+    };
   }
 
   async addTask(sprintId: string, taskId: string, userId: string) {
