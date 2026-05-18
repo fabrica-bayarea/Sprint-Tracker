@@ -131,6 +131,38 @@ export async function createSprint(
   }
 }
 
+export type IncompleteTasksAction =
+  | "MOVE_TO_NEXT"
+  | "RETURN_TO_BACKLOG"
+  | "KEEP";
+
+export interface CloseSprintResult {
+  sprintId: string;
+  status: "COMPLETED";
+  incompleteTaskCount: number;
+  action: IncompleteTasksAction;
+  targetSprintId: string | null;
+}
+
+export async function closeSprint(
+  sprintId: string,
+  payload: {
+    incompleteTasksAction: IncompleteTasksAction;
+    targetSprintId?: string;
+  },
+) {
+  try {
+    const safeId = validateId(sprintId, "sprintId");
+    const response = await api.post(`/v1/sprints/${safeId}/close`, payload);
+    return { success: true as const, data: response.data as CloseSprintResult };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: handleAxiosError(error, "Erro ao encerrar sprint"),
+    };
+  }
+}
+
 export async function updateSprint(
   sprintId: string,
   payload: Partial<{

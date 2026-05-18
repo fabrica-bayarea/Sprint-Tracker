@@ -18,13 +18,13 @@ import { Button } from "@/components/ui/button";
 import { useBoardStore } from "@/stores/use-board-store";
 import {
   getActiveSprint,
-  updateSprint,
   removeTaskFromSprint,
   type SprintTask,
   type ActiveSprint,
 } from "@/lib/actions/sprint";
 import { CreateSprintDialog } from "@/features/sprints/create-sprint-dialog";
 import { AddTaskDialog } from "@/features/sprints/add-task-dialog";
+import { CloseSprintDialog } from "@/features/sprints/close-sprint-dialog";
 
 type Bucket = "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE";
 
@@ -72,7 +72,7 @@ export default function SprintsPage() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [addTaskOpen, setAddTaskOpen] = useState(false);
-  const [closing, setClosing] = useState(false);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["sprint-active", selectedBoardId],
@@ -99,24 +99,8 @@ export default function SprintsPage() {
     return out;
   }, [sprint]);
 
-  async function handleCloseSprint() {
-    if (!sprint) return;
-    if (!confirm(`Encerrar a sprint "${sprint.name}"?`)) return;
-    setClosing(true);
-    const r = await updateSprint(sprint.id, { status: "COMPLETED" });
-    setClosing(false);
-    if (r.success) {
-      queryClient.invalidateQueries({
-        queryKey: ["sprint-active", selectedBoardId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["sprints", selectedBoardId],
-      });
-      toast.success("Sprint encerrada");
-    } else {
-      toast.error(r.error || "Erro ao encerrar");
-    }
-  }
+  const incompleteCount =
+    grouped.TODO.length + grouped.IN_PROGRESS.length + grouped.BLOCKED.length;
 
   async function handleRemoveTask(task: SprintTask) {
     if (!sprint) return;
@@ -238,12 +222,11 @@ export default function SprintsPage() {
           <Button
             type="button"
             size="sm"
-            onClick={handleCloseSprint}
-            disabled={closing}
+            onClick={() => setCloseDialogOpen(true)}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
             <CheckCircle2 size={14} className="mr-1" />
-            {closing ? "Encerrando..." : "Encerrar sprint"}
+            Encerrar sprint
           </Button>
         </div>
       </div>
@@ -294,6 +277,15 @@ export default function SprintsPage() {
         sprintId={sprint.id}
         isOpen={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
+      />
+
+      <CloseSprintDialog
+        isOpen={closeDialogOpen}
+        onClose={() => setCloseDialogOpen(false)}
+        sprintId={sprint.id}
+        sprintName={sprint.name}
+        boardId={selectedBoardId}
+        incompleteCount={incompleteCount}
       />
     </div>
   );
