@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
 
 import {
   Dialog,
@@ -131,7 +130,14 @@ export function CloseSprintDialog({
 
         {incompleteCount > 0 && (
           <div className="space-y-3 mt-2">
-            <label className="flex items-start gap-3 p-3 rounded-md border cursor-pointer hover:bg-muted/40 has-checked:border-red-500 has-checked:bg-red-50 dark:has-checked:bg-red-950/20">
+            <label
+              className={`flex items-start gap-3 p-3 rounded-md border has-checked:border-red-500 has-checked:bg-red-50 dark:has-checked:bg-red-950/20 ${
+                noPlanned
+                  ? "cursor-not-allowed opacity-50 select-none"
+                  : "cursor-pointer hover:bg-muted/40"
+              }`}
+              aria-disabled={noPlanned}
+            >
               <input
                 type="radio"
                 name="close-action"
@@ -139,15 +145,22 @@ export function CloseSprintDialog({
                 checked={action === "MOVE_TO_NEXT"}
                 onChange={() => setAction("MOVE_TO_NEXT")}
                 disabled={noPlanned}
-                className="mt-1 accent-red-600"
+                className="mt-1 accent-red-600 disabled:cursor-not-allowed"
               />
               <div className="flex-1">
-                <div className="font-medium text-sm">
-                  Mover pra próxima sprint
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">
+                    Mover pra próxima sprint
+                  </span>
+                  {noPlanned && (
+                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      Indisponível
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {noPlanned
-                    ? "Nenhuma sprint PLANNED disponível neste board."
+                    ? "Crie uma sprint com status PLANNED neste board pra habilitar."
                     : "Tasks não concluídas viram parte da próxima sprint."}
                 </div>
                 {action === "MOVE_TO_NEXT" && !noPlanned && (
@@ -207,16 +220,6 @@ export function CloseSprintDialog({
                 </div>
               </div>
             </label>
-
-            {noPlanned && action !== "RETURN_TO_BACKLOG" && (
-              <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 p-2 rounded bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
-                <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                <span>
-                  Pra usar &quot;mover pra próxima sprint&quot; voce precisa
-                  ter pelo menos uma sprint PLANNED criada neste board.
-                </span>
-              </div>
-            )}
           </div>
         )}
 
