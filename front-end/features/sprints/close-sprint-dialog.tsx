@@ -160,7 +160,7 @@ export function CloseSprintDialog({
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {noPlanned
-                    ? "Crie uma sprint com status PLANNED neste board pra habilitar."
+                    ? "Crie uma sprint planejada neste board pra habilitar."
                     : "Tasks não concluídas viram parte da próxima sprint."}
                 </div>
                 {action === "MOVE_TO_NEXT" && !noPlanned && (

@@ -73,7 +73,7 @@ export function CreateSprintDialog({
       toast.success("Sprint criada e ativada");
     } else {
       toast.warning(
-        "Sprint criada como PLANNED. Já existe outra sprint ativa neste board.",
+        "Sprint criada como planejada. Já existe outra sprint ativa neste board.",
       );
     }
   }
@@ -84,7 +84,7 @@ export function CreateSprintDialog({
         <DialogHeader>
           <DialogTitle>Nova sprint</DialogTitle>
           <DialogDescription>
-            A sprint começa em PLANNED. Ative quando começar o ciclo.
+            A sprint começa como planejada. Ative quando começar o ciclo.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
