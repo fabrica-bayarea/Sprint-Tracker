@@ -281,6 +281,8 @@ jobs:
         id: prisma
         continue-on-error: true
         working-directory: ./back-end
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
         run: npx prisma validate
 
       # =====================================================
