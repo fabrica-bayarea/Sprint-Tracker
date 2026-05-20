@@ -125,12 +125,13 @@ export default function BacklogPage() {
               Backlog vazio
             </h3>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
-              Você ainda não tem tarefas neste quadro.
+               Você ainda não tem tarefas em nenhum board. Crie ou entre em um
+              board para começar.
             </p>
             <Button asChild className="mt-6 bg-red-600 hover:bg-red-700 text-white">
               <Link href="/dashboard">
                 <ExternalLink size={14} className="mr-1" />
-                Ir para o quadro
+                Ir para os boards
               </Link>
             </Button>
           </div>
