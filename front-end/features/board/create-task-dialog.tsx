@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,9 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { createTask } from "@/lib/actions/task";
 import { listSprints } from "@/lib/actions/sprint";
 import type { BoardMember } from "@/lib/actions/members";
+import { cn } from "@/lib/utils";
 
 interface CreateTaskDialogProps {
   isOpen: boolean;
@@ -47,16 +56,17 @@ export function CreateTaskDialog({
   const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>(UNASSIGNED);
   const [sprintId, setSprintId] = useState<string>(NO_SPRINT);
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Sprints elegíveis = PLANNED ou ACTIVE (COMPLETED não aceita tasks).
   const { data: sprintsData } = useQuery({
     queryKey: ["sprints", boardId],
     queryFn: () => listSprints(boardId),
     enabled: isOpen && !!boardId,
     staleTime: 30_000,
   });
+
   const eligibleSprints =
     sprintsData?.success
       ? sprintsData.data.filter((s) => s.status !== "COMPLETED")
@@ -67,7 +77,8 @@ export function CreateTaskDialog({
     setDescription("");
     setAssigneeId(UNASSIGNED);
     setSprintId(NO_SPRINT);
-    setDueDate("");
+    setDueDate(undefined);
+    setIsCalendarOpen(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -80,8 +91,7 @@ export function CreateTaskDialog({
       description: description.trim() || undefined,
       position: nextPosition,
       status: "TODO",
-      // Input datetime-local retorna 'YYYY-MM-DDTHH:MM'; Prisma exige ISO-8601 completo
-      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      dueDate: dueDate ? dueDate.toISOString() : undefined,
       assigneeId: assigneeId !== UNASSIGNED ? assigneeId : null,
       sprintId: sprintId !== NO_SPRINT ? sprintId : null,
     });
@@ -129,14 +139,32 @@ export function CreateTaskDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="task-due">Vencimento</Label>
-              <Input
-                id="task-due"
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+            <div className="space-y-2 flex flex-col">
+              <Label>Vencimento</Label>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, "PPP") : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(date) => {
+                      setDueDate(date);
+                      setIsCalendarOpen(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {canAssign && (

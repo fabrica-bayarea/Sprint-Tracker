@@ -86,11 +86,11 @@ export function TaskHistory({ taskId, enabled }: TaskHistoryProps) {
       ) : logs.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">Sem histórico registrado.</p>
       ) : (
-        <ol className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        <ol className="space-y-2 max-h-30 overflow-y-auto pr-1">
           {logs.map((log) => (
             <li key={log.id} className="flex items-start gap-2 text-xs">
               <span
-                className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${actionIconColor[log.action]}`}
+                className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${actionIconColor[log.action]}`}
               >
                 <Clock size={11} />
               </span>
