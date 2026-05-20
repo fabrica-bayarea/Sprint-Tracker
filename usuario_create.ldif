@@ -1,0 +1,8 @@
+dn: uid=55566677788,ou=users,dc=exemplo,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+cn: Usuario Teste LDAP
+sn: LDAP
+uid: 55566677788
+mail: teste.ldap@suaempresa.com
+description: testeuser
