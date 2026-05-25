@@ -51,6 +51,7 @@ model Board {
   sprints     Sprint[]
   taskLogs    TaskLog[]
   invites     Invite[]
+  pokerSessions PokerSession[]
 }
 
 model Sprint {
@@ -77,6 +78,7 @@ model BoardMember {
   joinedAt DateTime @default(now())
   board    Board    @relation(fields: [boardId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
+  pokerVotes PokerVotes[]
 
   @@id([boardId, userId])
 }
@@ -128,6 +130,7 @@ model Task {
   labels      TaskLabel[]
   logs        TaskLog[]
   comments    TaskComment[]
+  pokerSessions PokerSession[]
 
   @@index([sprintId])
 }
@@ -204,18 +207,22 @@ model Notification {
 }
 
 enum PokerStatus {
-  WAITING,
-  VOTING,
-  REVEALED,
+  WAITING
+  VOTING
+  REVEALED
   CLOSED
 }
 
 model PokerSession {
   id String @id @default(uuid())
+  title String 
   pokerStatus PokerStatus
-  taskId String? @relation(fields: [taskId], references: [id])
+  pokerVotes PokerVotes[]
+  task Task? @relation(fields: [taskId], references: [id])
+  taskId String?
   inviteCode String @unique
-  fk_boardId String @relation(fields: [boardId], references: [id])
+  board Board @relation(fields: [boardId], references: [id])
+  boardId String
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
@@ -223,9 +230,13 @@ model PokerSession {
 model PokerVotes {
   id String @id @default(uuid())
   voteValue String
-  fk_pokerSessionId String
-  fk_memberId String
+  pokerSession PokerSession @relation(fields: [pokerSessionId], references: [id])
+  boardMember BoardMember @relation(fields: [boardMemberId, boardMemberUserId], references: [boardId, userId])
+  pokerSessionId String 
+  boardMemberId String
+  boardMemberUserId String
   comment String?
+  @@unique([boardMemberId, boardMemberUserId, pokerSessionId])
 }
 
 enum typeNotification {
