@@ -3,10 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { nanoid } from 'nanoid';
-import { CreatePokerSessionDTO } from './dto/CreateSession.dto';
-import { PrismaService } from '@/prisma/prisma.service';
 import { PokerStatus } from '@prisma/client';
+import { nanoid } from 'nanoid';
+
+import { PrismaService } from '@/prisma/prisma.service';
+
+import { CreatePokerSessionDTO } from './dto/CreateSession.dto';
 import { SubmitVoteDto } from './dto/SubmitVote.dto';
 
 @Injectable()
@@ -27,9 +29,7 @@ export class PokerService {
   }
 
   async joinSession(inviteCode: string) {
-    const findingInvinteCode = await this.prisma.pokerSession.findUnique({
-      where: { inviteCode },
-    });
+    const findingInvinteCode = await this.findSessionId(inviteCode);
     if (!findingInvinteCode) {
       throw new NotFoundException('Invalid invite code');
     }
@@ -40,11 +40,7 @@ export class PokerService {
   }
 
   async submitVote(dto: SubmitVoteDto, userId: string) {
-    const session = await this.prisma.pokerSession.findUnique({
-      where: {
-        id: dto.sessionId,
-      },
-    });
+    const session = await this.findSessionId(dto.sessionId);
 
     if (!session) {
       throw new NotFoundException('Poker session not found');
@@ -74,5 +70,38 @@ export class PokerService {
     });
 
     return vote;
+  }
+
+  async revealVotes(sessionId: string) {
+    const session = await this.findSessionId(sessionId);
+
+    if (!session) {
+      throw new NotFoundException('Poker session ID not found');
+    }
+
+    if (session.pokerStatus !== PokerStatus.VOTING) {
+      throw new BadRequestException('Please wait for the next round');
+    }
+    const revealed = await this.prisma.pokerSession.update({
+      where: {
+        id: sessionId,
+      },
+      data: {
+        pokerStatus: PokerStatus.REVEALED,
+      },
+      include: {
+        pokerVotes: true,
+      },
+    });
+    return revealed;
+  }
+
+  private async findSessionId(sessionId: string) {
+    const session = await this.prisma.pokerSession.findUnique({
+      where: {
+        id: sessionId,
+      },
+    });
+    return session;
   }
 }
