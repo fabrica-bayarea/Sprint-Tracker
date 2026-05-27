@@ -15,8 +15,18 @@ import { SubmitVoteDto } from './dto/SubmitVote.dto';
 export class PokerService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async CreatePokerSession(dto: CreatePokerSessionDTO, boardId: string) {
+  async createPokerSession(dto: CreatePokerSessionDTO, boardId: string) {
     const inviteCode = nanoid(6);
+    const procurarPorBoard = await this.prisma.board.findUnique({
+      where: {
+        id: boardId,
+      },
+    });
+
+    if (!procurarPorBoard) {
+      throw new NotFoundException('Board not found');
+    }
+
     const pokerSession = await this.prisma.pokerSession.create({
       data: {
         ...dto,
@@ -29,14 +39,39 @@ export class PokerService {
   }
 
   async joinSession(inviteCode: string) {
-    const findingInvinteCode = await this.findSessionId(inviteCode);
-    if (!findingInvinteCode) {
+    const findingInviteCode = await this.findSessionId(inviteCode);
+    if (!findingInviteCode) {
       throw new NotFoundException('Invalid invite code');
     }
-    if (findingInvinteCode.pokerStatus === PokerStatus.CLOSED) {
+    if (findingInviteCode.pokerStatus === PokerStatus.CLOSED) {
       throw new BadRequestException('Poker session is closed');
     }
-    return findingInvinteCode;
+    return findingInviteCode;
+  }
+
+  async closeSession(sessionId: string) {
+    const session = await this.findSessionId(sessionId);
+
+    if (!session) {
+      throw new NotFoundException('Poker session ID not found');
+    }
+
+    if (session.pokerStatus === PokerStatus.CLOSED) {
+      throw new BadRequestException('This Session is already closed');
+    }
+
+    const endSession = await this.prisma.pokerSession.update({
+      where: {
+        id: sessionId,
+      },
+      data: {
+        pokerStatus: PokerStatus.CLOSED,
+      },
+      include: {
+        pokerVotes: false,
+      },
+    });
+    return endSession;
   }
 
   async submitVote(dto: SubmitVoteDto, userId: string) {
@@ -94,6 +129,31 @@ export class PokerService {
       },
     });
     return revealed;
+  }
+
+  async nextCard(sessionId: string) {
+    const session = await this.findSessionId(sessionId);
+
+    if (!session) {
+      throw new NotFoundException('Poker session ID not found');
+    }
+
+    if (session.pokerStatus !== PokerStatus.REVEALED) {
+      throw new BadRequestException('Session status must be REVEALED');
+    }
+
+    const hideCard = await this.prisma.pokerSession.update({
+      where: {
+        id: sessionId,
+      },
+      data: {
+        pokerStatus: PokerStatus.VOTING,
+      },
+      include: {
+        pokerVotes: true,
+      },
+    });
+    return hideCard;
   }
 
   private async findSessionId(sessionId: string) {
