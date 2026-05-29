@@ -109,15 +109,21 @@ export class ProfileService {
   }
 
   /**
-   * Retorna todas as tasks dos boards visíveis ao usuário (owner ou member).
-   * Usado pela view de Backlog, que agrega tasks de todos os boards.
+   * Retorna as tasks dos boards visíveis ao usuário (owner ou member).
+   * Usado pela view de Backlog.
+   *
+   * Se `boardId` for informado, filtra só pra aquele board. O filtro de
+   * `members.some.userId` continua aplicado em conjunto, então passar um
+   * board ao qual o usuário não tem acesso simplesmente retorna vazio —
+   * não há vazamento de tasks de boards alheios.
    */
-  async getMyTasks(userId: string) {
+  async getMyTasks(userId: string, boardId?: string) {
     const tasks = await this.prisma.task.findMany({
       where: {
         deletedAt: null,
         list: {
           board: {
+            ...(boardId ? { id: boardId } : {}),
             members: {
               some: { userId },
             },

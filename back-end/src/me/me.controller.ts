@@ -1,4 +1,12 @@
-import { Body, Controller, Get, UseGuards, Put, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  UseGuards,
+  Put,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -79,13 +87,19 @@ export class ProfileController {
 
   @ApiOperation({
     summary: 'Tasks do usuário (backlog agregado)',
-    description: 'Retorna todas as tasks dos boards que o usuário participa',
+    description:
+      'Retorna as tasks dos boards que o usuário participa. ' +
+      'Se boardId for informado, filtra só pra aquele board (e só se o ' +
+      'usuário tiver acesso a ele).',
   })
   @ApiResponse({ status: 200, description: 'Tasks carregadas com sucesso' })
   @UseGuards(JwtAuthGuard)
   @Get('tasks')
-  async getMyTasks(@CurrentUser() user: AuthenticatedUser) {
-    const tasks = await this.profileService.getMyTasks(user.id);
+  async getMyTasks(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('boardId') boardId?: string,
+  ) {
+    const tasks = await this.profileService.getMyTasks(user.id, boardId);
     return tasks;
   }
 }

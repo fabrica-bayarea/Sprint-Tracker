@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/features/backlog/components/data-table";
 import { getBacklogColumns } from "@/features/backlog/components/columns";
 import { getMyTasks } from "@/lib/actions/backlog";
+import { useBoardStore } from "@/stores/use-board-store";
 
 type StatusFilter = "ALL" | "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "ARCHIVED";
 
@@ -26,11 +27,14 @@ export default function BacklogPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
+  const { selectedBoardId } = useBoardStore();
+
   const columns = getBacklogColumns();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["my-tasks"],
-    queryFn: getMyTasks,
+    queryKey: ["my-tasks", selectedBoardId],
+    queryFn: () => getMyTasks(selectedBoardId!),
+    enabled: !!selectedBoardId,
     staleTime: 30_000,
   });
 
@@ -55,12 +59,12 @@ export default function BacklogPage() {
           Backlog
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Todas as tarefas dos seus boards em um só lugar.
+          Todas as tarefas do quadro selecionado em um só lugar.
         </p>
       </div>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+        <div className="flex items-center gap-3 flex-1 min-w-70">
           <div className="relative flex items-center w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -102,15 +106,27 @@ export default function BacklogPage() {
           </div>
         )}
 
-        {!isLoading && tasks.length === 0 && (
+        {!isLoading && !selectedBoardId && (
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/20 border border-dashed border-border rounded-lg">
+            <ArchiveX className="h-10 w-10 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground">
+              Nenhum quadro selecionado
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">
+              Selecione um quadro no topo da página para ver o backlog.
+            </p>
+          </div>
+        )}
+
+        {!isLoading && selectedBoardId && tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/20 border border-dashed border-border rounded-lg">
             <ArchiveX className="h-10 w-10 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-foreground">
               Backlog vazio
             </h3>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
-              Você ainda não tem tarefas em nenhum board. Crie ou entre em um
-              board para começar.
+              Este quadro ainda não tem tarefas. Crie tarefas no board ou
+              troque de quadro no topo da página.
             </p>
             <Button asChild className="mt-6 bg-red-600 hover:bg-red-700 text-white">
               <Link href="/dashboard">
