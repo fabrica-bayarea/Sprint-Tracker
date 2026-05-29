@@ -59,7 +59,7 @@ export default function BacklogPage() {
           Backlog
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Todas as tarefas dos seus boards em um só lugar.
+          Todas as tarefas do quadro selecionado em um só lugar.
         </p>
       </div>
 
@@ -125,8 +125,8 @@ export default function BacklogPage() {
               Backlog vazio
             </h3>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
-               Você ainda não tem tarefas em nenhum board. Crie ou entre em um
-              board para começar.
+              Este quadro ainda não tem tarefas. Crie tarefas no board ou
+              troque de quadro no topo da página.
             </p>
             <Button asChild className="mt-6 bg-red-600 hover:bg-red-700 text-white">
               <Link href="/dashboard">
