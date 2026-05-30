@@ -3,6 +3,7 @@
 import api from "@/lib/api/axios";
 import { handleAxiosError } from "@/lib/utils/handle-axios-error";
 import type { Task } from "@/types/task";
+import { validateId } from "../utils/validateId";
 
 /** Task no contexto do backlog inclui informações da list e board */
 export interface BacklogTask extends Task {
@@ -26,9 +27,12 @@ export interface BacklogTask extends Task {
  * Backlog = agregado de todas as tasks dos boards visíveis ao usuário.
  * Retorna tasks ordenadas por updatedAt desc.
  */
-export async function getMyTasks() {
+export async function getMyTasks(boardId: string) {
   try {
-    const response = await api.get("/v1/me/tasks");
+    const safeBoardId = validateId(boardId, "boardId");
+    const response = await api.get("/v1/me/tasks", {
+      params: { boardId: safeBoardId }
+    });
     return { success: true as const, data: response.data as BacklogTask[] };
   } catch (error) {
     return {

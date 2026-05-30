@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 import {
   Dialog,
@@ -16,7 +18,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { createSprint, updateSprint } from "@/lib/actions/sprint";
+import { cn } from "@/lib/utils";
 
 interface CreateSprintDialogProps {
   boardId: string;
@@ -32,17 +41,22 @@ export function CreateSprintDialog({
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [startNow, setStartNow] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  const [isStartOpen, setIsStartOpen] = useState(false);
+  const [isEndOpen, setIsEndOpen] = useState(false);
 
   function reset() {
     setName("");
     setGoal("");
-    setStartDate("");
-    setEndDate("");
+    setStartDate(new Date());
+    setEndDate(undefined);
     setStartNow(true);
+    setIsStartOpen(false);
+    setIsEndOpen(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -52,8 +66,8 @@ export function CreateSprintDialog({
     const created = await createSprint(boardId, {
       name: name.trim(),
       goal: goal.trim() || undefined,
-      startDate: new Date(startDate).toISOString(),
-      endDate: new Date(endDate).toISOString(),
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
     });
 
     if (!created.success) {
@@ -62,9 +76,6 @@ export function CreateSprintDialog({
       return;
     }
 
-    // Se o usuário desmarcou "Iniciar agora", deixa como PLANNED.
-    // Senão tenta ativar. Backend bloqueia se já houver outra ACTIVE —
-    // nesse caso fica como PLANNED mesmo e avisamos.
     const shouldActivate = startNow;
     const activated = shouldActivate
       ? await updateSprint(created.data.id, { status: "ACTIVE" })
@@ -82,14 +93,14 @@ export function CreateSprintDialog({
       toast.success("Sprint criada e iniciada");
     } else {
       toast.warning(
-        "Sprint criada como planejada. Já existe outra sprint ativa neste board.",
+        "Sprint criada como planejada. Já existe outra sprint ativa neste board."
       );
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Nova sprint</DialogTitle>
           <DialogDescription>
@@ -122,26 +133,60 @@ export function CreateSprintDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="sprint-start">Início</Label>
-              <Input
-                id="sprint-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2 flex flex-col">
+              <Label>Início</Label>
+              <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => {
+                      setStartDate(date);
+                      setIsStartOpen(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="sprint-end">Fim</Label>
-              <Input
-                id="sprint-end"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-              />
+            <div className="space-y-2 flex flex-col">
+              <Label>Fim</Label>
+              <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : <span>Selecione a data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(date) => {
+                      setEndDate(date);
+                      setIsEndOpen(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -153,7 +198,7 @@ export function CreateSprintDialog({
               id="start-now"
               checked={startNow}
               onCheckedChange={(c) => setStartNow(c === true)}
-              className="mt-0.5 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+              className="mt-0.5 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 shrink-0"
             />
             <div className="flex-1">
               <div className="font-medium text-sm">Iniciar sprint agora</div>
@@ -165,14 +210,14 @@ export function CreateSprintDialog({
             </div>
           </label>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose}>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
             >
               {loading
                 ? "Criando..."
