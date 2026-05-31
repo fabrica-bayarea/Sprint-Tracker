@@ -19,8 +19,7 @@ import { AuthService } from '@/auth/auth.service';
   },
 })
 export abstract class BaseGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -29,7 +28,7 @@ export abstract class BaseGateway
     { user?: { id: string; name?: string } }
   >();
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
   logger = new Logger(`WebSocketGateway ${this.constructor.name}`);
 
   /**
@@ -58,12 +57,21 @@ export abstract class BaseGateway
    */
   async handleConnection(client: Socket) {
     try {
-      const cookies = cookie.parse(client.handshake.headers.cookie || '');
-      const token: string | undefined = cookies['sprinttacker-session'];
+      let token = client.handshake.auth?.token;
+
+      if (!token && client.handshake.headers?.authorization) {
+        token = client.handshake.headers.authorization.split(' ')[1];
+      }
+
+      if (!token) {
+        const cookies = cookie.parse(client.handshake.headers.cookie || '');
+        token = cookies['sprinttacker-session'];
+      }
 
       if (!token) {
         throw new Error('Token de sessão ausente');
       }
+
       const user: User | null =
         await this.authService.validateUserFromToken(token);
 
@@ -88,7 +96,6 @@ export abstract class BaseGateway
       client.disconnect();
     }
   }
-
   /**
    * Manipula desconexão de cliente.
    * Loga a desconexão com o ID do cliente e nome do usuário, se disponível.

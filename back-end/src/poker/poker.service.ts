@@ -10,10 +10,14 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreatePokerSessionDTO } from './dto/CreateSession.dto';
 import { SubmitVoteDto } from './dto/SubmitVote.dto';
+import { PokerGateway } from './poker.gateway';
 
 @Injectable()
 export class PokerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pokerGateway: PokerGateway,
+  ) { }
 
   async createPokerSession(dto: CreatePokerSessionDTO, boardId: string) {
     const inviteCode = nanoid(6);
@@ -29,13 +33,44 @@ export class PokerService {
 
     const pokerSession = await this.prisma.pokerSession.create({
       data: {
-        ...dto,
+        title: dto.title,
+        taskId: dto.taskId,
         boardId,
         pokerStatus: PokerStatus.WAITING,
         inviteCode,
       },
     });
     return pokerSession;
+  }
+
+  async listByBoard(boardId: string) {
+    const sessions = await this.prisma.pokerSession.findMany({
+      where: { boardId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        task: true,
+      },
+    });
+    return sessions.map((s) => ({
+      ...s,
+      taskIds: s.taskId ? [s.taskId] : [],
+      participantCount: this.pokerGateway.getRoomUserCount(s.id),
+    }));
+  }
+
+  async getSession(sessionId: string) {
+    const session = await this.prisma.pokerSession.findUnique({
+      where: { id: sessionId },
+      include: { task: true },
+    });
+    if (!session) {
+      throw new NotFoundException('Poker session not found');
+    }
+    return {
+      ...session,
+      taskIds: session.taskId ? [session.taskId] : [],
+      participantCount: this.pokerGateway.getRoomUserCount(sessionId),
+    };
   }
 
   async joinSession(inviteCode: string) {
@@ -71,6 +106,9 @@ export class PokerService {
         pokerVotes: false,
       },
     });
+
+    this.pokerGateway.emitPokerEvent(sessionId, 'pokerSessionClosed', { sessionId });
+
     return endSession;
   }
 
@@ -104,6 +142,11 @@ export class PokerService {
       },
     });
 
+    this.pokerGateway.emitPokerEvent(session.id, 'pokerVoteSubmitted', {
+      sessionId: session.id,
+      userId: member.userId,
+    });
+
     return vote;
   }
 
@@ -128,6 +171,12 @@ export class PokerService {
         pokerVotes: true,
       },
     });
+
+    this.pokerGateway.emitPokerEvent(sessionId, 'pokerVotesRevealed', {
+      sessionId,
+      votes: revealed.pokerVotes,
+    });
+
     return revealed;
   }
 
@@ -153,7 +202,35 @@ export class PokerService {
         pokerVotes: true,
       },
     });
+
+    this.pokerGateway.emitPokerEvent(sessionId, 'pokerNextCard', {
+      sessionId,
+    });
+
     return hideCard;
+  }
+
+  async startSession(sessionId: string) {
+    const session = await this.findSessionId(sessionId);
+
+    if (!session) {
+      throw new NotFoundException('Poker session ID not found');
+    }
+
+    if (session.pokerStatus !== PokerStatus.WAITING) {
+      throw new BadRequestException('Session must be WAITING');
+    }
+
+    const started = await this.prisma.pokerSession.update({
+      where: { id: sessionId },
+      data: { pokerStatus: PokerStatus.VOTING },
+    });
+
+    this.pokerGateway.emitPokerEvent(sessionId, 'pokerNextCard', {
+      sessionId,
+    });
+
+    return started;
   }
 
   private async findSessionId(sessionId: string) {

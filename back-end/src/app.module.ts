@@ -16,6 +16,7 @@ import { LoggingMiddleware } from '@/middleware/logging.middleware';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { TaskModule } from '@/task/task.module';
 import { TaskLogModule } from '@/task-log/task-log.module';
+import { PokerModule } from '@/poker/poker.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { TaskLogModule } from '@/task-log/task-log.module';
     TaskCommentModule,
     HealthModule,
     AnalysisModule,
+    PokerModule,
   ],
   providers: [],
 })

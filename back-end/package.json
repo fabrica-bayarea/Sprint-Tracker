@@ -40,6 +40,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "ldapts": "^8.0.9",
+    "nanoid": "^5.1.11",
     "nodemailer": "^7.0.11",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",

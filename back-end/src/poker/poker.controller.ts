@@ -1,4 +1,4 @@
-import { Body, Controller, UseGuards, Post, Param } from '@nestjs/common';
+import { Body, Controller, UseGuards, Post, Param, Get } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
 import { BoardRoleGuard } from '@/auth/guards/board-role.guard';
@@ -15,6 +15,16 @@ import { PokerService } from './poker.service';
 @Controller({ path: 'poker', version: '1' })
 export class PokerController {
   constructor(private readonly pokerService: PokerService) {}
+
+  @Get('/board/:boardId')
+  listByBoard(@Param('boardId') boardId: string) {
+    return this.pokerService.listByBoard(boardId);
+  }
+
+  @Get('/:sessionId')
+  getSession(@Param('sessionId') sessionId: string) {
+    return this.pokerService.getSession(sessionId);
+  }
 
   @UseGuards(BoardRoleGuard)
   @BoardRoles(Role.ADMIN)
@@ -53,5 +63,12 @@ export class PokerController {
   @Post('/next/:sessionId')
   next(@Param('sessionId') sessionId: string) {
     return this.pokerService.nextCard(sessionId);
+  }
+
+  @UseGuards(BoardRoleGuard)
+  @Post('/start/:sessionId')
+  @BoardRoles(Role.ADMIN)
+  start(@Param('sessionId') sessionId: string) {
+    return this.pokerService.startSession(sessionId);
   }
 }

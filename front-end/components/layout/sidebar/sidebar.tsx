@@ -10,6 +10,7 @@ import {
   Gauge,
   History,
   KanbanSquare,
+  Dices,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BoardSelect } from "./board-select";
@@ -61,6 +62,14 @@ export default function Sidebar() {
       icon: History,
       isActive: pathname === "/dashboard/sprints/history",
       disabled: false,
+    },
+    {
+      label: "Poker Session",
+      href: selectedBoardId ? `/dashboard/board/${selectedBoardId}/poker` : "#",
+      icon: Dices,
+      isActive: pathname.startsWith(`/dashboard/board/${selectedBoardId}/poker`),
+      disabled: !selectedBoardId,
+      disabledTitle: "Selecione um board no dropdown acima primeiro",
     },
   ];
 

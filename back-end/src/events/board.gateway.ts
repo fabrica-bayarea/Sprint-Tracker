@@ -13,7 +13,7 @@ import { BaseGateway } from './base.gateway';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   },
 })
