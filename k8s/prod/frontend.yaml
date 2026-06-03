@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bayarea-sprint-frontend
+  namespace: bayarea-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bayarea-sprint-frontend
+  template:
+    metadata:
+      labels:
+        app: bayarea-sprint-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 248189947068.dkr.ecr.us-east-1.amazonaws.com/bayarea-sprint-frontend-prod:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BASE_URL_API
+              value: "https://bayarea.dataiesb.com/sprint/api"
+            - name: BASE_URL_WS
+              value: "wss://bayarea.dataiesb.com/sprint/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bayarea-sprint-frontend
+  namespace: bayarea-web
+spec:
+  selector:
+    app: bayarea-sprint-frontend
+  ports:
+    - port: 3000
+      targetPort: 3000

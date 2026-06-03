@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bayarea-sprint-backend
+  namespace: bayarea-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bayarea-sprint-backend
+  template:
+    metadata:
+      labels:
+        app: bayarea-sprint-backend
+    spec:
+      containers:
+        - name: backend
+          image: 248189947068.dkr.ecr.us-east-1.amazonaws.com/bayarea-sprint-backend-prod:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sprint-tracker-secrets
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sprint-tracker-secrets
+                  key: JWT_SECRET
+            - name: JWT_RESET_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sprint-tracker-secrets
+                  key: JWT_RESET_SECRET
+            - name: BASE_URL
+              value: "https://bayarea.dataiesb.com"
+            - name: BASE_URL_UI
+              value: "https://bayarea.dataiesb.com/sprint"
+            - name: BASE_URL_API
+              value: "https://bayarea.dataiesb.com/sprint/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bayarea-sprint-backend
+  namespace: bayarea-web
+spec:
+  selector:
+    app: bayarea-sprint-backend
+  ports:
+    - port: 3000
+      targetPort: 3000
