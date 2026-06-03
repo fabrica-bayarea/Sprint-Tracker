@@ -117,3 +117,6 @@ scrap/
 * [0-9].css
 * [0-9].md
 .semgrepignore[ 0-9]*
+
+# Override local: aponta o back pro RDS da AWS (contém secret) — não commitar
+docker-compose.override.yml
