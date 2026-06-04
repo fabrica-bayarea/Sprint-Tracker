@@ -6,6 +6,7 @@ const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
   testRegex: '.*\\.spec.ts$',
+  roots: ['<rootDir>/test'],
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
