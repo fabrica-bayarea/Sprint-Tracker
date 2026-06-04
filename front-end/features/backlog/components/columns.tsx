@@ -11,6 +11,7 @@ const getStatusConfig = (status: string) => {
   const s = status?.toUpperCase() || "";
   if (s === "TODO") return { color: "bg-slate-400 dark:bg-slate-500", text: "A fazer" };
   if (s === "IN_PROGRESS") return { color: "bg-amber-500", text: "Em progresso" };
+  if (s === "BLOCKED") return { color: "bg-red-500", text: "Impedido" };
   if (s === "DONE") return { color: "bg-emerald-500", text: "Concluído" };
   if (s === "ARCHIVED") return { color: "bg-zinc-400 dark:bg-zinc-500", text: "Arquivada" };
   return { color: "bg-muted-foreground/40", text: status };

@@ -2,9 +2,9 @@ name: Security Pipeline
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
   workflow_dispatch:
 
 permissions: read-all
@@ -19,11 +19,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # =========================================
-  # CODEQL (SAST AVANÇADO)
-  # =========================================
+
+  # =========================================================
+  # CODEQL — JavaScript + TypeScript
+  # =========================================================
   codeql:
-    name: CodeQL Analysis
+    name: CodeQL Analysis (${{ matrix.language }})
     runs-on: ubuntu-latest
 
     permissions:
@@ -33,17 +34,30 @@ jobs:
     timeout-minutes: 30
 
     strategy:
+      fail-fast: false
       matrix:
-        language: [ 'javascript' ]
+        language: ['javascript', 'typescript']
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
       - name: Inicializar CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          queries: security-and-quality
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
@@ -51,40 +65,56 @@ jobs:
       - name: Rodar CodeQL
         uses: github/codeql-action/analyze@v4
         with:
+          category: "/language:${{ matrix.language }}"
           output: codeql-results
 
       - name: Checar severidade no SARIF do CodeQL
+        shell: bash
         run: |
           SARIF_FILE=$(find codeql-results -name "*.sarif" | head -1)
+
           if [ -z "$SARIF_FILE" ]; then
             echo "⚠️ Nenhum arquivo SARIF encontrado"
             exit 1
           fi
 
           COUNT=$(jq '
-            .runs[] as $run |
-            $run.results[] |
-            . as $result |
-            ($run.tool.extensions[]?.rules[]? |
+            [
+              .runs[].results[]? as $result |
+              (
+                .runs[].tool.driver.rules[]?,
+                .runs[].tool.extensions[]?.rules[]?
+              ) |
               select(.id == $result.ruleId) |
-              .properties["security-severity"] // 0 | tonumber
-            ) |
-            select(. >= 7.0)
-          ' "$SARIF_FILE" | jq -s 'length')
+              (.properties["security-severity"] // "0") |
+              tonumber |
+              select(. >= 7.0)
+            ] | length
+          ' "$SARIF_FILE")
 
           echo "⚠️ Alertas High/Critical encontrados: $COUNT"
 
-          if [ "$COUNT" -gt "0" ]; then
+          if [ "$COUNT" -gt 0 ]; then
             echo "❌ CodeQL encontrou $COUNT vulnerabilidade(s) High/Critical"
+            jq -r '
+              .runs[].results[]? as $result |
+              (
+                .runs[].tool.driver.rules[]?,
+                .runs[].tool.extensions[]?.rules[]?
+              ) |
+              select(.id == $result.ruleId) |
+              "\(.properties["security-severity"] // "?") | \($result.ruleId) | \($result.message.text)"
+            ' "$SARIF_FILE"
             exit 1
           fi
+
           echo "✅ Nenhuma vulnerabilidade High/Critical encontrada"
 
-  # =========================================
-  # SAST + SONAR + SEMGREP + SCA
-  # =========================================
+  # =========================================================
+  # SECURITY ANALYSIS — SCA + SAST + Secrets + Sonar
+  # =========================================================
   security:
-    name: SAST + SonarQube
+    name: Security Analysis
     runs-on: ubuntu-latest
 
     permissions:
@@ -92,84 +122,211 @@ jobs:
       security-events: write
 
     timeout-minutes: 30
-    # Removido 'needs: codeql' para rodar em paralelo e ganhar tempo
-    if: always()
 
     steps:
-      - uses: actions/checkout@v4
+
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # =====================================================
+      # SETUP
+      # =====================================================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      # Ajustado para os nomes de pastas reais: back-end e front-end
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      # =====================================================
+      # CACHE
+      # =====================================================
       - name: Cache node_modules (back-end)
         uses: actions/cache@v4
         with:
           path: ./back-end/node_modules
           key: ${{ runner.os }}-back-${{ hashFiles('back-end/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-back-
+          restore-keys: ${{ runner.os }}-back-
 
       - name: Cache node_modules (front-end)
         uses: actions/cache@v4
         with:
           path: ./front-end/node_modules
-          key: ${{ runner.os }}-front-${{ hashFiles('front-end/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-front-
+          key: ${{ runner.os }}-front-${{ hashFiles('front-end/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-front-
 
+      # =====================================================
+      # INSTALL
+      # =====================================================
       - name: Instalar dependências (back-end)
         working-directory: ./back-end
-        run: npm install
+        run: npm ci
 
       - name: Instalar dependências (front-end)
         working-directory: ./front-end
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
-      # ------------------------
-      # SCA (Software Composition Analysis)
-      # ------------------------
-      - name: Audit dependências (back-end)
-        working-directory: ./back-end
-        run: npm audit --audit-level=high || true
-
-      - name: Audit dependências (front-end)
-        working-directory: ./front-end
-        run: npm audit --audit-level=high || true
-
+      # =====================================================
+      # TESTS COM COVERAGE
+      # =====================================================
       - name: Rodar testes com coverage (back-end)
+        continue-on-error: true
         working-directory: ./back-end
-        run: npm run test:cov || true
+        run: npm run test:cov
 
-      # ------------------------
-      # SEMGREP
-      # ------------------------
+      # =====================================================
+      # SCA — npm audit
+      # =====================================================
+      - name: npm audit (back-end)
+        id: audit_back
+        continue-on-error: true
+        working-directory: ./back-end
+        run: npm audit --audit-level=high
+
+      - name: npm audit (front-end)
+        id: audit_front
+        continue-on-error: true
+        working-directory: ./front-end
+        run: pnpm audit --audit-level high
+
+      # =====================================================
+      # SCA — Trivy filesystem (cobre OS-level + libs)
+      # =====================================================
+      - name: Trivy filesystem scan
+        id: trivy_fs
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          skip-dirs: node_modules,.next,dist,coverage
+
+      - name: Upload Trivy SARIF
+        if: always() && hashFiles('trivy-fs.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      # =====================================================
+      # SEMGREP — OWASP + Node/Express + TypeScript
+      # =====================================================
       - name: Instalar Semgrep
         run: pip install semgrep
 
       - name: Rodar Semgrep
         id: semgrep
         continue-on-error: true
-        run: semgrep scan --config=p/owasp-top-ten --sarif --output=semgrep.sarif --error
+        shell: bash
+        run: |
+          set +e
+
+          semgrep scan \
+            --config "p/owasp-top-ten" \
+            --config "p/typescript" \
+            --config "p/javascript" \
+            --config "p/nodejsscan" \
+            --config "p/expressjs" \
+            --config "p/react" \
+            --config "p/secrets" \
+            --sarif \
+            --output=semgrep.sarif \
+            --timeout=120 \
+            --exclude="**/node_modules/**" \
+            --exclude="**/.next/**" \
+            --exclude="**/dist/**" \
+            --exclude="**/coverage/**" \
+            --error
+
+          EXIT_CODE=$?
+
+          echo "semgrep_exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+          if [ -f semgrep.sarif ]; then
+            echo "semgrep_generated=true" >> $GITHUB_OUTPUT
+          else
+            echo "semgrep_generated=false" >> $GITHUB_OUTPUT
+          fi
+
+          # nunca quebra aqui
+          exit 0
 
       - name: Upload Semgrep SARIF
+        if: always() && steps.semgrep.outputs.semgrep_generated == 'true'
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
         with:
           sarif_file: semgrep.sarif
           category: semgrep
 
-      # ------------------------
-      # SONARQUBE
-      # ------------------------
-      - name: SonarQube Scan
+      # =====================================================
+      # SECRET SCANNING — Gitleaks (action oficial)
+      # =====================================================
+      - name: Gitleaks Scan
+        id: gitleaks
+        continue-on-error: true
+        run: |
+          GITLEAKS_VERSION="8.27.2"
+          curl -sSL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          ./gitleaks detect \
+            --source . \
+            --redact \
+            --report-format sarif \
+            --report-path gitleaks.sarif \
+            --exit-code 0
+          echo "gitleaks_generated=$(test -f gitleaks.sarif && echo true || echo false)" >> $GITHUB_OUTPUT
+
+      # =====================================================
+      # PRISMA — valida schema antes de qualquer coisa quebrar em prod
+      # =====================================================
+      - name: Validar Prisma schema
+        id: prisma
+        continue-on-error: true
+        working-directory: ./back-end
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+        run: npx prisma validate
+
+      # =====================================================
+      # SBOM — CycloneDX (back-end + front-end)
+      # =====================================================
+      - name: Gerar SBOM
+        id: sbom
+        continue-on-error: true
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+
+      - name: Upload SBOM artifact
+        if: always() && hashFiles('sbom.cdx.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 30
+
+      # =====================================================
+      # SONARCLOUD
+      # =====================================================
+      - name: SonarCloud Scan
         id: sonar
         continue-on-error: true
-        uses: SonarSource/sonarqube-scan-action@v2
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
@@ -185,22 +342,73 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=back-end/coverage/lcov.info
             -Dsonar.qualitygate.wait=true
 
-      # ------------------------
-      # SECURITY GATE (FINAL)
-      # ------------------------
+      # =====================================================
+      # DEPENDENCY REVIEW — só em PRs
+      # =====================================================
+      - name: Dependency Review
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+      # =====================================================
+      # FINAL SECURITY GATE
+      # failure  → bloqueia o pipeline
+      # skipped  → aviso, não bloqueia
+      # =====================================================
       - name: Security Gate
         if: always()
+        shell: bash
         run: |
           FAILED=0
-          if [ "${{ steps.semgrep.outcome }}" = "failure" ]; then
-            echo "❌ Semgrep encontrou vulnerabilidades"
+
+          check_step() {
+            local name=$1
+            local outcome=$2
+            local blocking=$3   # "block" ou "warn"
+
+            if [ "$outcome" = "failure" ]; then
+              if [ "$blocking" = "block" ]; then
+                echo "❌ $name failed (BLOCKING)"
+                FAILED=1
+              else
+                echo "⚠️  $name failed (warning only)"
+              fi
+            elif [ "$outcome" = "skipped" ]; then
+              echo "⚠️  $name was skipped"
+            else
+              echo "✅ $name: $outcome"
+            fi
+          }
+
+          # Bloqueantes
+          SEMGREP_EXIT="${{ steps.semgrep.outputs.semgrep_exit_code }}"
+
+          if [ -z "$SEMGREP_EXIT" ]; then
+            echo "❌ Semgrep exit code missing (BLOCKING)"
             FAILED=1
-          fi
-          if [ "${{ steps.sonar.outcome }}" != "success" ]; then
-            echo "❌ SonarQube falhou ou Quality Gate barrado"
+          elif [ "$SEMGREP_EXIT" != "0" ]; then
+            echo "❌ Semgrep failed (BLOCKING)"
             FAILED=1
+          else
+            echo "✅ Semgrep passed"
           fi
-          if [ "$FAILED" = "1" ]; then
+          
+          check_step "SonarCloud"    "${{ steps.sonar.outcome }}"       "block"
+          check_step "Gitleaks"      "${{ steps.gitleaks.outcome }}"    "block"
+          check_step "Prisma"        "${{ steps.prisma.outcome }}"      "block"
+
+          # Não-bloqueantes (warnings)
+          check_step "Trivy FS"      "${{ steps.trivy_fs.outcome }}"    "warn"
+          check_step "npm audit BE"  "${{ steps.audit_back.outcome }}"  "warn"
+          check_step "npm audit FE"  "${{ steps.audit_front.outcome }}" "warn"
+          check_step "SBOM"          "${{ steps.sbom.outcome }}"        "warn"
+
+          echo ""
+          if [ "$FAILED" -eq 1 ]; then
+            echo "❌ Security pipeline FAILED — revise os achados acima"
             exit 1
           fi
-          echo "✅ Pipeline de segurança aprovada"
+
+          echo "✅ Security pipeline APPROVED"

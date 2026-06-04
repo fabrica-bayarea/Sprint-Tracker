@@ -226,6 +226,7 @@ enum BoardVisibility {
 enum Status {
   TODO
   IN_PROGRESS
+  BLOCKED
   DONE
   ARCHIVED
 }
@@ -243,4 +244,5 @@ enum LogAction {
   TASK_STATUS_CHANGED
   TASK_ARCHIVED
   TASK_DELETED
+  TASK_SPRINT_CHANGED
 }

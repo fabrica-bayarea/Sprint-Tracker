@@ -1,0 +1,14 @@
+# Dev container do front-end (Next.js 16 + Turbopack).
+# Hot reload via volume bind do compose. Para PROD use Dockerfile (multi-stage).
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 3001
+
+CMD ["sh", "-c", "PORT=3001 npm run dev -- --hostname 0.0.0.0"]

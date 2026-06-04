@@ -41,6 +41,31 @@ export interface ActiveSprint extends Sprint {
   tasks: SprintTask[];
 }
 
+export interface HistorySprintTask {
+  id: string;
+  title: string;
+  status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "ARCHIVED";
+  completedAt: string | null;
+  assignee: {
+    id: string;
+    name: string | null;
+    userName: string | null;
+    email: string | null;
+  } | null;
+  list: { id: string; title: string };
+}
+
+export interface HistorySprint extends Sprint {
+  completedTasks: HistorySprintTask[];
+  incompleteTasks: HistorySprintTask[];
+  stats: {
+    total: number;
+    completed: number;
+    incomplete: number;
+    completionRate: number;
+  };
+}
+
 export async function listSprints(boardId: string) {
   try {
     const safeBoardId = validateId(boardId, "boardId");
@@ -72,6 +97,21 @@ export async function getActiveSprint(boardId: string) {
   }
 }
 
+export async function getSprintHistory(boardId: string) {
+  try {
+    const safeBoardId = validateId(boardId, "boardId");
+    const response = await api.get(
+      `/v1/boards/${safeBoardId}/sprints/history`,
+    );
+    return { success: true as const, data: response.data as HistorySprint[] };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: handleAxiosError(error, "Erro ao buscar histórico de sprints"),
+    };
+  }
+}
+
 export async function createSprint(
   boardId: string,
   payload: { name: string; goal?: string; startDate: string; endDate: string },
@@ -87,6 +127,38 @@ export async function createSprint(
     return {
       success: false as const,
       error: handleAxiosError(error, "Erro ao criar sprint"),
+    };
+  }
+}
+
+export type IncompleteTasksAction =
+  | "MOVE_TO_NEXT"
+  | "RETURN_TO_BACKLOG"
+  | "KEEP";
+
+export interface CloseSprintResult {
+  sprintId: string;
+  status: "COMPLETED";
+  incompleteTaskCount: number;
+  action: IncompleteTasksAction;
+  targetSprintId: string | null;
+}
+
+export async function closeSprint(
+  sprintId: string,
+  payload: {
+    incompleteTasksAction: IncompleteTasksAction;
+    targetSprintId?: string;
+  },
+) {
+  try {
+    const safeId = validateId(sprintId, "sprintId");
+    const response = await api.post(`/v1/sprints/${safeId}/close`, payload);
+    return { success: true as const, data: response.data as CloseSprintResult };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: handleAxiosError(error, "Erro ao encerrar sprint"),
     };
   }
 }

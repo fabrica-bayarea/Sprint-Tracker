@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '@/auth/guards/jwt.guard';
 import { CurrentUser } from '@/auth/strategy/decorators/current-user.decorator';
 import { AuthenticatedUser } from '@/types/user.interface';
 
+import { CloseSprintDto } from './dto/close-sprint.dto';
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { SprintService } from './sprint.service';
@@ -52,6 +53,20 @@ export class SprintController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sprintService.getActive(boardId, user.id);
+  }
+
+  @ApiOperation({
+    summary: 'Histórico de sprints encerradas do board',
+    description:
+      'Retorna sprints COMPLETED com tasks separadas em concluídas/incompletas e métricas agregadas',
+  })
+  @ApiResponse({ status: 200, description: 'Histórico retornado' })
+  @Get('boards/:boardId/sprints/history')
+  getHistory(
+    @Param('boardId') boardId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sprintService.getHistory(boardId, user.id);
   }
 
   @ApiOperation({ summary: 'Cria uma sprint no board (admin)' })
@@ -91,6 +106,26 @@ export class SprintController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sprintService.remove(sprintId, user.id);
+  }
+
+  @ApiOperation({
+    summary: 'Encerra uma sprint com decisão sobre tasks incompletas (admin)',
+    description:
+      'Muda status pra COMPLETED e redistribui tasks não concluídas conforme a action: MOVE_TO_NEXT (move pra targetSprintId PLANNED), RETURN_TO_BACKLOG (sprintId=null), KEEP (deixa paradas). Cada movimentação é logada em TaskLog com action TASK_SPRINT_CHANGED.',
+  })
+  @ApiResponse({ status: 200, description: 'Sprint encerrada' })
+  @ApiResponse({
+    status: 400,
+    description: 'Sprint já encerrada / sprint de destino inválida',
+  })
+  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  @Post('sprints/:sprintId/close')
+  close(
+    @Param('sprintId') sprintId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CloseSprintDto,
+  ) {
+    return this.sprintService.closeSprint(sprintId, user.id, dto);
   }
 
   @ApiOperation({ summary: 'Adiciona uma task à sprint' })

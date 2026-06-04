@@ -43,7 +43,11 @@ export default function Header() {
 
   const handleLogout = async () => {
     await removeCookie("sprinttacker-session");
-    router.push("/auth/login/");
+    // window.location em vez de router.push: hard reload limpa o cache do
+    // react-query e desmonta todos os componentes/forms do dashboard. Sem
+    // isso, queries em flight com cookie já apagado podem deixar estado
+    // sujo e travar o próximo submit de login.
+    window.location.href = "/auth/login";
   };
 
   return (

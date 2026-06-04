@@ -12,21 +12,25 @@ import {
   ExternalLink,
   Gauge,
   CheckCircle2,
+  Play,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useBoardStore } from "@/stores/use-board-store";
 import {
   getActiveSprint,
+  listSprints,
   updateSprint,
   removeTaskFromSprint,
   type SprintTask,
   type ActiveSprint,
+  type SprintListItem,
 } from "@/lib/actions/sprint";
 import { CreateSprintDialog } from "@/features/sprints/create-sprint-dialog";
 import { AddTaskDialog } from "@/features/sprints/add-task-dialog";
+import { CloseSprintDialog } from "@/features/sprints/close-sprint-dialog";
 
-type Bucket = "TODO" | "IN_PROGRESS" | "DONE";
+type Bucket = "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE";
 
 const BUCKETS: { key: Bucket; label: string; className: string }[] = [
   {
@@ -40,6 +44,12 @@ const BUCKETS: { key: Bucket; label: string; className: string }[] = [
     label: "Em progresso",
     className:
       "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
+  },
+  {
+    key: "BLOCKED",
+    label: "Impedido",
+    className:
+      "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300",
   },
   {
     key: "DONE",
@@ -66,7 +76,7 @@ export default function SprintsPage() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [addTaskOpen, setAddTaskOpen] = useState(false);
-  const [closing, setClosing] = useState(false);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["sprint-active", selectedBoardId],
@@ -75,12 +85,39 @@ export default function SprintsPage() {
     staleTime: 15_000,
   });
 
+  const { data: allSprintsData } = useQuery({
+    queryKey: ["sprints", selectedBoardId],
+    queryFn: () => listSprints(selectedBoardId!),
+    enabled: !!selectedBoardId,
+    staleTime: 15_000,
+  });
+
   const sprint: ActiveSprint | null = data?.success ? data.data : null;
+  const plannedSprints: SprintListItem[] =
+    allSprintsData?.success && allSprintsData.data
+      ? allSprintsData.data.filter((s) => s.status === "PLANNED")
+      : [];
+
+  async function handleActivate(sprintId: string, sprintName: string) {
+    const r = await updateSprint(sprintId, { status: "ACTIVE" });
+    if (r.success) {
+      queryClient.invalidateQueries({
+        queryKey: ["sprint-active", selectedBoardId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["sprints", selectedBoardId],
+      });
+      toast.success(`"${sprintName}" iniciada`);
+    } else {
+      toast.error(r.error || "Erro ao iniciar sprint");
+    }
+  }
 
   const grouped = useMemo(() => {
     const out: Record<Bucket, SprintTask[]> = {
       TODO: [],
       IN_PROGRESS: [],
+      BLOCKED: [],
       DONE: [],
     };
     if (!sprint) return out;
@@ -92,24 +129,8 @@ export default function SprintsPage() {
     return out;
   }, [sprint]);
 
-  async function handleCloseSprint() {
-    if (!sprint) return;
-    if (!confirm(`Encerrar a sprint "${sprint.name}"?`)) return;
-    setClosing(true);
-    const r = await updateSprint(sprint.id, { status: "COMPLETED" });
-    setClosing(false);
-    if (r.success) {
-      queryClient.invalidateQueries({
-        queryKey: ["sprint-active", selectedBoardId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["sprints", selectedBoardId],
-      });
-      toast.success("Sprint encerrada");
-    } else {
-      toast.error(r.error || "Erro ao encerrar");
-    }
-  }
+  const incompleteCount =
+    grouped.TODO.length + grouped.IN_PROGRESS.length + grouped.BLOCKED.length;
 
   async function handleRemoveTask(task: SprintTask) {
     if (!sprint) return;
@@ -156,10 +177,71 @@ export default function SprintsPage() {
     );
   }
 
+  const plannedSection =
+    plannedSprints.length > 0 ? (
+      <div className="rounded-xl bg-card shadow-sm border border-border p-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Próximas sprints ({plannedSprints.length})
+        </h2>
+        <ul className="space-y-2">
+          {plannedSprints.map((s) => (
+            <li
+              key={s.id}
+              className="flex items-center gap-3 p-3 rounded-md border bg-muted/20"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                    Planejada
+                  </span>
+                  <span className="font-medium text-sm truncate">
+                    {s.name}
+                  </span>
+                </div>
+                {s.goal && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1.5">
+                    <Target size={12} className="mt-0.5 flex-shrink-0" />
+                    <span>{s.goal}</span>
+                  </p>
+                )}
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar size={11} />
+                    {formatDate(s.startDate)} → {formatDate(s.endDate)}
+                  </span>
+                  <span>·</span>
+                  <span>
+                    {s._count.tasks}{" "}
+                    {s._count.tasks === 1 ? "task" : "tasks"}
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!!sprint}
+                title={
+                  sprint
+                    ? "Encerre a sprint ativa primeiro"
+                    : "Iniciar esta sprint"
+                }
+                onClick={() => handleActivate(s.id, s.name)}
+              >
+                <Play size={12} className="mr-1" />
+                Iniciar
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
+
   // Sem sprint ativa
   if (!sprint) {
     return (
-      <div className="w-full p-10">
+      <div className="w-full p-10 space-y-6">
+        {plannedSection}
         <div className="max-w-md mx-auto mt-16 flex flex-col items-center text-center bg-muted/20 border border-dashed border-border rounded-lg p-10">
           <Gauge size={26} className="text-red-600 dark:text-red-400 mb-3" />
           <h1 className="text-xl font-semibold text-foreground">
@@ -189,6 +271,8 @@ export default function SprintsPage() {
   // Sprint ativa: header + kanban
   return (
     <div className="w-full p-10 space-y-6">
+      {plannedSection}
+
       {/* Header da sprint */}
       <div className="rounded-xl bg-card shadow-sm border border-border p-6 flex flex-col md:flex-row md:items-start gap-4 justify-between">
         <div className="flex-1 min-w-0">
@@ -231,18 +315,17 @@ export default function SprintsPage() {
           <Button
             type="button"
             size="sm"
-            onClick={handleCloseSprint}
-            disabled={closing}
+            onClick={() => setCloseDialogOpen(true)}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
             <CheckCircle2 size={14} className="mr-1" />
-            {closing ? "Encerrando..." : "Encerrar sprint"}
+            Encerrar sprint
           </Button>
         </div>
       </div>
 
       {/* Kanban */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {BUCKETS.map((bucket) => {
           const tasks = grouped[bucket.key];
           return (
@@ -287,6 +370,15 @@ export default function SprintsPage() {
         sprintId={sprint.id}
         isOpen={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
+      />
+
+      <CloseSprintDialog
+        isOpen={closeDialogOpen}
+        onClose={() => setCloseDialogOpen(false)}
+        sprintId={sprint.id}
+        sprintName={sprint.name}
+        boardId={selectedBoardId}
+        incompleteCount={incompleteCount}
       />
     </div>
   );

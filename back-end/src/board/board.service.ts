@@ -156,6 +156,9 @@ export class BoardService {
         const taskIds = tasks.map((t) => t.id);
 
         if (taskIds.length) {
+          // TaskLog.task FK não tem onDelete cascade, então precisa ser limpo
+          // antes das tasks. TaskComment.task tem Cascade, sem cleanup manual.
+          await tx.taskLog.deleteMany({ where: { taskId: { in: taskIds } } });
           await tx.taskLabel.deleteMany({ where: { taskId: { in: taskIds } } });
           await tx.task.deleteMany({ where: { id: { in: taskIds } } });
         }
@@ -163,6 +166,7 @@ export class BoardService {
         await tx.list.deleteMany({ where: { id: { in: listIds } } });
       }
 
+      // Logs órfãos do board (sem task associada) também são removidos.
       await tx.taskLog.deleteMany({ where: { boardId } });
 
       // Tasks já foram deletadas acima; sprints podem ser removidas direto

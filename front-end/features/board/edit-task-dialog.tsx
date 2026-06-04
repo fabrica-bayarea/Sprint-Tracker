@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { CalendarIcon, Trash2 } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,10 @@ import type { BoardMember } from "@/lib/actions/members";
 import { TaskHistory } from "@/features/board/task-history";
 import { TaskLabelsPicker } from "@/features/board/task-labels-picker";
 import { TaskComments } from "@/features/board/task-comments";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface EditTaskDialogProps {
   task: Task | null;
@@ -32,7 +36,6 @@ interface EditTaskDialogProps {
   members?: BoardMember[];
   canAssign?: boolean;
   canDelete?: boolean;
-  /** Admin/owner consegue ver histórico (TaskLogs) */
   canViewHistory?: boolean;
   currentUserId?: string;
 }
@@ -54,7 +57,8 @@ export function EditTaskDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("TODO");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [assigneeId, setAssigneeId] = useState<string>(UNASSIGNED);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -64,7 +68,7 @@ export function EditTaskDialog({
     setTitle(task.title);
     setDescription(task.description || "");
     setStatus(task.status);
-    setDueDate(task.dueDate ? task.dueDate.slice(0, 16) : "");
+    setDueDate(task.dueDate ? new Date(task.dueDate) : undefined);
     setAssigneeId(task.assigneeId ?? UNASSIGNED);
   }, [task]);
 
@@ -79,8 +83,7 @@ export function EditTaskDialog({
       title: title.trim(),
       description: description.trim() || undefined,
       status,
-      // datetime-local → ISO-8601 (Prisma exige)
-      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      dueDate: dueDate ? dueDate.toISOString() : undefined,
       assigneeId: canAssign ? (assigneeId !== UNASSIGNED ? assigneeId : null) : undefined,
     });
     setLoading(false);
@@ -112,7 +115,7 @@ export function EditTaskDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Editar tarefa</DialogTitle>
         </DialogHeader>
@@ -137,7 +140,7 @@ export function EditTaskDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={status} onValueChange={setStatus}>
@@ -147,20 +150,39 @@ export function EditTaskDialog({
                 <SelectContent>
                   <SelectItem value="TODO">A fazer</SelectItem>
                   <SelectItem value="IN_PROGRESS">Em progresso</SelectItem>
+                  <SelectItem value="BLOCKED">Impedido</SelectItem>
                   <SelectItem value="DONE">Concluído</SelectItem>
                   <SelectItem value="ARCHIVED">Arquivada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-task-due">Vencimento</Label>
-              <Input
-                id="edit-task-due"
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+            <div className="space-y-2 flex flex-col">
+              <Label>Vencimento</Label>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, "PPP") : <span>Selecione uma data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(date) => {
+                      setDueDate(date);
+                      setIsCalendarOpen(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -193,14 +215,14 @@ export function EditTaskDialog({
 
           <TaskHistory taskId={task.id} enabled={canViewHistory} />
 
-          <div className="flex justify-between gap-2 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row justify-between gap-2 pt-2">
             {canDelete ? (
               <Button
                 type="button"
                 variant="ghost"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 sm:w-auto w-full"
               >
                 <Trash2 size={16} className="mr-1" />
                 {deleting ? "Excluindo..." : "Excluir"}
@@ -208,14 +230,14 @@ export function EditTaskDialog({
             ) : (
               <div />
             )}
-            <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={onClose}>
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:w-auto w-full">
+              <Button type="button" variant="ghost" onClick={onClose} className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={loading}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
               >
                 {loading ? "Salvando..." : "Salvar"}
               </Button>
