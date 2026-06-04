@@ -117,10 +117,10 @@ describe('PokerService', () => {
       expect(mockPrisma.pokerVotes.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-                  voteValue: '5',
-                  pokerSessionId: 'session-123',
-                  boardMemberId: expect.any(String),
-                  boardMemberUserId: expect.any(String),
+            voteValue: '5',
+            pokerSessionId: 'session-123',
+            boardMemberId: expect.any(String),
+            boardMemberUserId: expect.any(String),
           }),
         }),
       );
@@ -213,6 +213,93 @@ describe('PokerService', () => {
 
       await expect(service.revealVotes(sessionId)).rejects.toThrow(
         'lease wait for the next round',
+      );
+    });
+  });
+  describe('closeSession', () => {
+    it('deve atualizar o status da sessão para CLOSED', async () => {
+      const sessionId = 'session-123';
+      const mockSession = {
+        id: sessionId,
+        pokerStatus: PokerStatus.VOTING,
+      };
+
+      mockPrisma.pokerSession.findUnique.mockResolvedValue(mockSession);
+      mockPrisma.pokerSession.update.mockResolvedValue({
+        ...mockSession,
+        pokerStatus: PokerStatus.CLOSED,
+      });
+
+      const result = await service.closeSession(sessionId);
+
+      expect(result).toEqual({
+        ...mockSession,
+        pokerStatus: PokerStatus.CLOSED,
+      });
+      expect(mockPrisma.pokerSession.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: sessionId },
+          data: { pokerStatus: PokerStatus.CLOSED },
+        }),
+      );
+    });
+    it('deve lançar NotFoundException se a sessão não existir', async () => {
+      const sessionId = 'session-123';
+
+      mockPrisma.pokerSession.findUnique.mockResolvedValue(null);
+
+      await expect(service.closeSession(sessionId)).rejects.toThrow(
+        'Poker session ID not found',
+      );
+    });
+  });
+  describe('nextCard', () => {
+    it('deve atualizar o status da sessão para VOTING', async () => {
+      const sessionId = 'session-123';
+      const mockSession = {
+        id: sessionId,
+        pokerStatus: PokerStatus.REVEALED,
+      };
+
+      mockPrisma.pokerSession.findUnique.mockResolvedValue(mockSession);
+      mockPrisma.pokerSession.update.mockResolvedValue({
+        ...mockSession,
+        pokerStatus: PokerStatus.VOTING,
+      });
+
+      const result = await service.nextCard(sessionId);
+
+      expect(result).toEqual({
+        ...mockSession,
+        pokerStatus: PokerStatus.VOTING,
+      });
+      expect(mockPrisma.pokerSession.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: sessionId },
+          data: { pokerStatus: PokerStatus.VOTING },
+        }),
+      );
+    });
+    it('deve lançar NotFoundException se a sessão não existir', async () => {
+      const sessionId = 'session-123';
+
+      mockPrisma.pokerSession.findUnique.mockResolvedValue(null);
+
+      await expect(service.nextCard(sessionId)).rejects.toThrow(
+        'Poker session ID not found',
+      );
+    });
+    it('deve lançar BadRequestException se a sessão não estiver em status REVEALED', async () => {
+      const sessionId = 'session-123';
+      const mockSession = {
+        id: sessionId,
+        pokerStatus: PokerStatus.WAITING,
+      };
+
+      mockPrisma.pokerSession.findUnique.mockResolvedValue(mockSession);
+
+      await expect(service.nextCard(sessionId)).rejects.toThrow(
+        'Session status must be REVEALED',
       );
     });
   });
