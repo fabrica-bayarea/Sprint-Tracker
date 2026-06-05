@@ -42,11 +42,15 @@ export function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
 
+  // nextUrl.clone() preserva o basePath (/sprint em prod). Setar .pathname
+  // e redirecionar mantém o prefixo — diferente de new URL(path, request.url),
+  // que gera caminho absoluto SEM basePath e quebra no deploy em sub-path.
   const isProtectedRoute = !request.nextUrl.pathname.startsWith('/auth');
   if (isProtectedRoute) {
     const tokenCookie = request.cookies.get('sprinttacker-session');
     if (!tokenCookie?.value) {
-      const loginURL = new URL('/auth/login', request.url);
+      const loginURL = request.nextUrl.clone();
+      loginURL.pathname = '/auth/login';
       const redirectResponse = NextResponse.redirect(loginURL);
       redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
       return redirectResponse;
@@ -55,7 +59,8 @@ export function proxy(request: NextRequest) {
 
   const homeToDashboard = request.nextUrl.pathname === '/';
   if (homeToDashboard) {
-    const dashboardURL = new URL('/dashboard', request.url);
+    const dashboardURL = request.nextUrl.clone();
+    dashboardURL.pathname = '/dashboard';
     const redirectResponse = NextResponse.redirect(dashboardURL);
     redirectResponse.headers.set('Content-Security-Policy', sanitizedCspHeader);
     return redirectResponse;
