@@ -152,6 +152,10 @@ export class SprintService {
     }
     return this.prisma.sprint.create({
       data: {
+        // ownerId agora é obrigatório (sprint multi-board é do dono).
+        // Por ora a sprint ainda nasce sob um board (boardId), mas já
+        // grava o dono. A lógica cross-board vem na Fase 2.
+        ownerId: userId,
         boardId,
         name: dto.name,
         goal: dto.goal,
@@ -271,7 +275,9 @@ export class SprintService {
         status: { not: 'DONE' },
         deletedAt: null,
       },
-      select: { id: true },
+      // Inclui o board da task (via list) — com sprint multi-board, o
+      // TaskLog de cada task pertence ao board DELA, não ao da sprint.
+      select: { id: true, list: { select: { boardId: true } } },
     });
     const incompleteIds = incompleteTasks.map((t) => t.id);
 
@@ -291,10 +297,10 @@ export class SprintService {
         });
 
         await tx.taskLog.createMany({
-          data: incompleteIds.map((taskId) => ({
-            taskId,
+          data: incompleteTasks.map((t) => ({
+            taskId: t.id,
             userId,
-            boardId: sprint.boardId,
+            boardId: t.list.boardId,
             action: LogAction.TASK_SPRINT_CHANGED,
             metadata: {
               fromSprintId: sprintId,
