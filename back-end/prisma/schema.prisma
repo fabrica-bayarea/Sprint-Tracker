@@ -57,14 +57,14 @@ model Board {
 model Sprint {
   id        String       @id @default(uuid())
   ownerId   String
-  boardId   String
+  boardId   String?
   name      String
   goal      String?
   startDate DateTime
   endDate   DateTime
   status    SprintStatus @default(PLANNED)
   owner     User         @relation("OwnerSprints", fields: [ownerId], references: [id])
-  board     Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  board     Board?       @relation(fields: [boardId], references: [id], onDelete: SetNull)
   tasks     Task[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
