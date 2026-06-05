@@ -10,12 +10,13 @@ const nextConfig: NextConfig = {
   // assets /_next) com /sprint. Em dev fica vazio pra rodar em localhost:3001/.
   // Requer que o ingress passe /sprint/* pro front SEM remover o prefixo.
   basePath: isDev ? undefined : '/sprint',
-  // Otimizador de imagem do Next (/_next/image) retorna 400 sob basePath
-  // no deploy standalone — ele tenta buscar a imagem em /images (sem o
-  // /sprint) e falha. unoptimized faz o <Image> servir o arquivo cru em
-  // /sprint/images/... (que existe), corrigindo os logos quebrados.
-  // São assets estáticos pequenos, otimização não faz diferença aqui.
-  images: { unoptimized: true },
+  // Custom loader (image-loader.ts) prefixa o basePath /sprint no src das
+  // imagens em produção. Sem isso o <Image> renderiza /images/... sem o
+  // /sprint → 404 (o otimizador padrão também dava 400 sob basePath).
+  images: {
+    loader: "custom",
+    loaderFile: "./image-loader.ts",
+  },
   async headers() {
     // TODO: Ao implementar TLS, colocar "upgrade-insecure-requests;"
     const cspHeader = `
