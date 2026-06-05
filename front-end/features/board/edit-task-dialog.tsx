@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { CalendarIcon, Trash2, Dices } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ interface EditTaskDialogProps {
   canAssign?: boolean;
   canDelete?: boolean;
   canViewHistory?: boolean;
+  canPoker?: boolean;
+  onStartPoker?: () => void;
   currentUserId?: string;
 }
 
@@ -51,6 +53,8 @@ export function EditTaskDialog({
   canAssign = false,
   canDelete = false,
   canViewHistory = false,
+  canPoker = false,
+  onStartPoker,
   currentUserId,
 }: EditTaskDialogProps) {
   const queryClient = useQueryClient();
@@ -214,6 +218,20 @@ export function EditTaskDialog({
           <TaskComments taskId={task.id} currentUserId={currentUserId} />
 
           <TaskHistory taskId={task.id} enabled={canViewHistory} />
+
+          {canPoker && (
+            <div className="pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onStartPoker}
+                className="w-full gap-2 border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-400 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-950/20"
+              >
+                <Dices size={15} />
+                Estimar com Poker Planning
+              </Button>
+            </div>
+          )}
 
           <div className="flex flex-col-reverse sm:flex-row justify-between gap-2 pt-2">
             {canDelete ? (

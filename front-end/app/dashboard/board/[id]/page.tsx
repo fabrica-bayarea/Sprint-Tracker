@@ -41,6 +41,7 @@ import { EditBoardDialog } from "@/features/board/edit-board-dialog";
 import { LabelsDialog } from "@/features/board/labels-dialog";
 import { MembersDialog } from "@/features/board/members-dialog";
 import { TaskCard } from "@/features/board/task-card";
+import { CreatePokerSessionModal } from "@/features/board/create-poker-session-modal";
 
 import type { Task } from "../../../../types/task";
 
@@ -83,6 +84,8 @@ export default function BoardPage() {
   const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [labelsOpen, setLabelsOpen] = useState(false);
+  const [pokerModalOpen, setPokerModalOpen] = useState(false);
+  const [pokerInitialTaskId, setPokerInitialTaskId] = useState<string | undefined>();
   const [optimisticLists, setOptimisticLists] = useState<ListWithTasks[] | null>(null);
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all__");
@@ -169,6 +172,12 @@ export default function BoardPage() {
         </button>
       </div>
     );
+  }
+
+  function handleStartPoker() {
+    setPokerInitialTaskId(editingTask?.id);
+    setEditingTask(null);
+    setPokerModalOpen(true);
   }
 
   async function handleDeleteList(id: string, title: string) {
@@ -622,7 +631,16 @@ export default function BoardPage() {
         canAssign={isAdmin}
         canDelete={canEditTasks}
         canViewHistory={isAdmin}
+        canPoker={isAdmin}
+        onStartPoker={handleStartPoker}
         currentUserId={myUserId}
+      />
+
+      <CreatePokerSessionModal
+        boardId={boardId}
+        isOpen={pokerModalOpen}
+        onClose={() => setPokerModalOpen(false)}
+        initialTaskId={pokerInitialTaskId}
       />
 
       <MembersDialog
