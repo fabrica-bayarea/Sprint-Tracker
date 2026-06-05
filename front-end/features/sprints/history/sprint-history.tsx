@@ -62,6 +62,11 @@ function TaskRow({
       >
         {task.title}
       </span>
+      {task.list?.board?.title && (
+        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium hidden sm:inline">
+          {task.list.board.title}
+        </span>
+      )}
       <span className="text-xs text-muted-foreground hidden md:flex items-center gap-1">
         <User size={12} />
         {assigneeLabel(task.assignee)}
