@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { login } from "@/lib/actions/auth";
+import { withBasePath } from "@/lib/base-path";
 import { LoginFormData, loginSchema } from "../../app/auth/login/login-schema";
 
 export function useLogin() {
@@ -45,7 +46,7 @@ export function useLogin() {
   };
 
   const handleOAuth = (provider: string) => {
-    window.location.href = `/api/v1/auth/${provider}`;
+    window.location.href = withBasePath(`/api/v1/auth/${provider}`);
   };
 
   return {

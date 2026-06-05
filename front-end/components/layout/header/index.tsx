@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQuery } from "@tanstack/react-query";
 import { removeCookie } from "@/lib/utils/session-cookie";
+import { withBasePath } from "@/lib/base-path";
 import { getUserProfile } from "@/lib/actions/profile";
 import styles from "./style.module.css";
 import { useSprintStore } from "@/stores/use-sprint-store";
@@ -47,7 +48,7 @@ export default function Header() {
     // react-query e desmonta todos os componentes/forms do dashboard. Sem
     // isso, queries em flight com cookie já apagado podem deixar estado
     // sujo e travar o próximo submit de login.
-    window.location.href = "/auth/login";
+    window.location.href = withBasePath("/auth/login");
   };
 
   return (
