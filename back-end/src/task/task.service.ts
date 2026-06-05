@@ -213,9 +213,24 @@ export class TaskService {
       }
     }
 
+    // Automação status -> coluna: se o status mudou e o board tem uma coluna
+    // (list) mapeada pro novo status, move a task pra ela. Se o board não
+    // tem coluna pra esse status, a task fica onde está (graceful).
+    let syncedListId: string | undefined;
+    if (isStatusChanging) {
+      const mappedList = await this.prisma.list.findFirst({
+        where: { boardId, status: dto.status as Status, isArchived: false },
+        select: { id: true },
+      });
+      if (mappedList && mappedList.id !== task.listId) {
+        syncedListId = mappedList.id;
+      }
+    }
+
     const dataToUpdate = {
       ...dto,
       ...(completedAt !== undefined && { completedAt }),
+      ...(syncedListId && { listId: syncedListId }),
     };
 
     const updated = await this.prisma.task.update({
@@ -412,6 +427,16 @@ export class TaskService {
       throw new NotFoundException('Lista de origem não encontrada');
     }
 
+    // Automação coluna -> status: se a coluna de destino tem um status
+    // mapeado, a task assume esse status (e ajusta completedAt).
+    const syncStatus =
+      targetList.status && targetList.status !== task.status
+        ? targetList.status
+        : undefined;
+    let completedAt: Date | null | undefined = undefined;
+    if (syncStatus === Status.DONE) completedAt = new Date();
+    else if (syncStatus && task.status === Status.DONE) completedAt = null;
+
     const updatedTask = await this.prisma.$transaction(async (prisma) => {
       await prisma.task.updateMany({
         where: {
@@ -433,7 +458,12 @@ export class TaskService {
 
       return prisma.task.update({
         where: { id: taskId },
-        data: { listId: newListId, position: newPosition },
+        data: {
+          listId: newListId,
+          position: newPosition,
+          ...(syncStatus && { status: syncStatus }),
+          ...(completedAt !== undefined && { completedAt }),
+        },
       });
     });
 

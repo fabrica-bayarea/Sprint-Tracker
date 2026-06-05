@@ -32,34 +32,27 @@ export class SprintService {
     }
   }
 
-  /** Garante que o usuário tem acesso ao board (qualquer membro). */
-  private async assertBoardAccess(boardId: string, userId: string) {
-    const board = await this.prisma.board.findUnique({
-      where: { id: boardId },
-      include: { members: { where: { userId } } },
-    });
-    if (!board) throw new NotFoundException('Board não encontrado');
-    const isOwner = board.ownerId === userId;
-    const isMember = board.members.length > 0;
-    if (!isOwner && !isMember) {
-      throw new ForbiddenException('Você não tem acesso a este board');
-    }
-  }
-
-  /** Acha a sprint, valida acesso e retorna sprint + boardId. */
-  private async assertSprintAccess(sprintId: string, userId: string) {
+  /**
+   * Acha a sprint e garante que o usuário é o DONO dela.
+   * Com multi-board a sprint é do usuário (ownerId), não de um board —
+   * então a permissão de gerenciar é por dono, não por admin de board.
+   */
+  private async assertSprintOwner(sprintId: string, userId: string) {
     const sprint = await this.prisma.sprint.findUnique({
       where: { id: sprintId },
     });
     if (!sprint) throw new NotFoundException('Sprint não encontrada');
-    await this.assertBoardAccess(sprint.boardId, userId);
+    if (sprint.ownerId !== userId) {
+      throw new ForbiddenException('Apenas o dono pode gerenciar esta sprint');
+    }
     return sprint;
   }
 
-  async listByBoard(boardId: string, userId: string) {
-    await this.assertBoardAccess(boardId, userId);
+  // Lista as sprints do USUÁRIO (multi-board). boardId no path é ignorado —
+  // mantido por compat com a rota /boards/:boardId/sprints.
+  async listByBoard(_boardId: string, userId: string) {
     return this.prisma.sprint.findMany({
-      where: { boardId },
+      where: { ownerId: userId },
       orderBy: [{ startDate: 'desc' }],
       include: {
         _count: { select: { tasks: true } },
@@ -75,10 +68,9 @@ export class SprintService {
    * Como o schema atual não rastreia movimentação entre sprints, "incompletas"
    * aqui são tasks que ficaram no sprint fechado sem serem marcadas DONE.
    */
-  async getHistory(boardId: string, userId: string) {
-    await this.assertBoardAccess(boardId, userId);
+  async getHistory(_boardId: string, userId: string) {
     const sprints = await this.prisma.sprint.findMany({
-      where: { boardId, status: SprintStatus.COMPLETED },
+      where: { ownerId: userId, status: SprintStatus.COMPLETED },
       orderBy: [{ endDate: 'desc' }],
       include: {
         tasks: {
@@ -91,7 +83,14 @@ export class SprintService {
             assignee: {
               select: { id: true, name: true, userName: true, email: true },
             },
-            list: { select: { id: true, title: true } },
+            // board de origem de cada task (multi-board)
+            list: {
+              select: {
+                id: true,
+                title: true,
+                board: { select: { id: true, title: true } },
+              },
+            },
           },
           orderBy: [{ completedAt: 'desc' }, { updatedAt: 'desc' }],
         },
@@ -119,11 +118,13 @@ export class SprintService {
     });
   }
 
-  /** Retorna a sprint ativa (status=ACTIVE) com tasks completas. Null se não houver. */
-  async getActive(boardId: string, userId: string) {
-    await this.assertBoardAccess(boardId, userId);
+  /**
+   * Retorna a sprint ativa do USUÁRIO (1 por dono). boardId no path é
+   * ignorado — a sprint é multi-board. Null se não houver.
+   */
+  async getActive(_boardId: string, userId: string) {
     const sprint = await this.prisma.sprint.findFirst({
-      where: { boardId, status: SprintStatus.ACTIVE },
+      where: { ownerId: userId, status: SprintStatus.ACTIVE },
       include: {
         tasks: {
           where: { deletedAt: null },
@@ -132,8 +133,13 @@ export class SprintService {
               select: { id: true, name: true, userName: true, email: true },
             },
             labels: { include: { label: true } },
+            // inclui o board de origem de cada task (multi-board)
             list: {
-              select: { id: true, title: true },
+              select: {
+                id: true,
+                title: true,
+                board: { select: { id: true, title: true } },
+              },
             },
           },
           orderBy: [{ updatedAt: 'desc' }],
@@ -152,9 +158,9 @@ export class SprintService {
     }
     return this.prisma.sprint.create({
       data: {
-        // ownerId agora é obrigatório (sprint multi-board é do dono).
-        // Por ora a sprint ainda nasce sob um board (boardId), mas já
-        // grava o dono. A lógica cross-board vem na Fase 2.
+        // Sprint é do dono (multi-board). Ainda nasce vinculada ao board de
+        // criação (boardId), mas pode receber tasks de qualquer board do
+        // dono via addTask.
         ownerId: userId,
         boardId,
         name: dto.name,
@@ -166,8 +172,7 @@ export class SprintService {
   }
 
   async update(sprintId: string, userId: string, dto: UpdateSprintDto) {
-    const sprint = await this.assertSprintAccess(sprintId, userId);
-    await this.assertBoardAdmin(sprint.boardId, userId);
+    const sprint = await this.assertSprintOwner(sprintId, userId);
 
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data.name = dto.name;
@@ -176,18 +181,18 @@ export class SprintService {
     if (dto.endDate !== undefined) data.endDate = new Date(dto.endDate);
 
     if (dto.status !== undefined) {
-      // Só pode haver uma sprint ACTIVE por board ao mesmo tempo.
+      // Só pode haver uma sprint ACTIVE por DONO ao mesmo tempo (multi-board).
       if (dto.status === SprintStatus.ACTIVE) {
         const otherActive = await this.prisma.sprint.findFirst({
           where: {
-            boardId: sprint.boardId,
+            ownerId: sprint.ownerId,
             status: SprintStatus.ACTIVE,
             NOT: { id: sprintId },
           },
         });
         if (otherActive) {
           throw new BadRequestException(
-            'Já existe uma sprint ativa neste board. Feche ela antes de ativar outra.',
+            'Você já tem uma sprint ativa. Encerre ela antes de ativar outra.',
           );
         }
       }
@@ -209,8 +214,7 @@ export class SprintService {
   }
 
   async remove(sprintId: string, userId: string) {
-    const sprint = await this.assertSprintAccess(sprintId, userId);
-    await this.assertBoardAdmin(sprint.boardId, userId);
+    await this.assertSprintOwner(sprintId, userId);
     // Tasks têm onDelete: SetNull no schema, então ficam apenas órfãs da sprint
     // (continuam no seu board/list).
     return this.prisma.sprint.delete({ where: { id: sprintId } });
@@ -224,8 +228,7 @@ export class SprintService {
    * "essa task veio da sprint X" no histórico futuramente.
    */
   async closeSprint(sprintId: string, userId: string, dto: CloseSprintDto) {
-    const sprint = await this.assertSprintAccess(sprintId, userId);
-    await this.assertBoardAdmin(sprint.boardId, userId);
+    const sprint = await this.assertSprintOwner(sprintId, userId);
 
     if (sprint.status === SprintStatus.COMPLETED) {
       throw new BadRequestException('Sprint já está encerrada');
@@ -257,9 +260,9 @@ export class SprintService {
       if (!target) {
         throw new NotFoundException('Sprint de destino não encontrada');
       }
-      if (target.boardId !== sprint.boardId) {
+      if (target.ownerId !== sprint.ownerId) {
         throw new BadRequestException(
-          'Sprint de destino pertence a outro board',
+          'Sprint de destino pertence a outro usuário',
         );
       }
       if (target.status !== SprintStatus.PLANNED) {
@@ -328,17 +331,20 @@ export class SprintService {
   }
 
   async addTask(sprintId: string, taskId: string, userId: string) {
-    const sprint = await this.assertSprintAccess(sprintId, userId);
+    const sprint = await this.assertSprintOwner(sprintId, userId);
     if (sprint.status === SprintStatus.COMPLETED) {
       throw new BadRequestException('Sprint encerrada não aceita tasks novas');
     }
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
-      include: { list: { select: { boardId: true } } },
+      include: { list: { select: { board: { select: { ownerId: true } } } } },
     });
     if (!task) throw new NotFoundException('Task não encontrada');
-    if (task.list.boardId !== sprint.boardId) {
-      throw new BadRequestException('Task pertence a outro board');
+    // Multi-board: aceita task de QUALQUER board que o dono da sprint possui.
+    if (task.list.board.ownerId !== sprint.ownerId) {
+      throw new BadRequestException(
+        'Você só pode adicionar tasks de boards que você é dono',
+      );
     }
     return this.prisma.task.update({
       where: { id: taskId },
@@ -347,7 +353,7 @@ export class SprintService {
   }
 
   async removeTask(sprintId: string, taskId: string, userId: string) {
-    await this.assertSprintAccess(sprintId, userId);
+    await this.assertSprintOwner(sprintId, userId);
     const task = await this.prisma.task.findUnique({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Task não encontrada');
     if (task.sprintId !== sprintId) {
