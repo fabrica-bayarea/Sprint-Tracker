@@ -46,8 +46,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
   ) {
+    // LDAP é opcional. Usar get() com default em vez de getOrThrow() pra
+    // não derrubar o boot quando LDAP está desligado e as vars LDAP_* não
+    // estão setadas. `userBaseDn` só é consumido nos métodos de login LDAP,
+    // que exigem ENABLE_LDAP_OAUTH e validam a config no momento do uso.
     this.userBaseDn =
-      this.configService.getOrThrow<string>('LDAP_USER_BASE_DN');
+      this.configService.get<string>('LDAP_USER_BASE_DN') ?? '';
   }
 
   // Gera um token JWT com base no payload fornecido.
