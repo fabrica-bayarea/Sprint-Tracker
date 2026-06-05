@@ -447,9 +447,14 @@ function SprintTaskCard({
           {task.description}
         </p>
       )}
-      <div className="flex items-center justify-between mt-2 text-[11px]">
-        <span className="text-muted-foreground/80 truncate">
-          {task.list?.title}
+      <div className="flex items-center justify-between mt-2 text-[11px] gap-2">
+        <span className="text-muted-foreground/80 truncate flex items-center gap-1.5 min-w-0">
+          {task.list?.board?.title && (
+            <span className="shrink-0 px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+              {task.list.board.title}
+            </span>
+          )}
+          <span className="truncate">{task.list?.title}</span>
         </span>
         {initial ? (
           <div className="flex items-center gap-1">

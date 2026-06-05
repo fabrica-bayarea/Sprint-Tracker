@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, Plus } from "lucide-react";
@@ -14,11 +14,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getAllList } from "@/lib/actions/list";
+import { getBoards } from "@/lib/actions/board";
 import { addTaskToSprint } from "@/lib/actions/sprint";
 import type { Task } from "@/types/task";
 
 interface AddTaskDialogProps {
+  /** Board padrão (o selecionado na sidebar). O usuário pode trocar. */
   boardId: string;
   sprintId: string;
   isOpen: boolean;
@@ -34,11 +43,26 @@ export function AddTaskDialog({
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState<string | null>(null);
+  // Board que está sendo navegado (multi-board: dá pra puxar de vários).
+  const [browseBoardId, setBrowseBoardId] = useState(boardId);
+
+  useEffect(() => {
+    if (boardId) setBrowseBoardId(boardId);
+  }, [boardId]);
+
+  const { data: boardsData } = useQuery({
+    queryKey: ["boards"],
+    queryFn: getBoards,
+    enabled: isOpen,
+    staleTime: 30_000,
+  });
+  const boards =
+    boardsData?.success && boardsData.data ? boardsData.data : [];
 
   const { data, isLoading } = useQuery({
-    queryKey: ["board-lists", boardId],
-    queryFn: () => getAllList(boardId),
-    enabled: isOpen && !!boardId,
+    queryKey: ["board-lists", browseBoardId],
+    queryFn: () => getAllList(browseBoardId),
+    enabled: isOpen && !!browseBoardId,
   });
 
   const candidates = useMemo<Task[]>(() => {
@@ -63,8 +87,11 @@ export function AddTaskDialog({
     const r = await addTaskToSprint(sprintId, task.id);
     setAdding(null);
     if (r.success) {
-      queryClient.invalidateQueries({ queryKey: ["sprint-active", boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-lists", boardId] });
+      // sprint-active é por-dono agora; invalida todas as variações
+      queryClient.invalidateQueries({ queryKey: ["sprint-active"] });
+      queryClient.invalidateQueries({
+        queryKey: ["board-lists", browseBoardId],
+      });
       toast.success(`"${task.title}" adicionada à sprint`);
     } else {
       toast.error(r.error || "Erro ao adicionar");
@@ -77,11 +104,26 @@ export function AddTaskDialog({
         <DialogHeader>
           <DialogTitle>Adicionar task à sprint</DialogTitle>
           <DialogDescription>
-            Selecione uma task do board que ainda não está em sprint.
+            Escolha um board e adicione tasks que ainda não estão em sprint.
+            Você pode puxar de vários boards.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 mt-2">
+          {/* Seletor de board (multi-board) */}
+          <Select value={browseBoardId} onValueChange={setBrowseBoardId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Escolha o board" />
+            </SelectTrigger>
+            <SelectContent>
+              {boards.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -100,7 +142,7 @@ export function AddTaskDialog({
             ) : filtered.length === 0 ? (
               <div className="text-xs text-muted-foreground italic py-6 text-center">
                 {candidates.length === 0
-                  ? "Sem tasks elegíveis (todas já estão em uma sprint ou arquivadas)"
+                  ? "Sem tasks elegíveis neste board (todas já estão em uma sprint ou arquivadas)"
                   : "Nenhuma task casa com a busca"}
               </div>
             ) : (

@@ -31,6 +31,7 @@ model User {
   taskComments        TaskComment[]  @relation("TaskCommentUser")
   notifications       Notification[]
   sentInvites         Invite[]       @relation("Sender")
+  ownedSprints        Sprint[]       @relation("OwnerSprints")
 
   @@unique([authProvider, providerId], name: "AuthProviderAndIdUnique")
 }
@@ -55,17 +56,21 @@ model Board {
 
 model Sprint {
   id        String       @id @default(uuid())
-  boardId   String
+  ownerId   String
+  boardId   String?
   name      String
   goal      String?
   startDate DateTime
   endDate   DateTime
   status    SprintStatus @default(PLANNED)
-  board     Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  owner     User         @relation("OwnerSprints", fields: [ownerId], references: [id])
+  board     Board?       @relation(fields: [boardId], references: [id], onDelete: SetNull)
   tasks     Task[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
+  @@index([ownerId])
+  @@index([ownerId, status])
   @@index([boardId])
   @@index([status])
 }
@@ -97,12 +102,15 @@ model List {
   id         String   @id @default(uuid())
   boardId    String
   title      String
+  status     Status?
   position   Int
   isArchived Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   board      Board    @relation(fields: [boardId], references: [id])
   tasks      Task[]
+
+  @@unique([boardId, status])
 }
 
 model Task {
