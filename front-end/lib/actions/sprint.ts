@@ -34,6 +34,8 @@ export interface SprintTask extends Task {
   list: {
     id: string;
     title: string;
+    // board de origem (multi-board) — incluído pelo getActive
+    board?: { id: string; title: string };
   };
 }
 
@@ -52,7 +54,8 @@ export interface HistorySprintTask {
     userName: string | null;
     email: string | null;
   } | null;
-  list: { id: string; title: string };
+  // board de origem (multi-board) — incluído pelo getHistory
+  list: { id: string; title: string; board?: { id: string; title: string } };
 }
 
 export interface HistorySprint extends Sprint {
