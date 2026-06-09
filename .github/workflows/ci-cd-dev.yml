@@ -81,7 +81,7 @@ jobs:
         run: echo "tag=${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-frontend-dev:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
-          context: ./front-end
+          context: .
           push: true
           build-args: |
             BASE_URL_API=https://bayarea.dataiesb.com/sprint-dev/api
@@ -89,6 +89,7 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.tag }}
             ${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-frontend-dev:latest
+          file: .github/Dockerfile.frontend-dev
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ vars.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
