@@ -50,12 +50,30 @@ Seguimos a especificação **Conventional Commits** para garantir clareza, consi
 
 Seguimos as seguintes convenções para nomeação de branches:
 
-- **main**: A branch principal contendo o código pronto para produção.
+- **main**: A branch de produção. **Não aceita push direto** — o código só entra via Pull Request aprovado.
+- **dev**: A branch de desenvolvimento/integração. Recebe merges das feature branches e faz deploy automático no ambiente de dev.
 - **feature/**: Usada para novas funcionalidades ou mudanças (ex.: `feature/user-authentication`).
 - **bugfix/**: Usada para correções de bugs (ex.: `bugfix/fix-login-issue`).
 - **hotfix/**: Usada para correções urgentes que precisam ser enviadas para produção imediatamente (ex.: `hotfix/crash-on-login`).
 - **release/**: Usada para preparar novas versões para lançamento (ex.: `release/v1.0.0`).
 - **chore/**: Usada para tarefas rotineiras e manutenção (ex.: `chore/update-dependencies`).
+
+## Fluxo de Trabalho (Git Flow)
+
+```
+feature/* ──► dev (deploy automático no ambiente dev) ──► main (somente via PR)
+```
+
+1. Crie sua branch a partir de `dev` (ex.: `feature/minha-feature`).
+2. Desenvolva e faça commits seguindo as convenções abaixo.
+3. Abra um PR para `dev`. Após aprovação e merge, o deploy no ambiente de dev é automático.
+4. Quando o código em `dev` estiver validado, abra um PR de `dev` → `main`.
+5. Após aprovação e merge na `main`, o deploy em produção é automático.
+
+> **Importante:** Antes de abrir qualquer PR, faça pull da branch alvo para garantir que está atualizado:
+> ```bash
+> git checkout dev && git pull origin dev
+> ```
 
 ---
 
@@ -78,8 +96,9 @@ Utilizamos a ferramenta **ESLint** para garantir que o código esteja formatado 
 
 Ao criar um pull request:
 
-1. Certifique-se de que sua branch está atualizada com a branch principal (`main`).
-2. Forneça um título claro e uma descrição para o PR.
-3. Vincule problemas relevantes, se aplicável (ex.: `Fixes #123`).
-4. Certifique-se de que todos os testes estão passando antes de solicitar uma revisão.
-5. Rebase ou faça merge das últimas mudanças da branch principal antes de mesclar o PR.
+1. Faça `git pull` da branch alvo antes de abrir o PR.
+2. Certifique-se de que sua branch está atualizada com a branch alvo (`dev` ou `main`).
+3. Forneça um título claro e uma descrição para o PR.
+4. Vincule problemas relevantes, se aplicável (ex.: `Fixes #123`).
+5. Certifique-se de que todos os testes estão passando antes de solicitar uma revisão.
+6. PRs para `main` **devem partir de `dev`** e só serão mergeados após aprovação.

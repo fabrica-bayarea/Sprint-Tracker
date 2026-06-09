@@ -1,13 +1,13 @@
-name: CI/CD Prod
+name: CI/CD Dev
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
     paths:
       - 'back-end/**'
       - 'front-end/**'
       - 'k8s/**'
-      - '.github/workflows/ci-cd.yml'
+      - '.github/workflows/ci-cd-dev.yml'
 
 env:
   NODE_VERSION: "22"
@@ -35,9 +35,8 @@ jobs:
             frontend:
               - 'front-end/**'
 
-  # ─── DOCKER BUILD & DEPLOY BACKEND ──────────────────
   docker-backend:
-    name: "Build & Deploy Backend"
+    name: "Build & Deploy Backend (Dev)"
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
@@ -50,24 +49,23 @@ jobs:
       - id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
       - id: meta
-        run: echo "tag=${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-backend-prod:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-backend-dev:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: ./back-end
           push: true
           tags: |
             ${{ steps.meta.outputs.tag }}
-            ${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-backend-prod:latest
+            ${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-backend-dev:latest
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ vars.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-          kubectl set image deployment/bayarea-sprint-backend \
+          kubectl set image deployment/bayarea-sprint-backend-dev \
             backend=${{ steps.meta.outputs.tag }} -n bayarea-web
-          kubectl rollout status deployment/bayarea-sprint-backend -n bayarea-web --timeout=300s
+          kubectl rollout status deployment/bayarea-sprint-backend-dev -n bayarea-web --timeout=300s
 
-  # ─── DOCKER BUILD & DEPLOY FRONTEND ─────────────────
   docker-frontend:
-    name: "Build & Deploy Frontend"
+    name: "Build & Deploy Frontend (Dev)"
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -80,20 +78,20 @@ jobs:
       - id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
       - id: meta
-        run: echo "tag=${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-frontend-prod:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-frontend-dev:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: ./front-end
           push: true
           build-args: |
-            BASE_URL_API=https://bayarea.dataiesb.com/sprint/api
-            BASE_URL_WS=wss://bayarea.dataiesb.com/sprint/api
+            BASE_URL_API=https://bayarea.dataiesb.com/sprint-dev/api
+            BASE_URL_WS=wss://bayarea.dataiesb.com/sprint-dev/api
           tags: |
             ${{ steps.meta.outputs.tag }}
-            ${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-frontend-prod:latest
+            ${{ steps.ecr-login.outputs.registry }}/bayarea-sprint-frontend-dev:latest
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ vars.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-          kubectl set image deployment/bayarea-sprint-frontend \
+          kubectl set image deployment/bayarea-sprint-frontend-dev \
             frontend=${{ steps.meta.outputs.tag }} -n bayarea-web
-          kubectl rollout status deployment/bayarea-sprint-frontend -n bayarea-web --timeout=300s
+          kubectl rollout status deployment/bayarea-sprint-frontend-dev -n bayarea-web --timeout=300s
